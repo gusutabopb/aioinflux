@@ -52,8 +52,8 @@ class AsyncInfluxDBClient:
 
     async def _post(self, *args, **kwargs):
         async with self.session.post(*args, **kwargs) as resp:
-            self.logger.debug(f'{resp.status}: {resp.reason}')
-            return await resp.json()
+            self.logger.info(f'{resp.status}: {resp.reason}')
+            return dict(resp=resp,  json=await resp.json())
 
     @staticmethod
     def _make_logger(log_level):
