@@ -28,6 +28,9 @@ class AsyncInfluxDBClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
 
+    def __del__(self):
+        self.session.close()
+
     async def create_database(self, dbname):
         data = dict(q=f'CREATE DATABASE {dbname}')
         return await self._post(self.query_url, data=data)
