@@ -13,7 +13,7 @@ PointType = Union[AnyStr, Mapping]
 class AsyncInfluxDBClient:
 
     def __init__(self, host='localhost', port=8086, database='testdb',
-                 username=None, password=None, loop=None, log_level=None):
+                 username=None, password=None, loop=None, log_level=30):
         self.logger = self._make_logger(log_level)
         self.loop = asyncio.get_event_loop() if loop is None else loop
         self.session = aiohttp.ClientSession(loop=self.loop,
@@ -57,14 +57,16 @@ class AsyncInfluxDBClient:
     async def _post(self, *args, **kwargs):
         async with self.session.post(*args, **kwargs) as resp:
             self.logger.info(f'{resp.status}: {resp.reason}')
-            return dict(resp=resp,  json=await resp.json())
+            output = dict(resp=resp,  json=await resp.json())
+            self.logger.debug(output['json'])
+            return output
 
     @staticmethod
     def _make_logger(log_level):
         logger = logging.getLogger('aioinflux')
+        logger.setLevel(log_level)
         formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s')
         if log_level and not logger.handlers:
-            logger.setLevel(log_level)
             stream_handler = logging.StreamHandler()
             stream_handler.setFormatter(formatter)
             logger.addHandler(stream_handler)
