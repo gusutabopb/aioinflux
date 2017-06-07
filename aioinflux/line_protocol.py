@@ -2,11 +2,13 @@ from typing import Iterable, Mapping
 
 import pandas as pd
 
-escapes = str.maketrans({'\\': r'\\', '"': r'\"',
-                         '\n': r'\n', "'": r"\'",
-                         ' ': r'\ ',  ',': r'\,',
-                         '=': r'\=',
-                         })
+# Special characters documentation:
+# https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/#special-characters
+# Although not in the official docs, new line characters are removed in order to avoid issues.
+escape_key = str.maketrans({',': r'\,', ' ': r'\ ', '=': r'\=', '\n': ''})
+escape_tag = str.maketrans({',': r'\,', ' ': r'\ ', '=': r'\=', '\n': ''})
+escape_str = str.maketrans({'"': r'\"', '\n': ''})
+escape_measurement = str.maketrans({',': r'\,', ' ': r'\ ', '\n': ''})
 
 def parse_data(data):
     if isinstance(data, bytes):
@@ -35,14 +37,14 @@ def make_line(point):
 
 
 def _parse_measurement(point):
-    return point['measurement']
+    return point['measurement'].translate(escape_measurement)
 
 
 def _parse_tags(point):
     output = []
     for k, v in point['tags'].items():
-        k = k.translate(escapes)
-        v = v.translate(escapes)
+        k = k.translate(escape_key)
+        v = v.translate(escape_tag)
         output.append('{k}={v}'.format(k=k, v=v))
     if output:
         return ','.join(output)
@@ -60,13 +62,13 @@ def _parse_timestamp(point):
 def _parse_fields(point):
     output = []
     for k, v in point['fields'].items():
-        k = k.translate(escapes)
+        k = k.translate(escape_key)
         if isinstance(v, int):
             output.append('{k}={v}i'.format(k=k, v=v))
         elif isinstance(v, bool):
             output.append('{k}={v}'.format(k=k, v=str(v).upper()))
         elif isinstance(v, str):
-            output.append('{k}="{v}"'.format(k=k, v=v.translate(escapes)))
+            output.append('{k}="{v}"'.format(k=k, v=v.translate(escape_str)))
         else:
             output.append('{k}={v}'.format(k=k, v=v))
     return ','.join(output)
