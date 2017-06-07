@@ -16,7 +16,8 @@ class AsyncInfluxDBClient:
                  username=None, password=None, loop=None, log_level=None):
         self.logger = self._make_logger(log_level)
         self.loop = asyncio.get_event_loop() if loop is None else loop
-        self.session = aiohttp.ClientSession(loop=self.loop)
+        self.session = aiohttp.ClientSession(loop=self.loop,
+                                             auth=aiohttp.BasicAuth(username, password))
         self.db = database
         self.base_url = f'http://{host}:{port}/'
         self.query_url = self.base_url + 'query'
