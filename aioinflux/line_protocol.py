@@ -45,6 +45,8 @@ def _parse_tags(point):
     for k, v in point['tags'].items():
         k = k.translate(escape_key)
         v = v.translate(escape_tag)
+        if not v:
+            continue  # ignore blank/null string tags
         output.append('{k}={v}'.format(k=k, v=v))
     if output:
         return ','.join(output)
