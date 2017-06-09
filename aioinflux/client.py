@@ -12,8 +12,8 @@ PointType = Union[AnyStr, Mapping]
 
 class AsyncInfluxDBClient:
 
-    def __init__(self, host='localhost', port=8086, database='testdb',
-                 username=None, password=None, loop=None, log_level=30):
+    def __init__(self, host='localhost', port=8086, username=None, password=None,
+                 database='testdb', loop=None, log_level=30):
         self.logger = self._make_logger(log_level)
         self.loop = asyncio.get_event_loop() if loop is None else loop
         self.session = aiohttp.ClientSession(loop=self.loop,
