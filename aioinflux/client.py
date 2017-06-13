@@ -4,7 +4,7 @@ import logging
 from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
-from typing import Union, AnyStr, Mapping, Iterable, Optional
+from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
 from urllib.parse import urlencode
 
 import aiohttp
@@ -66,6 +66,8 @@ class AsyncInfluxDBClient:
         self.url = f'http://{host}:{port}/{{endpoint}}'
         self.dataframe = dataframe
         self.sync = sync or dataframe
+        if dataframe and not sync:
+            self.logger.warning('Setting to `dataframe` to `True` makes client run in sync mode.')
 
     def __enter__(self):
         return self
@@ -78,7 +80,7 @@ class AsyncInfluxDBClient:
 
     @runner
     async def ping(self) -> dict:
-        """Ping InfluxDB. Returns a dictionary containing the headers of the response from `influxd`."""
+        """Pings InfluxDB. Returns a dictionary containing the headers of the response from `influxd`."""
         async with self.session.get(self.url.format(endpoint='ping')) as resp:
             self.logger.info(f'{resp.status}: {resp.reason}')
             return dict(resp.headers.items())
@@ -86,7 +88,7 @@ class AsyncInfluxDBClient:
     @runner
     async def write(self, data: Union[PointType, Iterable[PointType]]) -> bool:
         """
-        Write query to InfluxDB.
+        Writes query to InfluxDB.
         Input can be:
         1) a string properly formatted in InfluxDB's line protocol
         2) a dictionary containing four items ('measurement', 'time', 'tags', 'fields')
@@ -109,17 +111,24 @@ class AsyncInfluxDBClient:
                 raise ValueError(msg)
 
     @runner
-    async def query(self, q: AnyStr, db=None, epoch='ns', chunked=False, chunk_size=None, **kwargs):
+    async def query(self, q: AnyStr, db=None, epoch='ns',
+                    chunked=False, chunk_size=None, **kwargs) -> Union[AsyncGenerator, dict]:
         """
-        Send a query to InfluxDB.
-        https://docs.influxdata.com/influxdb/v1.2/tools/api/#query-string-parameters
+        Sends a query to InfluxDB.
+        Please refer to the InfluxDB documentation for all the possible queries:
+        https://docs.influxdata.com/influxdb/v1.2/query_language/spec/#queries
 
         :param q: Raw query string
         :param db: Database parameter. Defaults to `self.db`
-        :param epoch:
-        :param chunked:
-        :param chunk_size:
+        :param epoch: Precision level of response timestamps.
+            Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
+        :param chunked: Retrieves the points in streamed batches instead of in a single response and returns
+            and AsyncGenerator which will yield point by point.
+        :param chunk_size: Max number of points for each chunk.
+            InfluxDB chunks responses by series or by every 10,000 points, whichever occurs first.
         :param kwargs: String interpolation arguments for partialmethods
+        :return: Returns an async generator if chunked is True, otherwise returns
+            a dictionary containing the parsed JSON response.
         """
         async def _chunked_generator(func, url, data):
             async with func(url, **data) as resp:
@@ -153,7 +162,13 @@ class AsyncInfluxDBClient:
             self.logger.debug(output)
             return output
 
-
+    # Below are methods that wrap ``AsyncInfluxDBClient.query`` in order to provide
+    # convenient access to commonly used query patterns. Named arguments corresponding
+    # to the named placed holders in the pre-formatted query string of each of partialmethods
+    # must be passed (e.g.: `db`, `measurement`, etc).
+    # For more complex queries, pass a raw query to ``AsyncInfluxDBClient.query``.
+    # Please refer to the InfluxDB documentation for all the possible queries:
+    # https://docs.influxdata.com/influxdb/v1.2/query_language/spec/#queries
     create_database = partialmethod(query, q='CREATE DATABASE {db}')
     drop_database = partialmethod(query, q='DROP DATABASE {db}')
     drop_measurement = partialmethod(query, q='DROP MEASUREMENT {measurement}')
@@ -165,6 +180,7 @@ class AsyncInfluxDBClient:
 
     @staticmethod
     def _make_logger(log_level):
+        """Initializes logger"""
         logger = logging.getLogger('aioinflux')
         logger.setLevel(log_level)
         formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s')
@@ -176,6 +192,7 @@ class AsyncInfluxDBClient:
 
     @staticmethod
     def make_df(resp):
+        """Makes list of DataFrames from a response object"""
         def _make_df(series):
             df = pd.DataFrame(series['values'], columns=series['columns'])
             df = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)
