@@ -3,7 +3,7 @@ import json
 import logging
 from functools import partialmethod
 from functools import wraps
-from typing import Union, AnyStr, Mapping, Iterable
+from typing import Union, AnyStr, Mapping, Iterable, Optional
 from urllib.parse import urlencode
 
 import aiohttp
@@ -31,18 +31,32 @@ def runner(coro):
 
 
 class AsyncInfluxDBClient:
-    def __init__(self, host='localhost', port=8086, username=None, password=None,
-                 database='testdb', loop=None, log_level=30, dataframe=False, sync=False):
+    def __init__(self, host: str = 'localhost', port: int = 8086,
+                 username: Optional[str] = None, password: Optional[str] = None,
+                 database: str = 'testdb', loop: asyncio.BaseEventLoop = None,
+                 log_level: int = 30, dataframe: bool = False, sync: bool = False):
         """
+        The AsyncInfluxDBClient object holds information necessary to interect with InfluxDB.
+        It is async by default, but can also be used as a sync/blocking client and even generate
+        Pandas DataFrames from queries.
+        The three main public methods are the three endpoints of the InfluxDB API, namely:
+        1) AsyncInfluxDBClient.ping
+        2) AsyncInfluxDBClient.write
+        3) AsyncInfluxDBClient.query
+        See each of the above methods documentation for further usage details.
+        See also: https://docs.influxdata.com/influxdb/v1.2/tools/api/
 
-        :param host:
-        :param port:
-        :param username:
-        :param password:
-        :param database:
-        :param loop:
-        :param log_level:
-        :param dataframe:
+        :param host: Hostname to connect to InfluxDB.
+        :param port: Port to connect to InfluxDB.
+        :param username: Username to use to connect to InfluxDB.
+        :param password: User password.
+        :param database: Default database to be used by the client.
+        :param loop: Event loop used for processing HTTP requests.
+        :param log_level: Logging level. The lower the more verbose. Defaults to INFO (30).
+        :param dataframe: Setting to `True` make query results be parsed into a Pandas DataFrame.
+                          When set to `False` (default), query results will be returned as dictionaries.
+        :param sync: Setting to `True` will make the client behave in a sychronous way.
+                     Setting `self.dataframe` to True automatically sets `sync` to True as well.
         """
         self.logger = self._make_logger(log_level)
         self.loop = asyncio.get_event_loop() if loop is None else loop
@@ -63,15 +77,27 @@ class AsyncInfluxDBClient:
         self.session.close()
 
     @runner
-    async def ping(self):
-        """Ping InfluxDB"""
+    async def ping(self) -> dict:
+        """Ping InfluxDB. Returns a dictionary containing the headers of the response from `influxd`."""
         async with self.session.get(self.url.format(endpoint='ping')) as resp:
             self.logger.info(f'{resp.status}: {resp.reason}')
             return dict(resp.headers.items())
 
     @runner
-    async def write(self, data: Union[PointType, Iterable[PointType]]):
-        """Write query to InfluxDB."""
+    async def write(self, data: Union[PointType, Iterable[PointType]]) -> bool:
+        """
+        Write query to InfluxDB.
+        Input can be:
+        1) a string properly formatted in InfluxDB's line protocol
+        2) a dictionary containing four items ('measurement', 'time', 'tags', 'fields')
+        3) a Pandas DataFrame with a DatetimeIndex
+        4) an iterable of one of above
+        Input data in the 2-4 formats are parsed to the line protocol before being written to InfluxDB.
+        See also: https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/
+
+        :param data: Input data (see description above).
+        :return: Returns `True` if insert is sucessfull. Raises `ValueError` exception otherwise.
+        """
         data = parse_data(data)
         self.logger.debug(data)
         url = self.url.format(endpoint='write') + '?' + urlencode(dict(db=self.db))
