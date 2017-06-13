@@ -19,6 +19,9 @@ def parse_data(data):
         return make_line(data)
     elif isinstance(data, Iterable):
         return b'\n'.join([parse_data(i) for i in data])
+    elif isinstance(data, pd.DataFrame):
+        # TODO: Implement
+        return NotImplementedError('DataFrame writing not implemented')
     else:
         raise ValueError('Invalid input', data)
 

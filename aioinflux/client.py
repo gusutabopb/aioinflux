@@ -12,8 +12,7 @@ import pandas as pd
 
 from .line_protocol import parse_data
 
-PointType = Union[AnyStr, Mapping]
-
+PointType = Union[AnyStr, Mapping, pd.DataFrame]
 
 def runner(coro):
     """Function execution decorator."""
