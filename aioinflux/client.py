@@ -148,8 +148,9 @@ class AsyncInfluxDBClient:
 
         async with func(url, **data) as resp:
             self.logger.info(f'{resp.status}: {resp.reason}')
-            output = dict(resp=resp, json=await resp.json())
-            self.logger.debug(output['json'])
+            output = await resp.json()
+            self.logger.debug(resp)
+            self.logger.debug(output)
             return output
 
 

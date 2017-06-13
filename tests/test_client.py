@@ -25,7 +25,7 @@ def test_ping(client):
 
 def test_create_database(client):
     resp = client.create_database(db='mytestdb')
-    assert resp['resp'].status == 200
+    assert resp
 
 
 def test_simple_write(client):
@@ -35,7 +35,7 @@ def test_simple_write(client):
 
 def test_simple_query(client):
     resp = client.select_all(measurement='test_measurement')
-    assert len(resp['json']['results'][0]['series'][0]['values']) == 10
+    assert len(resp['results'][0]['series'][0]['values']) == 10
 
 
 def test_drop_measurement(client):
