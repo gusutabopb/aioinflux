@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
 from typing import Union, AnyStr, Mapping, Iterable, Optional
@@ -121,6 +122,15 @@ class AsyncInfluxDBClient:
         :param chunk_size:
         :param kwargs: String interpolation arguments for partialmethods
         """
+        async def _chunked_generator(func, url, data):
+            async with func(url, **data) as resp:
+                async for chunk in resp.content:
+                    for statement in json.loads(chunk)['results']:
+                        for series in statement['series']:
+                            Point = namedtuple('Point', series['columns'])
+                            for point in series['values']:
+                                yield Point(*point)
+
         db = self.db if db is None else db
         data = dict(q=q.format(db=db, **kwargs), db=db, chunked=str(chunked).lower(), epoch=epoch)
         if chunked and chunk_size:
@@ -133,14 +143,16 @@ class AsyncInfluxDBClient:
         url = self.url.format(endpoint='query')
         func = getattr(self.session, method)
         data = dict(params=data) if method == 'get' else dict(data=data)
+
+        if chunked:
+            return _chunked_generator(func, url, data)
+
         async with func(url, **data) as resp:
             self.logger.info(f'{resp.status}: {resp.reason}')
-            if chunked:
-                output = dict(resp=resp, json=[json.loads(chunk) async for chunk in resp.content])
-            else:
-                output = dict(resp=resp, json=await resp.json())
+            output = dict(resp=resp, json=await resp.json())
             self.logger.debug(output['json'])
             return output
+
 
     create_database = partialmethod(query, q='CREATE DATABASE {db}')
     drop_database = partialmethod(query, q='DROP DATABASE {db}')
