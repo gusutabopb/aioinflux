@@ -121,14 +121,12 @@ class AsyncInfluxDBClient:
         :param chunk_size:
         :param kwargs: String interpolation arguments for partialmethods
         """
-        kwargs['db'] = self.db if db is None else db
-        data = dict(q=q.format(**kwargs), chunked=str(chunked).lower(), epoch=epoch)
+        db = self.db if db is None else db
+        data = dict(q=q.format(db=db, **kwargs), db=db, chunked=str(chunked).lower(), epoch=epoch)
         if chunked and chunk_size:
             data['chunk_size'] = chunk_size
         if q.startswith('SELECT') or q.startswith('SHOW'):
-            method = 'post'  # Won't work with SELECT INTO
-            if db is None:
-                data['db'] = self.db
+            method = 'get'  # Will fail with SELECT INTO
         else:
             method = 'post'
 
