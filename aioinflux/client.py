@@ -103,7 +103,7 @@ class AsyncInfluxDBClient:
         See also: https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/
 
         :param data: Input data (see description above).
-        :return: Returns `True` if insert is sucessfull. Raises `ValueError` exception otherwise.
+        :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
         data = parse_data(data)
         self._logger.debug(data)
