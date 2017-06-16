@@ -29,6 +29,9 @@ def runner(coro):
 
     return inner
 
+class InfluxDBError(Exception):
+    pass
+
 
 class AsyncInfluxDBClient:
     def __init__(self, host: str = 'localhost', port: int = 8086,
@@ -151,6 +154,7 @@ class AsyncInfluxDBClient:
         url = self.url.format(endpoint='query')
         func = getattr(self.session, method)
         data = dict(params=data) if method == 'get' else dict(data=data)
+        self.logger.debug(data)
 
         if chunked:
             return _chunked_generator(func, url, data)
@@ -160,6 +164,7 @@ class AsyncInfluxDBClient:
             output = await resp.json()
             self.logger.debug(resp)
             self.logger.debug(output)
+            self.check_error(output)
             return output
 
     # Below are methods that wrap ``AsyncInfluxDBClient.query`` in order to provide
@@ -205,3 +210,13 @@ class AsyncInfluxDBClient:
         return [(series['name'], _make_df(series))
                 for statement in resp['results']
                 for series in statement['series']]
+
+    @staticmethod
+    def check_error(response):
+        if 'error' in response:
+            raise InfluxDBError(response['error'])
+        elif 'results' in response:
+            for statement in response['results']:
+                if 'error' in statement:
+                    msg = '{d[error]} (statement {d[statement_id]})'
+                    raise InfluxDBError(msg.format(d=statement))
