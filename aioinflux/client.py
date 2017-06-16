@@ -113,7 +113,7 @@ class AsyncInfluxDBClient:
                 return True
             else:
                 msg = f'Error writing data. Response: {resp.status} | {resp.reason}'
-                raise ValueError(msg)
+                raise InfluxDBError(msg)
 
     @runner
     async def query(self, q: AnyStr, db=None, epoch='ns',
