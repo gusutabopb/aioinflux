@@ -203,5 +203,5 @@ class AsyncInfluxDBClient:
             return df
 
         return [(series['name'], _make_df(series))
-                for statement in resp['json']['results']
+                for statement in resp['results']
                 for series in statement['series']]
