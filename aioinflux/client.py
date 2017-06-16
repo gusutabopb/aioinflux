@@ -142,8 +142,13 @@ class AsyncInfluxDBClient:
                             for point in series['values']:
                                 yield Point(*point)
 
-        db = self.db if db is None else db
-        data = dict(q=q.format(db=db, **kwargs), db=db, chunked=str(chunked).lower(), epoch=epoch)
+        try:
+            db = self.db if db is None else db
+            query = q.format(db=db, **kwargs)
+        except KeyError as e:
+            raise ValueError(f'Missing argument "{e.args[0]}" in {repr(q)}')
+
+        data = dict(q=query, db=db, chunked=str(chunked).lower(), epoch=epoch)
         if chunked and chunk_size:
             data['chunk_size'] = chunk_size
         if q.startswith('SELECT') or q.startswith('SHOW'):
