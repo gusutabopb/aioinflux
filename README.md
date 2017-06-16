@@ -79,8 +79,7 @@ Input data can be:
 
 Input data in formats 2-4 are parsed into the 
 [line protocol](https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/) 
-before being written to InfluxDB. All parsing functionality is located at  
-[`line_protocol.py`](aioinflux/line_protocol.py).
+before being written to InfluxDB. All parsing functionality is located at [`line_protocol.py`](aioinflux/line_protocol.py).
 
 The `write` method returns `True` when successful and raises an `InfluxDBError` otherwise.  
 
