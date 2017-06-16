@@ -11,6 +11,7 @@ import aiohttp
 import pandas as pd
 
 from .line_protocol import parse_data
+from .dataframe import make_df, parse_df
 
 PointType = Union[AnyStr, Mapping, pd.DataFrame]
 
@@ -23,7 +24,7 @@ def runner(coro):
             return coro(self, *args, **kwargs)
         resp = self._loop.run_until_complete(coro(self, *args, **kwargs))
         if self.dataframe and coro.__name__ == 'query':
-            return self._make_df(resp)
+            return make_df(resp)
         else:
             return resp
 
@@ -200,22 +201,6 @@ class AsyncInfluxDBClient:
             stream_handler.setFormatter(formatter)
             logger.addHandler(stream_handler)
         return logger
-
-    @staticmethod
-    def _make_df(resp):
-        """Makes list of DataFrames from a response object"""
-        def _make_df(series):
-            df = pd.DataFrame(series['values'], columns=series['columns'])
-            df = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)
-            df.index = df.index.tz_localize('UTC')
-            df.index.name = None
-            if 'name' in series:
-                df.name = series['name']
-            return df
-
-        return [(series['name'], _make_df(series))
-                for statement in resp['results']
-                for series in statement['series']]
 
     @staticmethod
     def _check_error(response):
