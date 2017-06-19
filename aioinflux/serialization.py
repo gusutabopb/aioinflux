@@ -1,6 +1,8 @@
 from typing import Iterable, Mapping
 
 import pandas as pd
+import numpy as np
+
 
 # Special characters documentation:
 # https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/#special-characters
@@ -95,8 +97,7 @@ def make_df(resp):
             for series in statement['series']]
 
 
-def parse_df(df, measurement, tag_columns=None):
-
+def parse_df(df, measurement, tag_columns=None, **extra_tags):
     # Calling t._asdict is more straightforward
     # but about 40% slower than using indexes
     def parser(df):
@@ -108,14 +109,21 @@ def parse_df(df, measurement, tag_columns=None):
                     tags[k] = t[i + 1]
                 else:
                     fields[k] = t[i + 1]
+            tags.update(extra_tags)
             yield dict(measurement=measurement,
                        time=t[0],
                        tags=tags,
                        fields=fields)
 
-    # TODO: check datatime index
-    # TODO: check/stringify object dtypes, issue warnings
-
-    tag_indexes = [list(df.columns).index(tag) + 1 for tag in tag_columns]
+    df = df.copy()
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise ValueError('DataFrame index is not DatetimeIndex')
+    for col_name, dtype in df.dtypes.iteritems():
+        if dtype == np.dtype('O'):
+            df[col_name] = df[col_name].astype(str)
+    if tag_columns:
+        tag_indexes = [list(df.columns).index(tag) + 1 for tag in tag_columns]
+    else:
+        tag_indexes = list()
     lines = [make_line(p) for p in parser(df)]
     return b'\n'.join(lines)
