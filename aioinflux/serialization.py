@@ -75,6 +75,8 @@ def _parse_fields(point):
             output.append('{k}={v}'.format(k=k, v=str(v).upper()))
         elif isinstance(v, str):
             output.append('{k}="{v}"'.format(k=k, v=v.translate(escape_str)))
+        elif np.isnan(v) or v is None:
+            continue
         else:
             output.append('{k}={v}'.format(k=k, v=v))
     return ','.join(output)
