@@ -63,7 +63,7 @@ for result in results:
 Despite its name, `AsyncInfluxDBClient` can also run in sync/blocking mode:
 
 ```python
-client = AsyncInfluxDBClient(database='testdb', sync=True)
+client = AsyncInfluxDBClient(database='testdb', async=False)
 client.ping()
 client.write(point)
 client.query('SELECT value FROM cpu_load_short')
@@ -74,12 +74,16 @@ client.query('SELECT value FROM cpu_load_short')
 Input data can be:
 1) A string properly formatted in InfluxDB's line protocol
 2) A dictionary containing the following keys: `measurement`, `time`, `tags`, `fields`
-3) A Pandas DataFrame with a DatetimeIndex (**not implemented yet**)
+3) A Pandas DataFrame with a DatetimeIndex
 4) An iterable of one of the above
 
 Input data in formats 2-4 are parsed into the 
 [line protocol](https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/) 
-before being written to InfluxDB. All parsing functionality is located at [`line_protocol.py`](aioinflux/line_protocol.py).
+before being written to InfluxDB. 
+All parsing functionality is located at [`serialization.py`](aioinflux/serialization.py).
+Beware that serialization is not highly optimized (PRs are welcome!) and may become a bottleneck depending 
+on your application.
+
 
 The `write` method returns `True` when successful and raises an `InfluxDBError` otherwise.  
 
