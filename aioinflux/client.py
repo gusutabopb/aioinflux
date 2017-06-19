@@ -92,7 +92,8 @@ class AsyncInfluxDBClient:
             return dict(resp.headers.items())
 
     @runner
-    async def write(self, data: Union[PointType, Iterable[PointType]]) -> bool:
+    async def write(self, data: Union[PointType, Iterable[PointType]],
+                    measurement=None, tag_columns=None, **extra_tags) -> bool:
         """Writes data to InfluxDB.
         Input can be:
         1) a string properly formatted in InfluxDB's line protocol
@@ -103,9 +104,10 @@ class AsyncInfluxDBClient:
         See also: https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/
 
         :param data: Input data (see description above).
+        :param **extra_tags: Aditional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
-        data = parse_data(data)
+        data = parse_data(data, measurement, tag_columns, **extra_tags)
         self._logger.debug(data)
         url = self._url.format(endpoint='write') + '?' + urlencode(dict(db=self.db))
         async with self._session.post(url, data=data) as resp:

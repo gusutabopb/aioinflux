@@ -12,27 +12,30 @@ escape_tag = str.maketrans({',': r'\,', ' ': r'\ ', '=': r'\=', '\n': ''})
 escape_str = str.maketrans({'"': r'\"', '\n': ''})
 escape_measurement = str.maketrans({',': r'\,', ' ': r'\ ', '\n': ''})
 
-def parse_data(data):
+
+def parse_data(data, measurement, tag_columns, **extra_tags):
     if isinstance(data, bytes):
         return data
     elif isinstance(data, str):
         return data.encode('utf-8')
+    elif isinstance(data, pd.DataFrame):
+        if measurement is None:
+            raise ValueError("Missing 'measurement'")
+        return parse_df(data, measurement, tag_columns, **extra_tags)
     elif isinstance(data, Mapping):
         return make_line(data)
     elif isinstance(data, Iterable):
-        return b'\n'.join([parse_data(i) for i in data])
-    elif isinstance(data, pd.DataFrame):
-        return parse_df(data)
+        return b'\n'.join([parse_data(i, measurement, tag_columns, **extra_tags) for i in data])
     else:
         raise ValueError('Invalid input', data)
 
 
-def make_line(point):
+def make_line(point, **extra_tags):
     p = dict(measurement=_parse_measurement(point),
-             tags=_parse_tags(point),
+             tags=_parse_tags(point, extra_tags),
              fields=_parse_fields(point),
              timestamp=_parse_timestamp(point))
-    if point['tags']:
+    if p['tags']:
         line = '{measurement},{tags} {fields} {timestamp}'.format(**p)
     else:
         p.pop('tags')
@@ -44,9 +47,9 @@ def _parse_measurement(point):
     return point['measurement'].translate(escape_measurement)
 
 
-def _parse_tags(point):
+def _parse_tags(point, extra_tags):
     output = []
-    for k, v in sorted(point['tags'].items()):
+    for k, v in sorted({**point['tags'], **extra_tags}.items()):
         k = k.translate(escape_key)
         v = v.translate(escape_tag)
         if not v:
@@ -63,7 +66,6 @@ def _parse_timestamp(point):
         return str()
     else:
         return int(pd.Timestamp(point['time']).asm8)
-
 
 def _parse_fields(point):
     output = []
