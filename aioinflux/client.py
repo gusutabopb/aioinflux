@@ -10,8 +10,7 @@ from urllib.parse import urlencode
 import aiohttp
 import pandas as pd
 
-from .line_protocol import parse_data
-from .dataframe import make_df, parse_df
+from .serialization import parse_data, make_df
 
 PointType = Union[AnyStr, Mapping, pd.DataFrame]
 
