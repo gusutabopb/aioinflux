@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 from collections import namedtuple
+import re
 from functools import partialmethod
 from functools import wraps
 from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
@@ -141,7 +142,12 @@ class AsyncInfluxDBClient:
                 async for chunk in resp.content:
                     for statement in json.loads(chunk)['results']:
                         for series in statement['series']:
-                            Point = namedtuple('Point', series['columns'])
+                            # Non-alphanumeric field names are not supported for namedtuples
+                            # If that is a problem, a regular tuple can be yielded instead:
+                            # e.g., tuple(zip(series['columns'], point))
+                            field_names = [re.sub('[^0-9a-zA-Z]+', '_', col)
+                                           for col in series['columns']]
+                            Point = namedtuple('Point', field_names)
                             for point in series['values']:
                                 yield Point(*point)
 
