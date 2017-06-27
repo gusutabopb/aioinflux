@@ -1,4 +1,4 @@
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, Union, Tuple
 
 import pandas as pd
 import numpy as np
@@ -83,21 +83,25 @@ def _parse_fields(point):
     return ','.join(output)
 
 
-def make_df(resp):
+def make_df(resp) -> Union[pd.DataFrame, Iterable[Tuple[str, pd.DataFrame]]]:
     """Makes list of DataFrames from a response object"""
 
-    def maker(series):
+    def maker(series) -> pd.DataFrame:
         df = pd.DataFrame(series['values'], columns=series['columns'])
-        df = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)
+        df = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)  # type: pd.DataFrame
         df.index = df.index.tz_localize('UTC')
         df.index.name = None
         if 'name' in series:
             df.name = series['name']
         return df
 
-    return [(series['name'], maker(series))
-            for statement in resp['results']
-            for series in statement['series']]
+    df_list = [(series['name'], maker(series))
+               for statement in resp['results']
+               for series in statement['series']]
+    if len(df_list) == 1:
+        return df_list[0][1]
+    else:
+        return df_list
 
 
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
