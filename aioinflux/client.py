@@ -103,7 +103,7 @@ class AsyncInfluxDBClient:
         """Writes data to InfluxDB.
         Input can be:
         1) a string properly formatted in InfluxDB's line protocol
-        2) a dictionary containing four items ('measurement', 'time', 'tags', 'fields')
+        2) a dictionary-like object containing four keys: 'measurement', 'time', 'tags', 'fields'
         3) a Pandas DataFrame with a DatetimeIndex
         4) an iterable of one of above
         Input data in formats 2-4 are parsed to the line protocol before being written to InfluxDB.
@@ -111,7 +111,9 @@ class AsyncInfluxDBClient:
 
         :param data: Input data (see description above).
         :param tag_columns: Columns that should be treated as tags (used when writing DataFrames only)
-        :param measurement: Measurement name (used when writing DataFrames only)
+        :param measurement: Measurement name. Mandatory when when writing DataFrames only.
+            When writing dictionary-like data, this field is treated as the default value
+            for points that do not contain a `measurement` field.
         :param extra_tags: Aditional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """

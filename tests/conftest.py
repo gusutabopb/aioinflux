@@ -7,7 +7,9 @@ from aioinflux import AsyncInfluxDBClient
 @pytest.fixture(scope='module')
 def sync_client():
     with AsyncInfluxDBClient(database='mytestdb', async=False, log_level=5) as client:
+        client.create_database(db='mytestdb')
         yield client
+        client.drop_database(db='mytestdb')
 
 
 @pytest.fixture(scope='module')

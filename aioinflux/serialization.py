@@ -23,16 +23,16 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
             raise ValueError("Missing 'measurement'")
         return parse_df(data, measurement, tag_columns, **extra_tags)
     elif isinstance(data, Mapping):
-        return make_line(data)
+        return make_line(data, measurement)
     elif isinstance(data, Iterable):
         return b'\n'.join([parse_data(i, measurement, tag_columns, **extra_tags) for i in data])
     else:
         raise ValueError('Invalid input', data)
 
 
-def make_line(point, **extra_tags):
+def make_line(point: Mapping, measurement=None, **extra_tags):
     """Converts dictionary-like data into a single line protocol line (point)"""
-    p = dict(measurement=_parse_measurement(point),
+    p = dict(measurement=_parse_measurement(point, measurement),
              tags=_parse_tags(point, extra_tags),
              fields=_parse_fields(point),
              timestamp=_parse_timestamp(point))
@@ -43,18 +43,26 @@ def make_line(point, **extra_tags):
     return line.encode('utf-8')
 
 
-def _parse_measurement(point):
-    return point['measurement'].translate(escape_measurement)
+def _parse_measurement(point, measurement):
+    try:
+        return point['measurement'].translate(escape_measurement)
+    except KeyError:
+        if measurement is None:
+            raise ValueError("'measurement' missing")
+        return measurement.translate(escape_measurement)
 
 
 def _parse_tags(point, extra_tags):
     output = []
-    for k, v in sorted({**point['tags'], **extra_tags}.items()):
-        k = k.translate(escape_key)
-        v = v.translate(escape_tag)
-        if not v:
-            continue  # ignore blank/null string tags
-        output.append('{k}={v}'.format(k=k, v=v))
+    try:
+        for k, v in sorted({**point['tags'], **extra_tags}.items()):
+            k = k.translate(escape_key)
+            v = v.translate(escape_tag)
+            if not v:
+                continue  # ignore blank/null string tags
+            output.append('{k}={v}'.format(k=k, v=v))
+    except KeyError:
+        pass
     if output:
         return ','.join(output)
     else:
