@@ -1,11 +1,11 @@
 import asyncio
 import json
 import logging
-from collections import namedtuple
 import re
+from collections import namedtuple, AsyncGenerator
 from functools import partialmethod
 from functools import wraps
-from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
+from typing import Union, AnyStr, Mapping, Iterable, Optional
 from urllib.parse import urlencode
 
 import aiohttp
