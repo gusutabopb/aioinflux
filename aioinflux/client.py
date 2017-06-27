@@ -105,7 +105,9 @@ class AsyncInfluxDBClient:
         See also: https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/
 
         :param data: Input data (see description above).
-        :param **extra_tags: Aditional tags to be added to all points passed.
+        :param tag_columns: Columns that should be treated as tags (used when writing DataFrames only)
+        :param measurement: Measurement name (used when writing DataFrames only)
+        :param extra_tags: Aditional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
         data = parse_data(data, measurement, tag_columns, **extra_tags)
@@ -130,9 +132,14 @@ class AsyncInfluxDBClient:
         :param epoch: Precision level of response timestamps.
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
         :param chunked: Retrieves the points in streamed batches instead of in a single
-            response and returns an AsyncGenerator which will yield point by point.
-        :param chunk_size: Max number of points for each chunk.
-            InfluxDB chunks responses by series or by every 10,000 points, whichever occurs first.
+            response and returns an AsyncGenerator which will yield point by point as
+            a Point namtedtuple.  Non-alphanumeric field names are not supported.
+            WARNING: If there are more than one series in your query result
+            points may not be yielded in the correct ascending/descending order
+            If client side codes depends on such behavior, make sure queries will only
+            return a single series.
+        :param chunk_size: Max number of points for each chunk. InfluxDB chunks responses
+            by series or by every 10,000 points, whichever occurs first.
         :param kwargs: String interpolation arguments for partialmethods
         :return: Returns an async generator if chunked is True, otherwise returns
             a dictionary containing the parsed JSON response.
