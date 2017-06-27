@@ -3,7 +3,6 @@ from typing import Iterable, Mapping
 import pandas as pd
 import numpy as np
 
-
 # Special characters documentation:
 # https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/#special-characters
 # Although not in the official docs, new line characters are removed in order to avoid issues.
@@ -38,7 +37,6 @@ def make_line(point, **extra_tags):
     if p['tags']:
         line = '{measurement},{tags} {fields} {timestamp}'.format(**p)
     else:
-        p.pop('tags')
         line = '{measurement} {fields} {timestamp}'.format(**p)
     return line.encode('utf-8')
 
@@ -66,6 +64,7 @@ def _parse_timestamp(point):
         return str()
     else:
         return int(pd.Timestamp(point['time']).asm8)
+
 
 def _parse_fields(point):
     output = []

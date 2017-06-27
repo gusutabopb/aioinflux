@@ -15,6 +15,7 @@ from .serialization import parse_data, make_df
 
 PointType = Union[AnyStr, Mapping, pd.DataFrame]
 
+
 def runner(coro):
     """Function execution decorator."""
 
@@ -29,6 +30,7 @@ def runner(coro):
             return resp
 
     return inner
+
 
 class InfluxDBError(Exception):
     pass
@@ -68,11 +70,11 @@ class AsyncInfluxDBClient:
         self._session = aiohttp.ClientSession(loop=self._loop, auth=self._auth)
         self._url = f'http://{host}:{port}/{{endpoint}}'
         self.db = database
-        self.url = f'http://{host}:{port}/{{endpoint}}'
         self.dataframe = dataframe
         self.async = async and not dataframe
         if async and dataframe:
-            self._logger.warning('Setting to `dataframe` to `True` makes client run in sync/blocking mode.')
+            self._logger.warning('Setting to `dataframe` to `True` '
+                                 'makes client run in sync/blocking mode.')
 
     def __enter__(self):
         return self
@@ -144,6 +146,7 @@ class AsyncInfluxDBClient:
         :return: Returns an async generator if chunked is True, otherwise returns
             a dictionary containing the parsed JSON response.
         """
+
         async def _chunked_generator(func, url, data):
             async with func(url, **data) as resp:
                 async for chunk in resp.content:
