@@ -12,7 +12,8 @@ escape_str = str.maketrans({'"': r'\"', '\n': ''})
 escape_measurement = str.maketrans({',': r'\,', ' ': r'\ ', '\n': ''})
 
 
-def parse_data(data, measurement, tag_columns, **extra_tags):
+def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
+    """Converts input data into line protocol format"""
     if isinstance(data, bytes):
         return data
     elif isinstance(data, str):
@@ -30,6 +31,7 @@ def parse_data(data, measurement, tag_columns, **extra_tags):
 
 
 def make_line(point, **extra_tags):
+    """Converts dictionary-like data into a single line protocol line (point)"""
     p = dict(measurement=_parse_measurement(point),
              tags=_parse_tags(point, extra_tags),
              fields=_parse_fields(point),
@@ -105,6 +107,7 @@ def make_df(resp) -> Union[pd.DataFrame, Iterable[Tuple[str, pd.DataFrame]]]:
 
 
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
+    """Converts a Pandas DataFrame into line protocol format"""
     # Calling t._asdict is more straightforward
     # but about 40% slower than using indexes
     def parser(df):

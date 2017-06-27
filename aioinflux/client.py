@@ -224,6 +224,7 @@ class AsyncInfluxDBClient:
 
     @staticmethod
     def _check_error(response):
+        """Checks for JSON error messages and raises Python exception"""
         if 'error' in response:
             raise InfluxDBError(response['error'])
         elif 'results' in response:
