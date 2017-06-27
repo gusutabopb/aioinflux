@@ -88,9 +88,54 @@ on your application.
 The `write` method returns `True` when successful and raises an `InfluxDBError` otherwise.  
 
 
-#### Dictionary data format
+#### Writting dictionary-like objects
 
-TODO
+Aioinflux accepts any dictionary-like object (mapping) as input. However, that dictionary must 
+be properly formated and contain the following keys:
+
+1) **`measurement`**: Optional. Must be a string-like object. If ommited, must be specified when 
+  calling `AsyncInfluxDBClient.write` by passing a `measurement` argument.
+1) **`time`**: Optional. The value can be `datetime.datetime`, date-like string 
+  (e.g., `2017-01-01`, `2009-11-10T23:00:00Z`) or anything else that can be parsed by Pandas 
+  [`Timestamp`](https://pandas.pydata.org/pandas-docs/stable/timeseries.html) class.
+1) **`tags`**: Optional. This must contain another mapping of field names and values.
+  Both tag keys and values should be strings.  
+1) **`fields`**: Mandatory. This must contain another mapping of field names and values.
+  Field keys should be strings. Field values can be `float`, `int`, `str`, or `bool` or any equivalent type. 
+
+Any fields other then the above will be ignored when writing data to InfluxDB.
+
+
+A typical dictionary-like point would look something like the following:
+
+```python
+{'time': '2009-11-10T23:00:00Z',
+'measurement': 'cpu_load_short',
+'tags': {'host': 'server01', 'region': 'us-west'},
+'fields': {'value1': 0.64, 'value2': True, 'value3': 10}}
+```
+
+
+#### Writting DataFrames
+
+Aioinflux also accepts Pandas dataframes as input. The only requirements for the dataframe is
+that the **index must be of type `DatetimeIndex`**. Also, any column whose `dtype` is `object` will be 
+converted to a string representation.
+
+A typical DataFrame input should look something like the following:
+
+```text
+                                       LUY       BEM       AJW tag
+2017-06-24 08:45:17.929097+00:00  2.545409  5.173134  5.532397   B
+2017-06-24 10:15:17.929097+00:00 -0.306673 -1.132941 -2.130625   E
+2017-06-24 11:45:17.929097+00:00  0.894738 -0.561979 -1.487940   B
+2017-06-24 13:15:17.929097+00:00 -1.799512 -1.722805 -2.308823   D
+2017-06-24 14:45:17.929097+00:00  0.390137 -0.016709 -0.667895   E
+```
+
+The measurement name must be specified with the `measurement` argument when calling `AsyncInfluxDBClient.write`.
+Additional tags can also be passed using arbitrary keyword arguments. See `AsyncInfluxDBClient.write` docstring 
+for details.
 
 
 ### Querying data
