@@ -48,5 +48,17 @@ def test_write_without_tags(sync_client):
     assert len(resp['results'][0]['series'][0]['values']) == 7
 
 
+def test_write_without_timestamp(sync_client):
+    points = [p for p in utils.random_points(9)]
+    for p in points:
+        _ = p.pop('time')
+        _ = p.pop('measurement')
+    print(points)
+    assert sync_client.write(points, measurement='yet_another_measurement')
+    resp = sync_client.select_all(measurement='yet_another_measurement')
+    # Points with the same tag/timestamp set are overwritten
+    assert len(resp['results'][0]['series'][0]['values']) == 1
+
+
 def test_drop_database(sync_client):
     sync_client.drop_database(db='mytestdb')
