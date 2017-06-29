@@ -60,5 +60,15 @@ def test_write_without_timestamp(sync_client):
     assert len(resp['results'][0]['series'][0]['values']) == 1
 
 
+def test_write_non_string_identifier_and_tags(sync_client):
+    point = dict(tags={1: 2},
+                 fields={3: 4})
+    with pytest.warns(UserWarning):
+        assert sync_client.write(point, measurement='my_measurement')
+    resp = sync_client.select_all(measurement='my_measurement')
+    print(resp)
+    assert len(resp['results'][0]['series'][0]['values']) == 1
+
+
 def test_drop_database(sync_client):
     sync_client.drop_database(db='mytestdb')

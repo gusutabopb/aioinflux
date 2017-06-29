@@ -1,3 +1,4 @@
+import warnings
 from typing import Iterable, Mapping, Union, Tuple
 
 import pandas as pd
@@ -6,10 +7,20 @@ import numpy as np
 # Special characters documentation:
 # https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/#special-characters
 # Although not in the official docs, new line characters are removed in order to avoid issues.
-escape_key = str.maketrans({',': r'\,', ' ': r'\ ', '=': r'\=', '\n': ''})
-escape_tag = str.maketrans({',': r'\,', ' ': r'\ ', '=': r'\=', '\n': ''})
-escape_str = str.maketrans({'"': r'\"', '\n': ''})
-escape_measurement = str.maketrans({',': r'\,', ' ': r'\ ', '\n': ''})
+key_escape = str.maketrans({',': r'\,', ' ': r'\ ', '=': r'\=', '\n': ''})
+tag_escape = str.maketrans({',': r'\,', ' ': r'\ ', '=': r'\=', '\n': ''})
+str_escape = str.maketrans({'"': r'\"', '\n': ''})
+measurement_escape = str.maketrans({',': r'\,', ' ': r'\ ', '\n': ''})
+
+
+def escape(string, escape_pattern):
+    """Assitant function for string escaping"""
+    try:
+        return string.translate(escape_pattern)
+    except AttributeError:
+        warnings.warn("Non-string-like data passed. "
+                      "Attemping to convert to 'str'.")
+        return str(string).translate(tag_escape)
 
 
 def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
@@ -45,19 +56,19 @@ def make_line(point: Mapping, measurement=None, **extra_tags):
 
 def _parse_measurement(point, measurement):
     try:
-        return point['measurement'].translate(escape_measurement)
+        return escape(point['measurement'], measurement_escape)
     except KeyError:
         if measurement is None:
             raise ValueError("'measurement' missing")
-        return measurement.translate(escape_measurement)
+        return escape(measurement, measurement_escape)
 
 
 def _parse_tags(point, extra_tags):
     output = []
     try:
         for k, v in sorted({**point['tags'], **extra_tags}.items()):
-            k = k.translate(escape_key)
-            v = v.translate(escape_tag)
+            k = escape(k, key_escape)
+            v = escape(v, tag_escape)
             if not v:
                 continue  # ignore blank/null string tags
             output.append('{k}={v}'.format(k=k, v=v))
@@ -79,13 +90,13 @@ def _parse_timestamp(point):
 def _parse_fields(point):
     output = []
     for k, v in point['fields'].items():
-        k = k.translate(escape_key)
+        k = escape(k, key_escape)
         if isinstance(v, int):
             output.append('{k}={v}i'.format(k=k, v=v))
         elif isinstance(v, bool):
             output.append('{k}={v}'.format(k=k, v=str(v).upper()))
         elif isinstance(v, str):
-            output.append('{k}="{v}"'.format(k=k, v=v.translate(escape_str)))
+            output.append('{k}="{v}"'.format(k=k, v=v.translate(str_escape)))
         elif np.isnan(v) or v is None:
             continue
         else:
