@@ -91,15 +91,18 @@ def _parse_fields(point):
     output = []
     for k, v in point['fields'].items():
         k = escape(k, key_escape)
-        if isinstance(v, int):
+        # noinspection PyUnresolvedReferences
+        if isinstance(v, (int, np.integer)):
             output.append('{k}={v}i'.format(k=k, v=v))
         elif isinstance(v, bool):
             output.append('{k}={v}'.format(k=k, v=str(v).upper()))
         elif isinstance(v, str):
             output.append('{k}="{v}"'.format(k=k, v=v.translate(str_escape)))
-        elif np.isnan(v) or v is None:
+        elif v is None or np.isnan(v):
             continue
         else:
+            # Floats and other numerical formats go here.
+            # TODO: Add unit test
             output.append('{k}={v}'.format(k=k, v=v))
     return ','.join(output)
 
