@@ -75,6 +75,8 @@ class AsyncInfluxDBClient:
         self._session = aiohttp.ClientSession(loop=self._loop, auth=self._auth)
         self._url = f'http://{host}:{port}/{{endpoint}}'
         self.db = database
+        self.host = host
+        self.port = port
         self.mode = mode
         if mode not in {'async', 'blocking', 'dataframe'}:
             raise ValueError('Invalid mode')
@@ -87,6 +89,10 @@ class AsyncInfluxDBClient:
 
     def __del__(self):
         self._session.close()
+
+    def __repr__(self):
+        items = {f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')}
+        return f'{type(self).__name__}({", ".join(items)})'
 
     @runner
     async def ping(self) -> dict:
