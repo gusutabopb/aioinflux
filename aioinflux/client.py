@@ -42,7 +42,8 @@ class InfluxDBError(Exception):
 class AsyncInfluxDBClient:
     def __init__(self, host: str = 'localhost', port: int = 8086,
                  username: Optional[str] = None, password: Optional[str] = None,
-                 database: str = 'testdb', loop: asyncio.BaseEventLoop = None,
+                 db: str = 'testdb', database: Optional[str] = None,
+                 loop: asyncio.BaseEventLoop = None,
                  log_level: int = 30, mode: str = 'async'):
         """
         The AsyncInfluxDBClient object holds information necessary to interect with InfluxDB.
@@ -59,7 +60,9 @@ class AsyncInfluxDBClient:
         :param port: Port to connect to InfluxDB.
         :param username: Username to use to connect to InfluxDB.
         :param password: User password.
+        :param db: Default database to be used by the client.
         :param database: Default database to be used by the client.
+            This field is for argument consistency with the official InfluxDB Python client.
         :param loop: Event loop used for processing HTTP requests.
         :param log_level: Logging level. The lower the more verbose. Defaults to INFO (30).
         :param mode: Mode in which client should run.
@@ -74,9 +77,9 @@ class AsyncInfluxDBClient:
         self._auth = aiohttp.BasicAuth(username, password) if username and password else None
         self._session = aiohttp.ClientSession(loop=self._loop, auth=self._auth)
         self._url = f'http://{host}:{port}/{{endpoint}}'
-        self.db = database
         self.host = host
         self.port = port
+        self.db = database or db
         self.mode = mode
         if mode not in {'async', 'blocking', 'dataframe'}:
             raise ValueError('Invalid mode')
