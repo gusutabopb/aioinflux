@@ -21,10 +21,10 @@ def runner(coro):
 
     @wraps(coro)
     def inner(self, *args, **kwargs):
-        if self.async:
+        if self.mode == 'async':
             return coro(self, *args, **kwargs)
         resp = self._loop.run_until_complete(coro(self, *args, **kwargs))
-        if self.dataframe and coro.__name__ == 'query':
+        if self.mode == 'dataframe' and coro.__name__ == 'query':
             try:
                 return make_df(resp)
             except KeyError:
@@ -43,7 +43,7 @@ class AsyncInfluxDBClient:
     def __init__(self, host: str = 'localhost', port: int = 8086,
                  username: Optional[str] = None, password: Optional[str] = None,
                  database: str = 'testdb', loop: asyncio.BaseEventLoop = None,
-                 log_level: int = 30, dataframe: bool = False, async: bool = True):
+                 log_level: int = 30, mode: str = 'async'):
         """
         The AsyncInfluxDBClient object holds information necessary to interect with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client and even generate
@@ -62,10 +62,12 @@ class AsyncInfluxDBClient:
         :param database: Default database to be used by the client.
         :param loop: Event loop used for processing HTTP requests.
         :param log_level: Logging level. The lower the more verbose. Defaults to INFO (30).
-        :param dataframe: Setting to `True` make query results be parsed into a Pandas DataFrame.
-                          When set to `False` (default), query results will be returned as dictionaries.
-        :param async: Setting to `False` will make the client behave in a sychronous/blocking way.
-                      Setting `self.dataframe` to True automatically sets `async` to False.
+        :param mode: Mode in which client should run.
+            Available options are: 'async', 'blocking' and 'dataframe'.
+            - 'async': Default mode. Each query/request to the backend will
+            - 'blocking': Behaves in sync/blocking fashion, similar to the official InfluxDB-Python client.
+            - 'dataframe': Behaves in a sync/blocking fashion, but parsing results into Pandas DataFrames.
+                           Similar to InfluxDB-Python's `DataFrameClient`.
         """
         self._logger = self._make_logger(log_level)
         self._loop = asyncio.get_event_loop() if loop is None else loop
@@ -73,11 +75,9 @@ class AsyncInfluxDBClient:
         self._session = aiohttp.ClientSession(loop=self._loop, auth=self._auth)
         self._url = f'http://{host}:{port}/{{endpoint}}'
         self.db = database
-        self.dataframe = dataframe
-        self.async = async and not dataframe
-        if async and dataframe:
-            self._logger.warning('Setting to `dataframe` to `True` '
-                                 'makes client run in sync/blocking mode.')
+        self.mode = mode
+        if mode not in {'async', 'blocking', 'dataframe'}:
+            raise ValueError('Invalid mode')
 
     def __enter__(self):
         return self
