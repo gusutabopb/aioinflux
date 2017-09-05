@@ -108,7 +108,8 @@ class AsyncInfluxDBClient:
 
     @runner
     async def write(self, data: Union[PointType, Iterable[PointType]],
-                    measurement=None, tag_columns=None, **extra_tags) -> bool:
+                    measurement: Optional[str] = None,
+                    tag_columns: Optional[Iterable] = None, **extra_tags) -> bool:
         """Writes data to InfluxDB.
         Input can be:
         1) a string properly formatted in InfluxDB's line protocol
