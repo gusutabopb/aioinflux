@@ -166,6 +166,8 @@ class AsyncInfluxDBClient:
             async with func(url, **data) as resp:
                 async for chunk in resp.content:
                     for statement in json.loads(chunk)['results']:
+                        if 'series' not in statement:
+                            continue
                         for series in statement['series']:
                             # Non-alphanumeric field names are not supported for namedtuples
                             # If that is a problem, a regular tuple can be yielded instead:
