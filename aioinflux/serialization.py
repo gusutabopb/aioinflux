@@ -34,7 +34,7 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
             raise ValueError("Missing 'measurement'")
         return parse_df(data, measurement, tag_columns, **extra_tags)
     elif isinstance(data, Mapping):
-        return make_line(data, measurement)
+        return make_line(data, measurement, **extra_tags)
     elif isinstance(data, Iterable):
         return b'\n'.join([parse_data(i, measurement, tag_columns, **extra_tags) for i in data])
     else:
