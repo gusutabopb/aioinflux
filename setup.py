@@ -20,6 +20,9 @@ setup(name='aioinflux',
                         'pandas>=0.20',
                         ],
       classifiers=[
-          'Development Status :: 3 - Alpha',
-          'Programming Language :: Python :: 3',
+          'Development Status :: 4 - Beta',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: MIT License',
+          'Programming Language :: Python :: 3.6',
+          'Topic :: Database',
       ])
