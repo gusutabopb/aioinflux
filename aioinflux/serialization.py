@@ -14,12 +14,12 @@ measurement_escape = str.maketrans({',': r'\,', ' ': r'\ ', '\n': ''})
 
 
 def escape(string, escape_pattern):
-    """Assitant function for string escaping"""
+    """Assistant function for string escaping"""
     try:
         return string.translate(escape_pattern)
     except AttributeError:
         warnings.warn("Non-string-like data passed. "
-                      "Attemping to convert to 'str'.")
+                      "Attempting to convert to 'str'.")
         return str(string).translate(tag_escape)
 
 
