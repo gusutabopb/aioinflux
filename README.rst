@@ -10,14 +10,17 @@ about InfluxDB at http://influxdata.com/
 Installation
 ------------
 
-Aioinflux is not yet listed on PyPI. Install directly from sources:
+To install the latest release:
 
-.. code:: text
+.. code:: bash
 
-    # Latest stable version
-    $ pip install git+https://github.com/plugaai/aioinflux
+    $ pip install aioinflux
 
-    # Latest development commit
+The library is still in beta, so you may also want to install the latest version from
+the development branch:
+
+.. code:: bash
+
     $ pip install git+https://github.com/plugaai/aioinflux@dev
 
 Dependencies
@@ -71,7 +74,7 @@ Client modes
 ~~~~~~~~~~~~
 
 Despite its name, ``AsyncInfluxDBClient`` can also run in sync/blocking
-modes. Avialable modes are: ``async`` (default), ``blocking`` and
+modes. Available modes are: ``async`` (default), ``blocking`` and
 ``dataframe``.
 
 Example using ``blocking`` mode:
@@ -105,17 +108,17 @@ The ``write`` method returns ``True`` when successful and raises an
 
 .. _`line protocol`: https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/
 .. |serialization.py| replace:: ``serialization.py``
-.. _serialization.py: aioinflux/serialization.py
+.. _serialization.py: https://github.com/plugaai/aioinflux/blob/master/aioinflux/serialization.py
 
 Writing dictionary-like objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Aioinflux accepts any dictionary-like object (mapping) as input.
-However, that dictionary must be properly formated and contain the
+However, that dictionary must be properly formatted and contain the
 following keys:
 
 1) **measurement**: Optional. Must be a string-like object. If
-   ommited, must be specified when calling ``AsyncInfluxDBClient.write``
+   omitted, must be specified when calling ``AsyncInfluxDBClient.write``
    by passing a ``measurement`` argument.
 2) **time**: Optional. The value can be ``datetime.datetime``,
    date-like string (e.g., ``2017-01-01``, ``2009-11-10T23:00:00Z``) or
@@ -263,10 +266,13 @@ Examples:
 For more complex queries, pass a raw query to
 ``AsyncInfluxDBClient.query``.
 
-Please refer to the `source <aioinflux/client.py#L199>`__ for argument
-information and to InfluxDB
-`documentation <https://docs.influxdata.com/influxdb/v1.3/query_language/spec/#queries>`__
-for further query-related information.
+Please refer to the source_ for argument information and to
+InfluxDB documentation_ for further query-related information.
+
+.. _source: https://github.com/plugaai/aioinflux/blob/master/aioinflux/client.py#L211
+.. _documentation: https://docs.influxdata.com/influxdb/v1.3/query_language/spec/#queries
+
+.. _source: https://github.com/plugaai/aioinflux/blob/master/aioinflux/client.py#L211
 
 Other functionality
 ~~~~~~~~~~~~~~~~~~~
@@ -287,7 +293,7 @@ can be switched by changing the ``db`` attribute:
     client = AsyncInfluxDBClient(db='db1')  # instantiate client
     client.db = 'db2'  # switch database
 
-Beaware that differently from some NoSQL databases (such as MongoDB),
+Beware that differently from some NoSQL databases (such as MongoDB),
 InfluxDB requires that a databases is explicitly created (by using the
 |CREATE DATABASE|_ query) before doing any operations on it.
 
