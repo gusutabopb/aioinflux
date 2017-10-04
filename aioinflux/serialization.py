@@ -147,14 +147,14 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
                        tags=tags,
                        fields=fields)
 
+    # Make a copy because modifications are made to the dataframe before insertion
     df = df.copy()
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError('DataFrame index is not DatetimeIndex')
-    for col_name, dtype in df.dtypes.iteritems():
-        if dtype == np.dtype('O'):
-            df[col_name] = df[col_name].astype(str)
+    for key, value in extra_tags.items():
+        df[key] = value
     if tag_columns:
-        tag_indexes = [list(df.columns).index(tag) + 1 for tag in tag_columns]
+        tag_indexes = [list(df.columns).index(tag) + 1 for tag in tag_columns + list(extra_tags)]
     else:
         tag_indexes = list()
     lines = [make_line(p) for p in parser(df)]
