@@ -5,7 +5,7 @@ from setuptools import setup
 if sys.version_info.major != 3 or sys.version_info.minor < 6:
     sys.exit('aioinflux supports Python>=3.6 only')
 
-with open('README.md', 'r') as f:
+with open('README.rst', 'r') as f:
     long_description = f.read()
 
 setup(name='aioinflux',
