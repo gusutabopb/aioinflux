@@ -1,1 +1,1 @@
-from .client import AsyncInfluxDBClient
+from .client import AsyncInfluxDBClient, InfluxDBError
