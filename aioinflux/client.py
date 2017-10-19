@@ -46,7 +46,7 @@ class AsyncInfluxDBClient:
                  loop: asyncio.BaseEventLoop = None,
                  log_level: int = 30, mode: str = 'async'):
         """
-        The AsyncInfluxDBClient object holds information necessary to interect with InfluxDB.
+        The AsyncInfluxDBClient object holds information necessary to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client and even generate
         Pandas DataFrames from queries.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
@@ -124,7 +124,7 @@ class AsyncInfluxDBClient:
         :param measurement: Measurement name. Mandatory when when writing DataFrames only.
             When writing dictionary-like data, this field is treated as the default value
             for points that do not contain a `measurement` field.
-        :param extra_tags: Aditional tags to be added to all points passed.
+        :param extra_tags: Additional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
         data = parse_data(data, measurement, tag_columns, **extra_tags)
@@ -150,14 +150,14 @@ class AsyncInfluxDBClient:
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
         :param chunked: Retrieves the points in streamed batches instead of in a single
             response and returns an AsyncGenerator which will yield point by point as
-            a Point namtedtuple.  Non-alphanumeric field names are not supported.
+            a Point namedtuple.  Non-alphanumeric field names are not supported.
             WARNING: If there are more than one series in your query result
             points may not be yielded in the correct ascending/descending order
             If client side codes depends on such behavior, make sure queries will only
             return a single series.
         :param chunk_size: Max number of points for each chunk. InfluxDB chunks responses
             by series or by every 10,000 points, whichever occurs first.
-        :param kwargs: String interpolation arguments for partialmethods
+        :param kwargs: String interpolation arguments for partial methods
         :return: Returns an async generator if chunked is True, otherwise returns
             a dictionary containing the parsed JSON response.
         """
@@ -210,7 +210,7 @@ class AsyncInfluxDBClient:
 
     # Below are methods that wrap ``AsyncInfluxDBClient.query`` in order to provide
     # convenient access to commonly used query patterns. Named arguments corresponding
-    # to the named placed holders in the pre-formatted query string of each of partialmethods
+    # to the named placed holders in the pre-formatted query string of each of partial methods
     # must be passed (e.g.: `db`, `measurement`, etc).
     # For more complex queries, pass a raw query to ``AsyncInfluxDBClient.query``.
     # Please refer to the InfluxDB documentation for all the possible queries:
