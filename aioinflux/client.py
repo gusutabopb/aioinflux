@@ -165,7 +165,10 @@ class AsyncInfluxDBClient:
         async def _chunked_generator(func, url, data):
             async with func(url, **data) as resp:
                 async for chunk in resp.content:
-                    for statement in json.loads(chunk)['results']:
+                    chunk = json.loads(chunk)
+                    if 'error' in chunk:
+                        raise InfluxDBError(chunk)
+                    for statement in chunk['results']:
                         if 'series' not in statement:
                             continue
                         for series in statement['series']:
