@@ -9,7 +9,7 @@ with open('README.rst', 'r') as f:
     long_description = f.read()
 
 setup(name='aioinflux',
-      version='0.1.0',
+      version='0.1.1-dev1',
       description='Asynchronous Python client for InfluxDB',
       long_description=long_description,
       author='Pluga AI',
