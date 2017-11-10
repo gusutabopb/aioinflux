@@ -17,6 +17,16 @@ def test_simple_write(sync_client):
     assert sync_client.write(utils.random_points(10))
 
 
+def test_string_write(sync_client):
+    point = 'cpu_load_short,host=server02,region=us-west value=0.55 1422568543702900257'
+    assert sync_client.write(point)
+
+
+def test_tagless_write(sync_client):
+    point = b'cpu_load_short value=0.55 1423568543000000000'
+    assert sync_client.write(point)
+
+
 def test_simple_query(sync_client):
     resp = sync_client.select_all(measurement='test_measurement')
     assert len(resp['results'][0]['series'][0]['values']) == 10
