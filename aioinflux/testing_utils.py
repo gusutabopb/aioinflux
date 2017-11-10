@@ -36,3 +36,7 @@ def random_dataframe():
     df['tag'] = tags
     df.index = ix
     return df
+
+
+def random_string():
+    return ''.join(random.choices(string.ascii_lowercase, k=random.randint(4, 10)))
