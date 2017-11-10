@@ -136,11 +136,14 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
         for t in df.itertuples():
             tags = dict()
             fields = dict()
-            for i, k in enumerate(t._fields[1:]):
-                if i + 1 in tag_indexes:
-                    tags[k] = t[i + 1]
+            # noinspection PyProtectedMember
+            for i, k in enumerate(t._fields):
+                if i in tag_indexes:
+                    tags[k] = t[i]
+                elif i == 0:
+                    continue
                 else:
-                    fields[k] = t[i + 1]
+                    fields[k] = t[i]
             tags.update(extra_tags)
             yield dict(measurement=measurement,
                        time=t[0],
@@ -154,7 +157,7 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
     for key, value in extra_tags.items():
         df[key] = value
     if tag_columns:
-        tag_indexes = [list(df.columns).index(tag) + 1 for tag in tag_columns + list(extra_tags)]
+        tag_indexes = [df.columns.get_loc(tag) + 1 for tag in tag_columns + list(extra_tags)]
     else:
         tag_indexes = list()
     lines = [make_line(p) for p in parser(df)]

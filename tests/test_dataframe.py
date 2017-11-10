@@ -3,7 +3,7 @@ import aioinflux.testing_utils as utils
 
 def test_write_dataframe(df_client):
     assert df_client.write(utils.random_dataframe(),
-                           measurement='test_measurement', mytag='foo')
+                           measurement='test_measurement', mytag='foo', tag_columns=['tag'])
 
 
 def test_read_dataframe(df_client):
