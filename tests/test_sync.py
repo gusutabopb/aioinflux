@@ -1,6 +1,6 @@
 import pytest
 
-import aioinflux.test_utils as utils
+import aioinflux.testing_utils as utils
 
 
 def test_ping(sync_client):
