@@ -1,5 +1,6 @@
-import pytest
 import asyncio
+
+import pytest
 
 from aioinflux import AsyncInfluxDBClient
 
@@ -15,6 +16,7 @@ def sync_client():
 @pytest.fixture(scope='module')
 def async_client():
     with AsyncInfluxDBClient(db='mytestdb', mode='async', log_level=5) as client:
+        print(client)  # test __repr__
         yield client
 
 
