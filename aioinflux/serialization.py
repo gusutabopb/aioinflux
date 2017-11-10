@@ -92,10 +92,10 @@ def _parse_fields(point):
     for k, v in point['fields'].items():
         k = escape(k, key_escape)
         # noinspection PyUnresolvedReferences
-        if isinstance(v, (int, np.integer)):
-            output.append('{k}={v}i'.format(k=k, v=v))
-        elif isinstance(v, bool):
+        if isinstance(v, bool):
             output.append('{k}={v}'.format(k=k, v=str(v).upper()))
+        elif isinstance(v, (int, np.integer)):
+            output.append('{k}={v}i'.format(k=k, v=v))
         elif isinstance(v, str):
             output.append('{k}="{v}"'.format(k=k, v=v.translate(str_escape)))
         elif v is None or np.isnan(v):

@@ -1,6 +1,7 @@
 import pytest
 
 import aioinflux.testing_utils as utils
+import numpy as np
 
 
 def test_ping(sync_client):
@@ -25,6 +26,20 @@ def test_string_write(sync_client):
 def test_tagless_write(sync_client):
     point = b'cpu_load_short value=0.55 1423568543000000000'
     assert sync_client.write(point)
+
+
+def test_special_values_write(sync_client):
+    point = utils.random_point()
+    point['tags']['boolean_tag'] = True
+    point['tags']['none_tag'] = None
+    point['tags']['nan_tag'] = np.nan
+    point['tags']['blank_tag'] = ''
+    point['fields']['boolean_field'] = False
+    point['fields']['none_field'] = None
+    point['fields']['nan_field'] = np.nan
+    point['measurement'] = 'special_values'
+    with pytest.warns(UserWarning):
+        assert sync_client.write(point)
 
 
 def test_simple_query(sync_client):
