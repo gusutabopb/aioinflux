@@ -3,7 +3,6 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.6.2
-      - image: influxdb:latest
     steps:
       - checkout
       - run:
@@ -11,10 +10,7 @@ jobs:
           command: cat setup.py Makefile
       - run:
           name: Install
-          command: sudo pip install -e .[test]
-      - run:
-          name: Run tests
-          command: make test
+          command: sudo pip install -e .
 
   test:
     docker:
@@ -23,7 +19,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Test
+          name: See files
+          command: cat setup.py Makefile
+      - run:
+          name: Install test extras
+          command: sudo pip install -e .[test]
+      - run:
+          name: Run test
           command: make test
 
 workflows:
@@ -34,6 +36,3 @@ workflows:
       - test:
           requires:
             - build
-          filters:
-            branches:
-              only: dev
