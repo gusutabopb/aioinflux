@@ -1,5 +1,14 @@
 aioinflux
 =========
+.. image:: https://img.shields.io/circleci/project/github/plugaai/aioinflux.svg
+    :target: https://circleci.com/gh/plugaai/aioinflux
+.. image:: https://img.shields.io/codecov/c/github/plugaai/aioinflux.svg
+    :target: https://codecov.io/gh/plugaai/aioinflux
+.. image:: https://img.shields.io/pypi/v/aioinflux.svg
+    :target: https://pypi.python.org/pypi/aioinflux
+.. image:: https://img.shields.io/pypi/pyversions/aioinflux.svg
+    :target: https://pypi.python.org/pypi/aioinflux
+
 
 Asynchronous Python client for InfluxDB. Built on top of
 |aiohttp|_ and |asyncio|_.
