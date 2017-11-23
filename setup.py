@@ -2,9 +2,6 @@
 import sys
 from setuptools import setup
 
-if sys.version_info.major != 3 or sys.version_info.minor < 6:
-    sys.exit('aioinflux supports Python>=3.6 only')
-
 with open('README.rst', 'r') as f:
     long_description = f.read()
 
@@ -16,11 +13,12 @@ setup(name='aioinflux',
       author_email='gusutabopb@gmail.com',
       url='https://github.com/plugaai/aioinflux',
       packages=['aioinflux'],
+      python_requires='>=3.6',
       install_requires=['aiohttp>=2.3.0',
                         'pandas>=0.21',
                         'numpy',
                         ],
-      test_requires=['pytest', 'pytest-asyncio', 'pytest-cov'],
+      extras_require={'test': ['pytest', 'pytest-asyncio', 'pytest-cov']},
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
