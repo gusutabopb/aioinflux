@@ -5,7 +5,8 @@ import aioinflux.testing_utils as utils
 
 @pytest.mark.asyncio
 async def test_ping(async_client):
-    assert len(await async_client.ping()) == 4
+    r = await async_client.ping()
+    assert 'X-Influxdb-Version' in r
 
 
 @pytest.mark.asyncio

@@ -5,7 +5,8 @@ import numpy as np
 
 
 def test_ping(sync_client):
-    assert len(sync_client.ping()) == 4
+    r = sync_client.ping()
+    assert 'X-Influxdb-Version' in r
 
 
 def test_create_database(sync_client):
