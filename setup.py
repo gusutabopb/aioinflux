@@ -20,7 +20,7 @@ setup(name='aioinflux',
                         'pandas>=0.21',
                         'numpy',
                         ],
-      test_requires=['pytest', 'pytest-asyncio', 'pytest-cov'],
+      extras_require={'test': ['pytest', 'pytest-asyncio', 'pytest-cov']},
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
