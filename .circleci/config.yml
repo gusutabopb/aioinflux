@@ -6,12 +6,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: See files
-          command: cat setup.py Makefile
-      - run:
           name: Install
           command: sudo pip install -e .
-
   test:
     docker:
       - image: circleci/python:3.6.2
@@ -19,14 +15,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: See files
-          command: cat setup.py Makefile
-      - run:
           name: Install test extras
           command: sudo pip install -e .[test]
       - run:
           name: Run test
           command: make test
+      - run:
+          name: ls
+          command: ls -la
+      - run:
+          name: Upload coverage report to Codecov
+          command: bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
