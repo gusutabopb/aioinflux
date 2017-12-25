@@ -115,6 +115,9 @@ def make_df(resp) -> Union[pd.DataFrame, Iterable[Tuple[str, pd.DataFrame]]]:
         df = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)  # type: pd.DataFrame
         df.index = df.index.tz_localize('UTC')
         df.index.name = None
+        if 'tags' in series:
+            for k, v in series['tags'].items():
+                df[k] = v
         if 'name' in series:
             df.name = series['name']
         return df
