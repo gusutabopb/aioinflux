@@ -41,6 +41,7 @@ class InfluxDBError(Exception):
 
 class AsyncInfluxDBClient:
     def __init__(self, host: str = 'localhost', port: int = 8086,
+                 unix_socket: Optional[str] = None,
                  username: Optional[str] = None, password: Optional[str] = None,
                  db: str = 'testdb', database: Optional[str] = None,
                  loop: asyncio.BaseEventLoop = None,
@@ -58,6 +59,7 @@ class AsyncInfluxDBClient:
 
         :param host: Hostname to connect to InfluxDB.
         :param port: Port to connect to InfluxDB.
+        :param unix_socket: Path to the InfluxDB. unix socket.
         :param username: Username to use to connect to InfluxDB.
         :param password: User password.
         :param db: Default database to be used by the client.
@@ -74,11 +76,13 @@ class AsyncInfluxDBClient:
         """
         self._logger = self._make_logger(log_level)
         self._loop = asyncio.get_event_loop() if loop is None else loop
+        self._connector = None if unix_socket is None else aiohttp.UnixConnector(path=unix_socket, loop=self._loop)
         self._auth = aiohttp.BasicAuth(username, password) if username and password else None
-        self._session = aiohttp.ClientSession(loop=self._loop, auth=self._auth)
+        self._session = aiohttp.ClientSession(loop=self._loop, auth=self._auth, connector=self._connector)
         self._url = f'http://{host}:{port}/{{endpoint}}'
         self.host = host
         self.port = port
+        self.unix_socket = unix_socket
         self.db = database or db
         self.mode = mode
         if mode not in {'async', 'blocking', 'dataframe'}:
