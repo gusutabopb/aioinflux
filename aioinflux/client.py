@@ -93,14 +93,23 @@ class AsyncInfluxDBClient:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._session.close()
+        self.close()
 
-    def __del__(self):
-        self._session.close()
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
 
     def __repr__(self):
         items = {f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')}
         return f'{type(self).__name__}({", ".join(items)})'
+
+    @runner
+    async def close(self):
+        if self._session:
+            await self._session.close()
+            self._session = None
 
     @runner
     async def ping(self) -> dict:
