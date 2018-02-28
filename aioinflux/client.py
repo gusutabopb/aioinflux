@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import logging.config
 import re
 from collections import namedtuple, AsyncGenerator
@@ -90,16 +89,15 @@ class AsyncInfluxDBClient:
         :param loop: Event loop used for processing HTTP requests.
         """
         self._loop = asyncio.get_event_loop() if loop is None else loop
-        self._connector = None if unix_socket is None else aiohttp.UnixConnector(path=unix_socket, loop=self._loop)
+        self._connector = aiohttp.UnixConnector(path=unix_socket, loop=self._loop) if unix_socket else None
         self._auth = aiohttp.BasicAuth(username, password) if username and password else None
         self._session = aiohttp.ClientSession(loop=self._loop, auth=self._auth, connector=self._connector)
         self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
         self.host = host
         self.port = port
-        self.unix_socket = unix_socket
         self.db = database or db
         self.mode = mode
-        if mode not in {'async', 'blocking', 'dataframe'}:
+        if mode not in ('async', 'blocking', 'dataframe'):
             raise ValueError('Invalid mode')
 
     def __enter__(self):
@@ -144,7 +142,7 @@ class AsyncInfluxDBClient:
         3) a Pandas DataFrame with a DatetimeIndex
         4) an iterable of one of above
         Input data in formats 2-4 are parsed to the line protocol before being written to InfluxDB.
-        See also: https://docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/
+        See also: https://docs.influxdata.com/influxdb/v1.4/write_protocols/line_protocol_reference/
 
         :param data: Input data (see description above).
         :param tag_columns: Columns that should be treated as tags (used when writing DataFrames only)
@@ -169,7 +167,7 @@ class AsyncInfluxDBClient:
                     chunked=False, chunk_size=None, **kwargs) -> Union[AsyncGenerator, dict]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
-        https://docs.influxdata.com/influxdb/v1.2/query_language/spec/#queries
+        https://docs.influxdata.com/influxdb/v1.4/query_language/spec/#queries
 
         :param q: Raw query string
         :param db: Database parameter. Defaults to `self.db`
