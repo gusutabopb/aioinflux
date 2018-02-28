@@ -28,10 +28,7 @@ def runner(coro):
             return coro(self, *args, **kwargs)
         resp = self._loop.run_until_complete(coro(self, *args, **kwargs))
         if self.mode == 'dataframe' and coro.__name__ == 'query':
-            try:
-                return make_df(resp)
-            except KeyError:
-                return resp
+            return make_df(resp)
         else:
             return resp
 

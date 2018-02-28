@@ -1,5 +1,6 @@
 import warnings
-from typing import Iterable, Mapping, Union, Tuple
+from collections import defaultdict
+from typing import Iterable, Mapping, Union, Dict
 
 import pandas as pd
 import numpy as np
@@ -107,7 +108,7 @@ def _parse_fields(point):
     return ','.join(output)
 
 
-def make_df(resp) -> Union[pd.DataFrame, Iterable[Tuple[str, pd.DataFrame]]]:
+def make_df(resp) -> Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]:
     """Makes list of DataFrames from a response object"""
 
     def maker(series) -> pd.DataFrame:
@@ -123,12 +124,15 @@ def make_df(resp) -> Union[pd.DataFrame, Iterable[Tuple[str, pd.DataFrame]]]:
         return df
 
     df_list = [(series['name'], maker(series))
-               for statement in resp['results']
+               for statement in resp['results'] if 'series' in statement
                for series in statement['series']]
     if len(df_list) == 1:
         return df_list[0][1]
     else:
-        return df_list
+        d = defaultdict(list)
+        for k, df in sorted(df_list, key=lambda x: x[0]):
+            d[k].append(df)
+        return {k: pd.concat(v, axis=0) for k, v in d.items()}
 
 
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
