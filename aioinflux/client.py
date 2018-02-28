@@ -47,11 +47,20 @@ class InfluxDBError(Exception):
 
 
 class AsyncInfluxDBClient:
-    def __init__(self, host: str = 'localhost', port: int = 8086,
+    def __init__(self,
+                 host: str = 'localhost',
+                 port: int = 8086,
+                 mode: str = 'async',
+                 db: str = 'testdb',
+                 *,
+                 ssl: bool = False,
                  unix_socket: Optional[str] = None,
-                 username: Optional[str] = None, password: Optional[str] = None,
-                 ssl: bool = False, db: str = 'testdb', database: Optional[str] = None,
-                 loop: asyncio.BaseEventLoop = None, mode: str = 'async'):
+                 username: Optional[str] = None,
+                 password: Optional[str] = None,
+                 database: Optional[str] = None,
+                 loop: Optional[asyncio.BaseEventLoop] = None,
+
+                 ):
         """
         The AsyncInfluxDBClient object holds information necessary to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client and even generate
@@ -61,24 +70,24 @@ class AsyncInfluxDBClient:
         2) AsyncInfluxDBClient.write
         3) AsyncInfluxDBClient.query
         See each of the above methods documentation for further usage details.
-        See also: https://docs.influxdata.com/influxdb/v1.2/tools/api/
+        See also: https://docs.influxdata.com/influxdb/v1.4/tools/api/
 
         :param host: Hostname to connect to InfluxDB.
         :param port: Port to connect to InfluxDB.
-        :param unix_socket: Path to the InfluxDB. unix socket.
-        :param username: Username to use to connect to InfluxDB.
-        :param password: User password.
-        :param ssl: If https should be used.
-        :param db: Default database to be used by the client.
-        :param database: Default database to be used by the client.
-            This field is for argument consistency with the official InfluxDB Python client.
-        :param loop: Event loop used for processing HTTP requests.
         :param mode: Mode in which client should run.
             Available options are: 'async', 'blocking' and 'dataframe'.
             - 'async': Default mode. Each query/request to the backend will
             - 'blocking': Behaves in sync/blocking fashion, similar to the official InfluxDB-Python client.
             - 'dataframe': Behaves in a sync/blocking fashion, but parsing results into Pandas DataFrames.
                            Similar to InfluxDB-Python's `DataFrameClient`.
+        :param db: Default database to be used by the client.
+        :param ssl: If https should be used.
+        :param unix_socket: Path to the InfluxDB. unix socket.
+        :param username: Username to use to connect to InfluxDB.
+        :param password: User password.
+        :param database: Default database to be used by the client.
+            This field is for argument consistency with the official InfluxDB Python client.
+        :param loop: Event loop used for processing HTTP requests.
         """
         self._loop = asyncio.get_event_loop() if loop is None else loop
         self._connector = None if unix_socket is None else aiohttp.UnixConnector(path=unix_socket, loop=self._loop)
