@@ -224,22 +224,6 @@ class AsyncInfluxDBClient:
             self._check_error(output)
             return output
 
-    # Below are methods that wrap ``AsyncInfluxDBClient.query`` in order to provide
-    # convenient access to commonly used query patterns. Named arguments corresponding
-    # to the named placed holders in the pre-formatted query string of each of partial methods
-    # must be passed (e.g.: `db`, `measurement`, etc).
-    # For more complex queries, pass a raw query to ``AsyncInfluxDBClient.query``.
-    # Please refer to the InfluxDB documentation for all the possible queries:
-    # https://docs.influxdata.com/influxdb/v1.2/query_language/spec/#queries
-    create_database = partialmethod(query, q='CREATE DATABASE {db}')
-    drop_database = partialmethod(query, q='DROP DATABASE {db}')
-    drop_measurement = partialmethod(query, q='DROP MEASUREMENT {measurement}')
-    show_databases = partialmethod(query, q='SHOW DATABASES')
-    show_measurements = partialmethod(query, q='SHOW MEASUREMENTS')
-    show_retention_policies = partialmethod(query, q='SHOW RETENTION POLICIES')
-    show_users = partialmethod(query, q='SHOW USERS')
-    select_all = partialmethod(query, q='SELECT * FROM {measurement}')
-
     @staticmethod
     def _check_error(response):
         """Checks for JSON error messages and raises Python exception"""
@@ -250,3 +234,36 @@ class AsyncInfluxDBClient:
                 if 'error' in statement:
                     msg = '{d[error]} (statement {d[statement_id]})'
                     raise InfluxDBError(msg.format(d=statement))
+
+
+def set_custom_queries(queries: Optional[Union[Mapping, Path, str]] = None, **kwargs) -> None:
+    """Defines custom methods to provide quick access to commonly used query patterns.
+
+    Query patterns are passed as flat mappings (e.g. dictionary), where the key is name name of
+    the desired new method representing the query pattern and the value is the actual query pattern.
+    Query patterns are plain strings, with optional the named placed holders. Named placed holders
+    are processed as keyword arguments in ``str.format``. Positional arguments are not supported.
+
+    See queries.yml for examples.
+
+    :param queries: Mapping (or path to YAML file) containing query patterns.
+        Can be used in conjunction with kwargs.
+    :param kwargs: Alternative way to pass query patterns.
+    """
+    if queries is None:
+        queries = {}
+    elif not isinstance(queries, dict):
+        with Path(queries).open() as f:
+            queries = yaml.load(f)
+
+    restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
+    for name, query in {**queries, **kwargs}.items():
+        if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
+            logger.warning(f'Ignoring invalid custom query: {query}')
+            continue
+        f = partialmethod(AsyncInfluxDBClient.query, q=query)
+        setattr(AsyncInfluxDBClient, name, f)
+
+
+# Loads built-in query patterns
+set_custom_queries(Path(__file__).parent / 'queries.yml')

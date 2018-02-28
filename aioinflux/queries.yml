@@ -1,0 +1,8 @@
+create_database: CREATE DATABASE {db}
+drop_database: 'DROP DATABASE {db}'
+drop_measurement: 'DROP MEASUREMENT {measurement}'
+show_databases: 'SHOW DATABASES'
+show_measurements: 'SHOW MEASUREMENTS'
+show_retention_policies: 'SHOW RETENTION POLICIES'
+show_users: 'SHOW USERS'
+select_all: 'SELECT * FROM {measurement}'
