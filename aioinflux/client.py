@@ -183,8 +183,8 @@ class AsyncInfluxDBClient:
             a dictionary containing the parsed JSON response.
         """
 
-        async def _chunked_generator(func, url, data):
-            async with func(url, **data) as resp:
+        async def _chunked_generator(url, data):
+            async with self._session.post(url, data=data) as resp:
                 async for chunk in resp.content:
                     chunk = json.loads(chunk)
                     if 'error' in chunk:
@@ -211,20 +211,12 @@ class AsyncInfluxDBClient:
         data = dict(q=query, db=db, chunked=str(chunked).lower(), epoch=epoch)
         if chunked and chunk_size:
             data['chunk_size'] = chunk_size
-        if q.startswith('SELECT') or q.startswith('SHOW'):
-            method = 'get'  # Will fail with SELECT INTO
-        else:
-            method = 'post'
 
         url = self._url.format(endpoint='query')
-        func = getattr(self._session, method)
-        data = dict(params=data) if method == 'get' else dict(data=data)
-        logger.debug(data)
-
         if chunked:
-            return _chunked_generator(func, url, data)
+            return _chunked_generator(url, data)
 
-        async with func(url, **data) as resp:
+        async with self._session.post(url, data=data) as resp:
             logger.debug(f'{resp.status}: {resp.reason}')
             output = await resp.json()
             logger.debug(resp)
