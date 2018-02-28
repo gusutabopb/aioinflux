@@ -1,8 +1,7 @@
 import pytest
 
 from aioinflux import testing_utils as utils
-from aioinflux import AsyncInfluxDBClient, InfluxDBError
-from aioinflux.client import logger
+from aioinflux import AsyncInfluxDBClient, InfluxDBError, logger, set_custom_queries
 
 
 def test_invalid_data_write(sync_client):
@@ -38,3 +37,11 @@ def test_invalid_client_mode():
     with pytest.raises(ValueError):
         _ = AsyncInfluxDBClient(db='mytestdb', mode=utils.random_string())
 
+
+def test_invalid_query(sync_client):
+    with pytest.raises(InfluxDBError):
+        sync_client.query('NOT A VALID QUERY')
+
+
+def test_invalid_query_pattern():
+    set_custom_queries(my_query='SELECT {q} from {epoch}')
