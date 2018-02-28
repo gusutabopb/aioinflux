@@ -2,7 +2,9 @@ import asyncio
 
 import pytest
 
-from aioinflux import AsyncInfluxDBClient
+from aioinflux import AsyncInfluxDBClient, logger
+
+logger.setLevel('DEBUG')
 
 
 @pytest.yield_fixture(scope='module')
@@ -14,7 +16,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def sync_client():
-    with AsyncInfluxDBClient(db='mytestdb', mode='blocking', log_level=5) as client:
+    with AsyncInfluxDBClient(db='mytestdb', mode='blocking') as client:
         client.create_database(db='mytestdb')
         yield client
         client.drop_database(db='mytestdb')
@@ -23,14 +25,14 @@ def sync_client():
 @pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def async_client():
-    async with AsyncInfluxDBClient(db='mytestdb', mode='async', log_level=5) as client:
-        print(client)  # test __repr__
+    async with AsyncInfluxDBClient(db='mytestdb', mode='async') as client:
+        logger.debug(client)  # test __repr__
         yield client
 
 
 @pytest.fixture(scope='module')
 def df_client():
-    with AsyncInfluxDBClient(db='mytestdb', mode='dataframe', log_level=5) as client:
+    with AsyncInfluxDBClient(db='mytestdb', mode='dataframe') as client:
         client.create_database(db='mytestdb')
         yield client
         client.drop_database(db='mytestdb')

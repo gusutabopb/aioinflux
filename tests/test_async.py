@@ -1,6 +1,7 @@
 import pytest
 
 import aioinflux.testing_utils as utils
+from aioinflux.client import logger
 
 
 @pytest.mark.asyncio
@@ -17,7 +18,7 @@ async def test_create_database(async_client):
 
 @pytest.mark.asyncio
 async def test_simple_write(async_client):
-    print(async_client.db)
+    logger.debug(async_client.db)
     assert await async_client.write(utils.random_points(100))
 
 

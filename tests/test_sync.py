@@ -1,6 +1,7 @@
 import pytest
 
 import aioinflux.testing_utils as utils
+from aioinflux.client import logger
 import numpy as np
 
 
@@ -15,7 +16,7 @@ def test_create_database(sync_client):
 
 
 def test_simple_write(sync_client):
-    print(sync_client.db)
+    logger.debug(sync_client.db)
     assert sync_client.write(utils.random_points(10))
 
 
@@ -56,7 +57,7 @@ def test_write_with_custom_measurement(sync_client):
     points = [p for p in utils.random_points(5)]
     for p in points:
         _ = p.pop('measurement')
-    print(points)
+    logger.debug(points)
     with pytest.raises(ValueError):
         assert sync_client.write(points)
     assert sync_client.write(points, measurement='another_measurement')
@@ -68,7 +69,7 @@ def test_write_without_tags(sync_client):
     points = [p for p in utils.random_points(7)]
     for p in points:
         _ = p.pop('tags')
-    print(points)
+    logger.debug(points)
     assert sync_client.write(points, mytag='foo')
     resp = sync_client.select_all(measurement='test_measurement')
     assert len(resp['results'][0]['series'][0]['values']) == 7
@@ -79,7 +80,7 @@ def test_write_without_timestamp(sync_client):
     for p in points:
         _ = p.pop('time')
         _ = p.pop('measurement')
-    print(points)
+    logger.debug(points)
     assert sync_client.write(points, measurement='yet_another_measurement')
     resp = sync_client.select_all(measurement='yet_another_measurement')
     # Points with the same tag/timestamp set are overwritten
@@ -92,7 +93,7 @@ def test_write_non_string_identifier_and_tags(sync_client):
     with pytest.warns(UserWarning):
         assert sync_client.write(point, measurement='my_measurement')
     resp = sync_client.select_all(measurement='my_measurement')
-    print(resp)
+    logger.debug(resp)
     assert len(resp['results'][0]['series'][0]['values']) == 1
 
 

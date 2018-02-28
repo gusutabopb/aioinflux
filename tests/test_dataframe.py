@@ -1,4 +1,5 @@
 import aioinflux.testing_utils as utils
+from aioinflux.client import logger
 
 
 def test_write_dataframe(df_client):
@@ -8,5 +9,5 @@ def test_write_dataframe(df_client):
 
 def test_read_dataframe(df_client):
     df = df_client.select_all(measurement='test_measurement')
-    print(df.head())
+    logger.debug(df.head())
     assert df.shape == (50, 7)

@@ -1,15 +1,18 @@
 import asyncio
 import json
 import logging
+import logging.config
 import re
 from collections import namedtuple, AsyncGenerator
 from functools import partialmethod
 from functools import wraps
+from pathlib import Path
 from typing import Union, AnyStr, Mapping, Iterable, Optional
 from urllib.parse import urlencode
 
 import aiohttp
 import pandas as pd
+import yaml
 
 from .serialization import parse_data, make_df
 
@@ -35,6 +38,13 @@ def runner(coro):
     return inner
 
 
+# Logging setup. See ``logging`` official docs for details on customization.
+# To turn on debugging, simply call ``aioinflux.logger.setLevel('DEBUG')``
+with open(Path(__file__).parent / 'logging.yml') as f:
+    logging.config.dictConfig(yaml.load(f))
+    logger = logging.getLogger(__name__)
+
+
 class InfluxDBError(Exception):
     pass
 
@@ -44,8 +54,7 @@ class AsyncInfluxDBClient:
                  unix_socket: Optional[str] = None,
                  username: Optional[str] = None, password: Optional[str] = None,
                  ssl: bool = False, db: str = 'testdb', database: Optional[str] = None,
-                 loop: asyncio.BaseEventLoop = None,
-                 log_level: int = 30, mode: str = 'async'):
+                 loop: asyncio.BaseEventLoop = None, mode: str = 'async'):
         """
         The AsyncInfluxDBClient object holds information necessary to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client and even generate
@@ -67,7 +76,6 @@ class AsyncInfluxDBClient:
         :param database: Default database to be used by the client.
             This field is for argument consistency with the official InfluxDB Python client.
         :param loop: Event loop used for processing HTTP requests.
-        :param log_level: Logging level. The lower the more verbose. Defaults to INFO (30).
         :param mode: Mode in which client should run.
             Available options are: 'async', 'blocking' and 'dataframe'.
             - 'async': Default mode. Each query/request to the backend will
@@ -75,7 +83,6 @@ class AsyncInfluxDBClient:
             - 'dataframe': Behaves in a sync/blocking fashion, but parsing results into Pandas DataFrames.
                            Similar to InfluxDB-Python's `DataFrameClient`.
         """
-        self._logger = self._make_logger(log_level)
         self._loop = asyncio.get_event_loop() if loop is None else loop
         self._connector = None if unix_socket is None else aiohttp.UnixConnector(path=unix_socket, loop=self._loop)
         self._auth = aiohttp.BasicAuth(username, password) if username and password else None
@@ -117,7 +124,7 @@ class AsyncInfluxDBClient:
          Returns a dictionary containing the headers of the response from `influxd`.
          """
         async with self._session.get(self._url.format(endpoint='ping')) as resp:
-            self._logger.info(f'{resp.status}: {resp.reason}')
+            logger.debug(f'{resp.status}: {resp.reason}')
             return dict(resp.headers.items())
 
     @runner
@@ -142,7 +149,7 @@ class AsyncInfluxDBClient:
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
         data = parse_data(data, measurement, tag_columns, **extra_tags)
-        self._logger.debug(data)
+        logger.debug(data)
         url = self._url.format(endpoint='write') + '?' + urlencode(dict(db=self.db))
         async with self._session.post(url, data=data) as resp:
             if resp.status == 204:
@@ -212,16 +219,16 @@ class AsyncInfluxDBClient:
         url = self._url.format(endpoint='query')
         func = getattr(self._session, method)
         data = dict(params=data) if method == 'get' else dict(data=data)
-        self._logger.debug(data)
+        logger.debug(data)
 
         if chunked:
             return _chunked_generator(func, url, data)
 
         async with func(url, **data) as resp:
-            self._logger.info(f'{resp.status}: {resp.reason}')
+            logger.debug(f'{resp.status}: {resp.reason}')
             output = await resp.json()
-            self._logger.debug(resp)
-            self._logger.debug(output)
+            logger.debug(resp)
+            logger.debug(output)
             self._check_error(output)
             return output
 
@@ -240,18 +247,6 @@ class AsyncInfluxDBClient:
     show_retention_policies = partialmethod(query, q='SHOW RETENTION POLICIES')
     show_users = partialmethod(query, q='SHOW USERS')
     select_all = partialmethod(query, q='SELECT * FROM {measurement}')
-
-    @staticmethod
-    def _make_logger(log_level):
-        """Initializes logger"""
-        logger = logging.getLogger('aioinflux')
-        logger.setLevel(log_level)
-        formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s: %(message)s')
-        if log_level and not logger.handlers:
-            stream_handler = logging.StreamHandler()
-            stream_handler.setFormatter(formatter)
-            logger.addHandler(stream_handler)
-        return logger
 
     @staticmethod
     def _check_error(response):
