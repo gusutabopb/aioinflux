@@ -222,9 +222,8 @@ class AsyncInfluxDBClient:
             return _chunked_generator(url, data)
 
         async with self._session.post(url, data=data) as resp:
-            logger.debug(f'{resp.status}: {resp.reason}')
-            output = await resp.json()
             logger.debug(resp)
+            output = await resp.json()
             logger.debug(output)
             self._check_error(output)
             return output
