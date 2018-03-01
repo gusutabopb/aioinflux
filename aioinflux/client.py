@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging.config
 import re
+import warnings
 from collections import namedtuple, AsyncGenerator
 from functools import partialmethod
 from functools import wraps
@@ -263,7 +264,7 @@ def set_custom_queries(queries: Optional[Union[Mapping, Path, str]] = None, **kw
     restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
     for name, query in {**queries, **kwargs}.items():
         if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
-            logger.warning(f'Ignoring invalid custom query: {query}')
+            warnings.warn(f'Ignoring invalid custom query: {query}')
             continue
         f = partialmethod(AsyncInfluxDBClient.query, q=query)
         setattr(AsyncInfluxDBClient, name, f)
