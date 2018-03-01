@@ -17,7 +17,7 @@ setup(name='aioinflux',
       install_requires=['aiohttp>=3.0',
                         'pandas>=0.21',
                         'numpy',
-                        'yaml',
+                        'pyyaml',
                         ],
       extras_require={'test': ['pytest', 'pytest-asyncio', 'pytest-cov']},
       classifiers=[
