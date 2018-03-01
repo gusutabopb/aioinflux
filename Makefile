@@ -6,7 +6,7 @@ cov: test
 
 clean:
 	rm -rf build dist *.egg-info
-	rm -rf .cache htmlcov .coverage
+	rm -rf .cache htmlcov .coverage .pytest_cache
 	rm -f .DS_Store
 
 build: clean test

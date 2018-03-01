@@ -44,6 +44,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.pytest_cache/
 
 # Translations
 *.mo
@@ -88,9 +89,9 @@ ENV/
 # Rope project settings
 .ropeproject
 
-#Added by Gustavo
-.log/
+# Pycharm
 .idea/
-*.zip
-*.pkl
+
+# macOS
 .DS_Store
+
