@@ -4,7 +4,7 @@ import pytest
 
 from aioinflux import AsyncInfluxDBClient, logger
 
-logger.setLevel('DEBUG')
+logger.setLevel('INFO')
 
 
 @pytest.yield_fixture(scope='module')
