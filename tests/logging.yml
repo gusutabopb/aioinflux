@@ -9,6 +9,6 @@ handlers:
     formatter: default
 loggers:
   aioinflux:
-    level: WARNING
+    level: INFO
     handlers: [console]
     propagate: False

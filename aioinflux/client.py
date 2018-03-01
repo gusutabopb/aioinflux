@@ -1,6 +1,6 @@
 import asyncio
 import json
-import logging.config
+import logging
 import re
 import warnings
 from collections import namedtuple, AsyncGenerator
@@ -18,6 +18,10 @@ from .serialization import parse_data, make_df
 
 PointType = Union[AnyStr, Mapping, pd.DataFrame]
 
+# Aioinflux uses logging mainly for debugging purposes.
+# Please attach your own handlers if you need logging.
+logger = logging.getLogger('aioinflux')
+
 
 def runner(coro):
     """Function execution decorator."""
@@ -33,13 +37,6 @@ def runner(coro):
             return resp
 
     return inner
-
-
-# Logging setup. See ``logging`` official docs for details on customization.
-# To turn on debugging, simply call ``aioinflux.logger.setLevel('DEBUG')``
-with open(Path(__file__).parent / 'logging.yml') as f:
-    logging.config.dictConfig(yaml.load(f))
-    logger = logging.getLogger(__name__)
 
 
 class InfluxDBError(Exception):

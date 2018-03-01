@@ -1,10 +1,14 @@
 import asyncio
+import logging.config
+from pathlib import Path
 
 import pytest
+import yaml
 
 from aioinflux import AsyncInfluxDBClient, logger
 
-logger.setLevel('INFO')
+with open(Path(__file__).parent / 'logging.yml') as f:
+    logging.config.dictConfig(yaml.load(f))
 
 
 @pytest.yield_fixture(scope='module')
