@@ -83,9 +83,9 @@ def _parse_tags(point, extra_tags):
 
 def _parse_timestamp(point):
     if 'time' not in point:
-        return str()
+        return ''
     else:
-        return int(pd.Timestamp(point['time']).asm8)
+        return pd.Timestamp(point['time']).value
 
 
 def _parse_fields(point):
