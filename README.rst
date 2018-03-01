@@ -312,7 +312,20 @@ InfluxDB requires that a databases is explicitly created (by using the
 Debugging
 ^^^^^^^^^
 
-TODO
+If you are having problems while using Aioinflux, enabling logging might be useful.
+
+Below is a simple way to setup logging from your application:
+
+.. code:: python
+
+    import logging
+
+    logging.basicConfig()
+    logging.getLogger('aioinflux').setLevel(logging.DEBUG)
+
+For further information about logging, please refer to the
+`official documentation <https://docs.python.org/3/library/logging.config.html>`__.
+
 
 Implementation
 --------------
