@@ -108,16 +108,16 @@ DatetimeIndex 4) An iterable of one of the above
 
 Input data in formats 2-4 are parsed into the `line
 protocol`_ before being written to InfluxDB. All parsing functionality is located
-at serialization.py_. Beware that
+at |serialization|_. Beware that
 serialization is not highly optimized (PRs are welcome!) and may become
 a bottleneck depending on your application.
 
 The ``write`` method returns ``True`` when successful and raises an
 ``InfluxDBError`` otherwise.
 
-.. _`line protocol`: https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/
-.. |serialization.py| replace:: ``serialization.py``
-.. _serialization.py: https://github.com/plugaai/aioinflux/blob/master/aioinflux/serialization.py
+.. _`line protocol`: https://docs.influxdata.com/influxdb/v1.4/write_protocols/line_protocol_reference/
+.. |serialization| replace:: ``serialization.py``
+.. _serialization: aioinflux/serialization.py
 
 Writing dictionary-like objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -200,7 +200,7 @@ exception of they strings ``data``, ``measurement`` and ``tag_columns``).
 
 See ``AsyncInfluxDBClient.write`` docstring for details.
 
-.. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/v1.3/query_language/spec/#identifiers
+.. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/v1.4/query_language/spec/#identifiers
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
 
 Querying data
@@ -216,7 +216,7 @@ Querying data is as simple as passing an InfluxDB query string to
 The result (in ``blocking`` and ``async`` modes) is a dictionary
 containing the raw JSON data returned by the InfluxDB `HTTP API`_:
 
-.. _`HTTP API`: https://docs.influxdata.com/influxdb/v1.3/guides/querying_data/#querying-data-using-the-http-api
+.. _`HTTP API`: https://docs.influxdata.com/influxdb/v1.4/guides/querying_data/#querying-data-using-the-http-api
 
 .. code:: python
 
@@ -256,32 +256,38 @@ Chunked responses
 
 TODO
 
-Convenience functions
-^^^^^^^^^^^^^^^^^^^^^
+Query patterns
+^^^^^^^^^^^^^^
 
 Aioinflux provides some wrappers around ``AsyncInfluxDBClient.query`` in
-order to provide convenient access to commonly used query patterns.
-Appropriate named arguments must be passed (e.g.: ``db``,
-``measurement``, etc).
+order to provide convenient access in IPython/Jupyter to commonly used query patterns.
 
-Examples:
+Query patterns are query strings containing optional named "replacement fields"
+surrounded by curly braces ``{}``, just as in |str_format|_.
+Replacement field values are defined by keyword arguments when calling the method
+associated with the query pattern.
+
+Aioinflux comes with some built-in query patterns, defined in `queries.yml`_.
+Users can define additional query patterns by using the |set_custom_queries|_ helper function.
+However, for one-off queries, passing a raw query to directly to
+``AsyncInfluxDBClient.query`` can be simpler.
+
+Built-in query pattern examples:
 
 .. code:: python
 
-    client.create_database(db='foo')
-    client.drop_measurement(measurement='bar')
-    client.show_users()
+    client.create_database(db='foo')            # CREATE DATABASE {db}
+    client.drop_measurement(measurement='bar')  # DROP MEASUREMENT {measurement}'
+    client.show_users()                         # SHOW USERS
 
-For more complex queries, pass a raw query to
-``AsyncInfluxDBClient.query``.
+Please refer to InfluxDB documentation_ for further query-related information.
 
-Please refer to the source_ for argument information and to
-InfluxDB documentation_ for further query-related information.
-
-.. _source: https://github.com/plugaai/aioinflux/blob/master/aioinflux/client.py#L211
-.. _documentation: https://docs.influxdata.com/influxdb/v1.3/query_language/spec/#queries
-
-.. _source: https://github.com/plugaai/aioinflux/blob/master/aioinflux/client.py#L211
+.. _`queries.yml`: aioinflux/queries.yml
+.. _documentation: https://docs.influxdata.com/influxdb/v1.4/query_language/
+.. |str_format| replace:: ``str_format()``
+.. _str_format: https://docs.python.org/3/library/string.html#formatstrings
+.. |set_custom_queries| replace:: ``aioinflux.set_custom_queries``
+.. _set_custom_queries: aioinflux/client.py#L154
 
 Other functionality
 ~~~~~~~~~~~~~~~~~~~
@@ -304,10 +310,10 @@ can be switched by changing the ``db`` attribute:
 
 Beware that differently from some NoSQL databases (such as MongoDB),
 InfluxDB requires that a databases is explicitly created (by using the
-|CREATE DATABASE|_ query) before doing any operations on it.
+|CREATE_DATABASE|_ query) before doing any operations on it.
 
-.. |CREATE DATABASE| replace:: ``CREATE DATABASE``
-.. _`CREATE DATABASE`: https://docs.influxdata.com/influxdb/v1.3/query_language/database_management/#create-database
+.. |CREATE_DATABASE| replace:: ``CREATE DATABASE``
+.. _`CREATE_DATABASE`: https://docs.influxdata.com/influxdb/v1.4/query_language/database_management/#create-database
 
 Debugging
 ^^^^^^^^^
@@ -331,8 +337,8 @@ Implementation
 --------------
 
 Since InfluxDB exposes all its functionality through an `HTTP
-API <https://docs.influxdata.com/influxdb/v1.3/tools/api/>`__,
-``AsyncInfluxDBClient`` tries to be nothing more than a thin and dry
+API <https://docs.influxdata.com/influxdb/v1.4/tools/api/>`__,
+``AsyncInfluxDBClient`` tries to be nothing more than a thin and simple
 wrapper around that API.
 
 The InfluxDB HTTP API exposes exactly three endpoints/functions:
@@ -345,7 +351,7 @@ writing) and parsing JSON responses (when querying).
 Additionally,
 `partials <https://en.wikipedia.org/wiki/Partial_application>`__ are
 used in order to provide convenient access to commonly used query
-patterns. See the `Convenience functions <#convenience-functions>`__
+patterns. See the `Query patterns <#query-patterns>`__
 section for details.
 
 Contributing
