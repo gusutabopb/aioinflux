@@ -34,3 +34,10 @@ def test_read_dataframe_groupby(df_client):
     logger.info('\n'.join(s))
     assert df_dict['m1'].shape == (5, 6)
     assert df_dict['m2'].shape == (5, 6)
+
+
+def test_read_dataframe_show_databases(df_client):
+    df = df_client.show_databases()
+    assert isinstance(df.index, pd.RangeIndex)
+    assert 'name' in df.columns
+    logger.info(f'\n{df.head()}')
