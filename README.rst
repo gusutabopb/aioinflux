@@ -82,7 +82,7 @@ This sums most of what you can do with ``aioinflux``:
 Client modes
 ~~~~~~~~~~~~
 
-Despite its name, ``InfluxDBClient`` can also run in sync/blocking
+Despite the library's name, ``InfluxDBClient`` can also run in non-async
 modes. Available modes are: ``async`` (default), ``blocking`` and
 ``dataframe``.
 
@@ -101,15 +101,16 @@ mode usage.
 Writing data
 ~~~~~~~~~~~~
 
-Input data can be: 1) A string properly formatted in InfluxDB's line
-protocol 2) A dictionary containing the following keys: ``measurement``,
-``time``, ``tags``, ``fields`` 3) A Pandas DataFrame with a
-DatetimeIndex 4) An iterable of one of the above
+Input data can be:
 
-Input data in formats 2-4 are parsed into the `line
-protocol`_ before being written to InfluxDB. All parsing functionality is located
-at |serialization|_. Beware that
-serialization is not highly optimized (PRs are welcome!) and may become
+1. A string properly formatted in InfluxDB's line protocol
+2. A dictionary containing the following keys: ``measurement``, ``time``, ``tags``, ``fields``
+3. A Pandas ``DataFrame`` with a ``DatetimeIndex``
+4. An iterable of one of the above
+
+Input data in formats 2-4 are parsed into the `line protocol`_ before being written to InfluxDB.
+All parsing functionality is located at |serialization|_.
+Beware that serialization is not highly optimized (cythonization PRs are welcome!) and may become
 a bottleneck depending on your application.
 
 The ``write`` method returns ``True`` when successful and raises an
@@ -136,7 +137,7 @@ following keys:
    names and values. Both tag keys and values should be strings.
 4) **fields**: Mandatory. This must contain another mapping of field
    names and values. Field keys should be strings. Field values can be
-   ``float``, ``int``, ``str``, or ``bool`` or any equivalent type.
+   ``float``, ``int``, ``str``, or ``bool`` or any equivalent type (e.g. Numpy types).
 
 .. |Timestamp| replace:: ``Timestamp``
 .. _Timestamp: https://pandas.pydata.org/pandas-docs/stable/timeseries.html
