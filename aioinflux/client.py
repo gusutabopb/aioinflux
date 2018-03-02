@@ -94,9 +94,18 @@ class AsyncInfluxDBClient:
         self.host = host
         self.port = port
         self.db = database or db
+        self._mode = None
         self.mode = mode
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, mode):
         if mode not in ('async', 'blocking', 'dataframe'):
             raise ValueError('Invalid mode')
+        self._mode = mode
 
     def __enter__(self):
         return self
@@ -111,7 +120,8 @@ class AsyncInfluxDBClient:
         await self.close()
 
     def __repr__(self):
-        items = {f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')}
+        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')]
+        items.append(f'mode={self.mode}')
         return f'{type(self).__name__}({", ".join(items)})'
 
     @runner
