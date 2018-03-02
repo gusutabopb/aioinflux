@@ -170,7 +170,7 @@ class InfluxDBClient:
                 return True
             else:
                 msg = (f'Error writing data ({resp.status}): '
-                      f'{resp.headers.get("X-Influxdb-Error", resp.reason)}')
+                       f'{resp.headers.get("X-Influxdb-Error", resp.reason)}')
                 raise InfluxDBError(msg)
 
     @runner
