@@ -21,22 +21,23 @@ def event_loop():
 @pytest.fixture(scope='module')
 def sync_client():
     with AsyncInfluxDBClient(db='mytestdb', mode='blocking') as client:
-        client.create_database(db='mytestdb')
+        client.create_database()
         yield client
-        client.drop_database(db='mytestdb')
+        client.drop_database()
 
 
 @pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def async_client():
     async with AsyncInfluxDBClient(db='mytestdb', mode='async') as client:
-        logger.debug(client)  # test __repr__
+        await client.create_database()
         yield client
+        await client.drop_database()
 
 
 @pytest.fixture(scope='module')
 def df_client():
     with AsyncInfluxDBClient(db='mytestdb', mode='dataframe') as client:
-        client.create_database(db='mytestdb')
+        client.create_database()
         yield client
-        client.drop_database(db='mytestdb')
+        client.drop_database()
