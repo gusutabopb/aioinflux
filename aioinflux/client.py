@@ -4,8 +4,7 @@ import logging
 import re
 import warnings
 from collections import namedtuple, AsyncGenerator
-from functools import partialmethod
-from functools import wraps
+from functools import partialmethod, wraps
 from pathlib import Path
 from typing import Union, AnyStr, Mapping, Iterable, Optional
 from urllib.parse import urlencode
@@ -56,7 +55,6 @@ class AsyncInfluxDBClient:
                  password: Optional[str] = None,
                  database: Optional[str] = None,
                  loop: Optional[asyncio.BaseEventLoop] = None,
-
                  ):
         """
         The AsyncInfluxDBClient object holds information necessary to interact with InfluxDB.
