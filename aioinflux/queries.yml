@@ -6,3 +6,7 @@ show_measurements: 'SHOW MEASUREMENTS'
 show_retention_policies: 'SHOW RETENTION POLICIES'
 show_users: 'SHOW USERS'
 select_all: 'SELECT * FROM {measurement}'
+show_tag_keys: SHOW TAG KEYS
+show_tag_values: SHOW TAG VALUES WITH key = "{key}"
+show_tag_keys_from: SHOW TAG KEYS FROM {measurement}
+show_tag_values_from: SHOW TAG VALUES FROM {measurement} WITH key = "{key}"
