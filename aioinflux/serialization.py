@@ -67,7 +67,7 @@ def _parse_measurement(point, measurement):
 def _parse_tags(point, extra_tags):
     output = []
     try:
-        for k, v in sorted({**point['tags'], **extra_tags}.items()):
+        for k, v in {**point['tags'], **extra_tags}.items():
             k = escape(k, key_escape)
             v = escape(v, tag_escape)
             if not v:
