@@ -67,7 +67,7 @@ class AsyncInfluxDBClient:
         2) AsyncInfluxDBClient.write
         3) AsyncInfluxDBClient.query
         See each of the above methods documentation for further usage details.
-        See also: https://docs.influxdata.com/influxdb/v1.4/tools/api/
+        See also: https://docs.influxdata.com/influxdb/latest/tools/api/
 
         :param host: Hostname to connect to InfluxDB.
         :param port: Port to connect to InfluxDB.
@@ -79,7 +79,7 @@ class AsyncInfluxDBClient:
                            Similar to InfluxDB-Python's `DataFrameClient`.
         :param db: Default database to be used by the client.
         :param ssl: If https should be used.
-        :param unix_socket: Path to the InfluxDB. unix socket.
+        :param unix_socket: Path to the InfluxDB Unix domain socket.
         :param username: Username to use to connect to InfluxDB.
         :param password: User password.
         :param database: Default database to be used by the client.
@@ -140,7 +140,7 @@ class AsyncInfluxDBClient:
         3) a Pandas DataFrame with a DatetimeIndex
         4) an iterable of one of above
         Input data in formats 2-4 are parsed to the line protocol before being written to InfluxDB.
-        See also: https://docs.influxdata.com/influxdb/v1.4/write_protocols/line_protocol_reference/
+        See also: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/
 
         :param data: Input data (see description above).
         :param tag_columns: Columns that should be treated as tags (used when writing DataFrames only)
@@ -165,7 +165,7 @@ class AsyncInfluxDBClient:
                     chunked=False, chunk_size=None, **kwargs) -> Union[AsyncGenerator, dict]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
-        https://docs.influxdata.com/influxdb/v1.4/query_language/spec/#queries
+        https://docs.influxdata.com/influxdb/latest/query_language/spec/#queries
 
         :param q: Raw query string
         :param db: Database parameter. Defaults to `self.db`

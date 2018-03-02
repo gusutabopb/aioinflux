@@ -115,7 +115,7 @@ a bottleneck depending on your application.
 The ``write`` method returns ``True`` when successful and raises an
 ``InfluxDBError`` otherwise.
 
-.. _`line protocol`: https://docs.influxdata.com/influxdb/v1.4/write_protocols/line_protocol_reference/
+.. _`line protocol`: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/
 .. |serialization| replace:: ``serialization.py``
 .. _serialization: aioinflux/serialization.py
 
@@ -200,14 +200,14 @@ exception of they strings ``data``, ``measurement`` and ``tag_columns``).
 
 See ``AsyncInfluxDBClient.write`` docstring for details.
 
-.. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/v1.4/query_language/spec/#identifiers
+.. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/latest/query_language/spec/#identifiers
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
 
 Querying data
 ~~~~~~~~~~~~~
 
 Querying data is as simple as passing an InfluxDB query string to
-``AsyncInfluxDBClient.write``:
+``AsyncInfluxDBClient.query``:
 
 .. code:: python
 
@@ -216,7 +216,7 @@ Querying data is as simple as passing an InfluxDB query string to
 The result (in ``blocking`` and ``async`` modes) is a dictionary
 containing the raw JSON data returned by the InfluxDB `HTTP API`_:
 
-.. _`HTTP API`: https://docs.influxdata.com/influxdb/v1.4/guides/querying_data/#querying-data-using-the-http-api
+.. _`HTTP API`: https://docs.influxdata.com/influxdb/latest/guides/querying_data/#querying-data-using-the-http-api
 
 .. code:: python
 
@@ -237,6 +237,10 @@ containing the raw JSON data returned by the InfluxDB `HTTP API`_:
 Retrieving DataFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
+When the client is in ``dataframe`` mode, ``AsyncInfluxDBClient.query`` will
+return a Pandas ``DataFrame``:
+
+
 .. code:: text
 
                                       Price  Volume
@@ -250,6 +254,14 @@ Retrieving DataFrames
     2017-04-12 02:17:22.274657+00:00   5782    5500
     2017-04-12 02:17:22.274658+00:00   5781    3200
     2017-04-12 02:17:22.314710+00:00   5782     100
+
+Mode can be chosen not only during object instantiation but also by
+simply |changing_mode|_.
+
+
+.. |changing_mode| replace:: changing the ``mode`` attribute
+.. _changing_mode: #switching-modes
+
 
 Chunked responses
 ^^^^^^^^^^^^^^^^^
@@ -283,11 +295,11 @@ Built-in query pattern examples:
 Please refer to InfluxDB documentation_ for further query-related information.
 
 .. _`queries.yml`: aioinflux/queries.yml
-.. _documentation: https://docs.influxdata.com/influxdb/v1.4/query_language/
+.. _documentation: https://docs.influxdata.com/influxdb/latest/query_language/
 .. |str_format| replace:: ``str_format()``
 .. _str_format: https://docs.python.org/3/library/string.html#formatstrings
 .. |set_custom_queries| replace:: ``aioinflux.set_custom_queries``
-.. _set_custom_queries: aioinflux/client.py#L154
+.. _set_custom_queries: aioinflux/client.py#L240
 
 Other functionality
 ~~~~~~~~~~~~~~~~~~~
@@ -295,7 +307,44 @@ Other functionality
 Authentication
 ^^^^^^^^^^^^^^
 
-TODO
+Aioinflux supports basic HTTP authentication provided by |basic_auth|_.
+Simply pass ``username`` and ``password`` when instantiating ``AsyncInfluxDBClient``:
+
+.. code:: python
+
+    client = AsyncInfluxDBClient(username='user', password='pass)
+
+
+.. |basic_auth| replace:: ``aiohttp.BasicAuth``
+.. _basic_auth: https://docs.aiohttp.org/en/stable/client_reference.html#basicauth
+
+
+Unix domain sockets
+^^^^^^^^^^^^^^^^^^^
+
+If your InfluxDB server uses UNIX domain sockets you can use ``unix_socket``
+when instantiating ``AsyncInfluxDBClient``:
+
+.. code:: python
+
+    client = AsyncInfluxDBClient(unix_socket='/path/to/socket')
+
+See |unix_connector|_ for details.
+
+.. |unix_connector| replace:: ``aiohttp.UnixConnector``
+.. _unix_connector: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.UnixConnector
+
+
+HTTPS/SSL
+^^^^^^^^^
+Aioinflux/InfluxDB use HTTP by default, but HTTPS can be used by passing ``ssl=True``
+when instantiating ``AsyncInfluxDBClient``:
+
+
+.. code:: python
+
+    client = AsyncInfluxDBClient(host='my.host.io', ssl=True)
+
 
 Database selection
 ^^^^^^^^^^^^^^^^^^
@@ -305,15 +354,27 @@ can be switched by changing the ``db`` attribute:
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(db='db1')  # instantiate client
-    client.db = 'db2'  # switch database
+    client = AsyncInfluxDBClient(db='db1')
+    client.db = 'db2'
 
 Beware that differently from some NoSQL databases (such as MongoDB),
 InfluxDB requires that a databases is explicitly created (by using the
 |CREATE_DATABASE|_ query) before doing any operations on it.
 
 .. |CREATE_DATABASE| replace:: ``CREATE DATABASE``
-.. _`CREATE_DATABASE`: https://docs.influxdata.com/influxdb/v1.4/query_language/database_management/#create-database
+.. _`CREATE_DATABASE`: https://docs.influxdata.com/influxdb/latest/query_language/database_management/#create-database
+
+Switching modes
+^^^^^^^^^^^^^^^
+
+After the instantiation of the ``AsyncInfluxDBClient`` object, database
+can be switched on-the-fly by changing the ``mode`` attribute:
+
+.. code:: python
+
+    client = AsyncInfluxDBClient(mode='blocking')
+    client.mode = 'dataframe'
+
 
 Debugging
 ^^^^^^^^^
@@ -330,14 +391,14 @@ Below is a simple way to setup logging from your application:
     logging.getLogger('aioinflux').setLevel(logging.DEBUG)
 
 For further information about logging, please refer to the
-`official documentation <https://docs.python.org/3/library/logging.config.html>`__.
+`official documentation <https://docs.python.org/3/library/logging.html>`__.
 
 
 Implementation
 --------------
 
 Since InfluxDB exposes all its functionality through an `HTTP
-API <https://docs.influxdata.com/influxdb/v1.4/tools/api/>`__,
+API <https://docs.influxdata.com/influxdb/latest/tools/api/>`__,
 ``AsyncInfluxDBClient`` tries to be nothing more than a thin and simple
 wrapper around that API.
 
