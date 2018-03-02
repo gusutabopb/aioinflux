@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from aioinflux import AsyncInfluxDBClient, logger
+from aioinflux import InfluxDBClient, logger
 
 with open(Path(__file__).parent / 'logging.yml') as f:
     logging.config.dictConfig(yaml.load(f))
@@ -20,7 +20,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def sync_client():
-    with AsyncInfluxDBClient(db='mytestdb', mode='blocking') as client:
+    with InfluxDBClient(db='mytestdb', mode='blocking') as client:
         client.create_database()
         yield client
         client.drop_database()
@@ -29,7 +29,7 @@ def sync_client():
 @pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def async_client():
-    async with AsyncInfluxDBClient(db='mytestdb', mode='async') as client:
+    async with InfluxDBClient(db='mytestdb', mode='async') as client:
         await client.create_database()
         yield client
         await client.drop_database()
@@ -37,7 +37,7 @@ async def async_client():
 
 @pytest.fixture(scope='module')
 def df_client():
-    with AsyncInfluxDBClient(db='mytestdb', mode='dataframe') as client:
+    with InfluxDBClient(db='mytestdb', mode='dataframe') as client:
         client.create_database()
         yield client
         client.drop_database()

@@ -1,7 +1,7 @@
 import pytest
 
 from aioinflux import testing_utils as utils
-from aioinflux import AsyncInfluxDBClient, InfluxDBError, logger, set_custom_queries
+from aioinflux import InfluxDBClient, InfluxDBError, logger, set_custom_queries
 
 
 def test_invalid_data_write(sync_client):
@@ -35,7 +35,7 @@ def test_invalid_data_write(sync_client):
 
 def test_invalid_client_mode():
     with pytest.raises(ValueError) as e:
-        _ = AsyncInfluxDBClient(db='mytestdb', mode=utils.random_string())
+        _ = InfluxDBClient(db='mytestdb', mode=utils.random_string())
     logger.error(e)
 
 

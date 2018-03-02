@@ -42,7 +42,7 @@ class InfluxDBError(Exception):
     pass
 
 
-class AsyncInfluxDBClient:
+class InfluxDBClient:
     def __init__(self,
                  host: str = 'localhost',
                  port: int = 8086,
@@ -57,13 +57,13 @@ class AsyncInfluxDBClient:
                  loop: Optional[asyncio.BaseEventLoop] = None,
                  ):
         """
-        The AsyncInfluxDBClient object holds information necessary to interact with InfluxDB.
+        The InfluxDBClient object holds information necessary to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client and even generate
         Pandas DataFrames from queries.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
-        1) AsyncInfluxDBClient.ping
-        2) AsyncInfluxDBClient.write
-        3) AsyncInfluxDBClient.query
+        1) InfluxDBClient.ping
+        2) InfluxDBClient.write
+        3) InfluxDBClient.query
         See each of the above methods documentation for further usage details.
         See also: https://docs.influxdata.com/influxdb/latest/tools/api/
 
@@ -274,8 +274,8 @@ def set_custom_queries(queries: Optional[Union[Mapping, Path, str]] = None, **kw
         if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
             warnings.warn(f'Ignoring invalid custom query: {query}')
             continue
-        f = partialmethod(AsyncInfluxDBClient.query, q=query)
-        setattr(AsyncInfluxDBClient, name, f)
+        f = partialmethod(InfluxDBClient.query, q=query)
+        setattr(InfluxDBClient, name, f)
 
 
 # Loads built-in query patterns

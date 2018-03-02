@@ -60,7 +60,7 @@ This sums most of what you can do with ``aioinflux``:
 .. code:: python
 
     import asyncio
-    from aioinflux import AsyncInfluxDBClient
+    from aioinflux import InfluxDBClient
 
     point = dict(time='2009-11-10T23:00:00Z',
                  measurement='cpu_load_short',
@@ -68,7 +68,7 @@ This sums most of what you can do with ``aioinflux``:
                        'region': 'us-west'},
                  fields={'value': 0.64})
 
-    client = AsyncInfluxDBClient(db='testdb')
+    client = InfluxDBClient(db='testdb')
 
     coros = [client.create_database(db='testdb'),
              client.write(point),
@@ -82,7 +82,7 @@ This sums most of what you can do with ``aioinflux``:
 Client modes
 ~~~~~~~~~~~~
 
-Despite its name, ``AsyncInfluxDBClient`` can also run in sync/blocking
+Despite its name, ``InfluxDBClient`` can also run in sync/blocking
 modes. Available modes are: ``async`` (default), ``blocking`` and
 ``dataframe``.
 
@@ -90,7 +90,7 @@ Example using ``blocking`` mode:
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(db='testdb', mode='blocking')
+    client = InfluxDBClient(db='testdb', mode='blocking')
     client.ping()
     client.write(point)
     client.query('SELECT value FROM cpu_load_short')
@@ -127,7 +127,7 @@ However, that dictionary must be properly formatted and contain the
 following keys:
 
 1) **measurement**: Optional. Must be a string-like object. If
-   omitted, must be specified when calling ``AsyncInfluxDBClient.write``
+   omitted, must be specified when calling ``InfluxDBClient.write``
    by passing a ``measurement`` argument.
 2) **time**: Optional. The value can be ``datetime.datetime``,
    date-like string (e.g., ``2017-01-01``, ``2009-11-10T23:00:00Z``) or
@@ -174,14 +174,14 @@ A typical DataFrame input should look something like the following:
     2017-06-24 14:45:17.929097+00:00  0.390137 -0.016709 -0.667895   E
 
 The measurement name must be specified with the ``measurement`` argument
-when calling ``AsyncInfluxDBClient.write``. Additional tags can also be
+when calling ``InfluxDBClient.write``. Additional tags can also be
 passed using arbitrary keyword arguments.
 
 **Example:**
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(db='testdb', mode='blocking')
+    client = InfluxDBClient(db='testdb', mode='blocking')
     client.write(df, measurement='prices', tag_columns=['tag'], asset_class='equities')
 
 In the example above, ``df`` is the DataFrame we are trying to write to
@@ -192,13 +192,13 @@ dataframe columns should be parsed as tag values. If ``tag_columns`` is
 not explicitly passed, all columns in the dataframe will be treated as
 InfluxDB field values.
 
-Any other keyword arguments passed to ``AsyncInfluxDBClient.write`` are
+Any other keyword arguments passed to ``InfluxDBClient.write`` are
 treated as extra tags which will be attached to the data being written
 to InfluxDB. Any string which is a valid `InfluxDB identifier`_ and
 valid `Python identifier`_ can be used as an extra tag key (with the
 exception of they strings ``data``, ``measurement`` and ``tag_columns``).
 
-See ``AsyncInfluxDBClient.write`` docstring for details.
+See ``InfluxDBClient.write`` docstring for details.
 
 .. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/latest/query_language/spec/#identifiers
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
@@ -207,7 +207,7 @@ Querying data
 ~~~~~~~~~~~~~
 
 Querying data is as simple as passing an InfluxDB query string to
-``AsyncInfluxDBClient.query``:
+``InfluxDBClient.query``:
 
 .. code:: python
 
@@ -237,7 +237,7 @@ containing the raw JSON data returned by the InfluxDB `HTTP API`_:
 Retrieving DataFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
-When the client is in ``dataframe`` mode, ``AsyncInfluxDBClient.query`` will
+When the client is in ``dataframe`` mode, ``InfluxDBClient.query`` will
 return a Pandas ``DataFrame``:
 
 
@@ -271,7 +271,7 @@ TODO
 Query patterns
 ^^^^^^^^^^^^^^
 
-Aioinflux provides some wrappers around ``AsyncInfluxDBClient.query`` in
+Aioinflux provides some wrappers around ``InfluxDBClient.query`` in
 order to provide convenient access in IPython/Jupyter to commonly used query patterns.
 
 Query patterns are query strings containing optional named "replacement fields"
@@ -282,7 +282,7 @@ associated with the query pattern.
 Aioinflux comes with some built-in query patterns, defined in `queries.yml`_.
 Users can define additional query patterns by using the |set_custom_queries|_ helper function.
 However, for one-off queries, passing a raw query to directly to
-``AsyncInfluxDBClient.query`` can be simpler.
+``InfluxDBClient.query`` can be simpler.
 
 Built-in query pattern examples:
 
@@ -308,11 +308,11 @@ Authentication
 ^^^^^^^^^^^^^^
 
 Aioinflux supports basic HTTP authentication provided by |basic_auth|_.
-Simply pass ``username`` and ``password`` when instantiating ``AsyncInfluxDBClient``:
+Simply pass ``username`` and ``password`` when instantiating ``InfluxDBClient``:
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(username='user', password='pass)
+    client = InfluxDBClient(username='user', password='pass)
 
 
 .. |basic_auth| replace:: ``aiohttp.BasicAuth``
@@ -323,11 +323,11 @@ Unix domain sockets
 ^^^^^^^^^^^^^^^^^^^
 
 If your InfluxDB server uses UNIX domain sockets you can use ``unix_socket``
-when instantiating ``AsyncInfluxDBClient``:
+when instantiating ``InfluxDBClient``:
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(unix_socket='/path/to/socket')
+    client = InfluxDBClient(unix_socket='/path/to/socket')
 
 See |unix_connector|_ for details.
 
@@ -338,23 +338,23 @@ See |unix_connector|_ for details.
 HTTPS/SSL
 ^^^^^^^^^
 Aioinflux/InfluxDB use HTTP by default, but HTTPS can be used by passing ``ssl=True``
-when instantiating ``AsyncInfluxDBClient``:
+when instantiating ``InfluxDBClient``:
 
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(host='my.host.io', ssl=True)
+    client = InfluxDBClient(host='my.host.io', ssl=True)
 
 
 Database selection
 ^^^^^^^^^^^^^^^^^^
 
-After the instantiation of the ``AsyncInfluxDBClient`` object, database
+After the instantiation of the ``InfluxDBClient`` object, database
 can be switched by changing the ``db`` attribute:
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(db='db1')
+    client = InfluxDBClient(db='db1')
     client.db = 'db2'
 
 Beware that differently from some NoSQL databases (such as MongoDB),
@@ -367,12 +367,12 @@ InfluxDB requires that a databases is explicitly created (by using the
 Switching modes
 ^^^^^^^^^^^^^^^
 
-After the instantiation of the ``AsyncInfluxDBClient`` object, database
+After the instantiation of the ``InfluxDBClient`` object, database
 can be switched on-the-fly by changing the ``mode`` attribute:
 
 .. code:: python
 
-    client = AsyncInfluxDBClient(mode='blocking')
+    client = InfluxDBClient(mode='blocking')
     client.mode = 'dataframe'
 
 
@@ -399,13 +399,13 @@ Implementation
 
 Since InfluxDB exposes all its functionality through an `HTTP
 API <https://docs.influxdata.com/influxdb/latest/tools/api/>`__,
-``AsyncInfluxDBClient`` tries to be nothing more than a thin and simple
+``InfluxDBClient`` tries to be nothing more than a thin and simple
 wrapper around that API.
 
 The InfluxDB HTTP API exposes exactly three endpoints/functions:
 ``ping``, ``write`` and ``query``.
 
-``AsyncInfluxDBClient`` merely wraps these three functions and provides
+``InfluxDBClient`` merely wraps these three functions and provides
 some parsing functionality for generating line protocol data (when
 writing) and parsing JSON responses (when querying).
 
