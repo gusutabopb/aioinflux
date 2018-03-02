@@ -117,6 +117,10 @@ class AsyncInfluxDBClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
+    def __del__(self):
+        if not self._loop.is_closed() and self._session and self.mode != 'async':
+            asyncio.ensure_future(self._session.close(), loop=self._loop)
+
     def __repr__(self):
         items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')]
         items.append(f'mode={self.mode}')
