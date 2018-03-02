@@ -278,7 +278,8 @@ order to provide convenient access in IPython/Jupyter to commonly used query pat
 Query patterns are query strings containing optional named "replacement fields"
 surrounded by curly braces ``{}``, just as in |str_format|_.
 Replacement field values are defined by keyword arguments when calling the method
-associated with the query pattern.
+associated with the query pattern. Differently from plain |str_format|, positional
+arguments are also supported and can be mixed with keyword arguments.
 
 Aioinflux comes with some built-in query patterns, defined in `queries.yml`_.
 Users can define additional query patterns by using the |set_custom_queries|_ helper function.
@@ -289,9 +290,12 @@ Built-in query pattern examples:
 
 .. code:: python
 
-    client.create_database(db='foo')            # CREATE DATABASE {db}
-    client.drop_measurement(measurement='bar')  # DROP MEASUREMENT {measurement}'
-    client.show_users()                         # SHOW USERS
+    client.create_database(db='foo')   # CREATE DATABASE {db}
+    client.drop_measurement('bar')     # DROP MEASUREMENT {measurement}'
+    client.show_users()                # SHOW USERS
+
+    # Positional and keyword arguments can be mixed
+    client.show_tag_values_from('bar', key='spam')  # SHOW TAG VALUES FROM {measurement} WITH key = "{key}"
 
 Please refer to InfluxDB documentation_ for further query-related information.
 

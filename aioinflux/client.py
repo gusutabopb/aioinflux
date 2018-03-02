@@ -174,13 +174,14 @@ class InfluxDBClient:
                 raise InfluxDBError(msg)
 
     @runner
-    async def query(self, q: AnyStr, db=None, epoch='ns',
+    async def query(self, q: AnyStr, *args, db=None, epoch='ns',
                     chunked=False, chunk_size=None, **kwargs) -> Union[AsyncGenerator, dict]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
         https://docs.influxdata.com/influxdb/latest/query_language/spec/#queries
 
         :param q: Raw query string
+        :param args: Positional arguments for query patterns
         :param db: Database parameter. Defaults to `self.db`
         :param epoch: Precision level of response timestamps.
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
@@ -193,7 +194,7 @@ class InfluxDBClient:
             return a single series.
         :param chunk_size: Max number of points for each chunk. InfluxDB chunks responses
             by series or by every 10,000 points, whichever occurs first.
-        :param kwargs: String interpolation arguments for partial methods
+        :param kwargs: Keyword arguments for query patterns
         :return: Returns an async generator if chunked is True, otherwise returns
             a dictionary containing the parsed JSON response.
         """
@@ -218,6 +219,9 @@ class InfluxDBClient:
                                 yield Point(*point)
 
         try:
+            if args:
+                fields = [i for i in re.findall('{(\w+)}', q) if i not in kwargs]
+                kwargs.update(dict(zip(fields, args)))
             db = self.db if db is None else db
             query = q.format(db=db, **kwargs)
         except KeyError as e:
@@ -256,7 +260,8 @@ def set_custom_queries(queries: Optional[Union[Mapping, Path, str]] = None, **kw
     Query patterns are passed as flat mappings (e.g. dictionary), where the key is name name of
     the desired new method representing the query pattern and the value is the actual query pattern.
     Query patterns are plain strings, with optional the named placed holders. Named placed holders
-    are processed as keyword arguments in ``str.format``. Positional arguments are not supported.
+    are processed as keyword arguments in ``str.format``.
+    Positional arguments are also supported.
 
     See queries.yml for examples.
 
@@ -275,7 +280,7 @@ def set_custom_queries(queries: Optional[Union[Mapping, Path, str]] = None, **kw
         if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
             warnings.warn(f'Ignoring invalid custom query: {query}')
             continue
-        f = partialmethod(InfluxDBClient.query, q=query)
+        f = partialmethod(InfluxDBClient.query, query)
         setattr(InfluxDBClient, name, f)
 
 

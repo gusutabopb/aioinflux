@@ -41,3 +41,13 @@ def test_read_dataframe_show_databases(df_client):
     assert isinstance(df.index, pd.RangeIndex)
     assert 'name' in df.columns
     logger.info(f'\n{df.head()}')
+
+
+# noinspection PyUnresolvedReferences
+def test_mixed_args_kwargs_query_pattern(df_client):
+    df1 = df_client.show_tag_values_from('m1', key='tag')
+    df2 = df_client.show_tag_values_from('m1', 'tag')
+    df3 = df_client.show_tag_values_from('tag', measurement='m1')
+    assert (df1 == df2).all().all()
+    assert (df1 == df3).all().all()
+    assert (df2 == df3).all().all()
