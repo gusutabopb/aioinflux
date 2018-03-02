@@ -178,7 +178,7 @@ class InfluxDBClient:
                     chunked=False, chunk_size=None, **kwargs) -> Union[AsyncGenerator, dict]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
-        https://docs.influxdata.com/influxdb/latest/query_language/spec/#queries
+        https://docs.influxdata.com/influxdb/latest/query_language/
 
         :param q: Raw query string
         :param args: Positional arguments for query patterns
@@ -254,10 +254,10 @@ class InfluxDBClient:
                     raise InfluxDBError(msg.format(d=statement))
 
 
-def set_custom_queries(queries: Optional[Union[Mapping, Path, str]] = None, **kwargs) -> None:
+def set_custom_queries(queries: Optional[Union[Path, str, dict]] = None, **kwargs) -> None:
     """Defines custom methods to provide quick access to commonly used query patterns.
 
-    Query patterns are passed as flat mappings (e.g. dictionary), where the key is name name of
+    Query patterns are passed as dictionaries, where the key is name name of
     the desired new method representing the query pattern and the value is the actual query pattern.
     Query patterns are plain strings, with optional the named placed holders. Named placed holders
     are processed as keyword arguments in ``str.format``.
@@ -265,7 +265,7 @@ def set_custom_queries(queries: Optional[Union[Mapping, Path, str]] = None, **kw
 
     See queries.yml for examples.
 
-    :param queries: Mapping (or path to YAML file) containing query patterns.
+    :param queries: Dictionary (or path to YAML file) containing query patterns.
         Can be used in conjunction with kwargs.
     :param kwargs: Alternative way to pass query patterns.
     """
