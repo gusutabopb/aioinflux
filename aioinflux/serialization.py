@@ -125,16 +125,25 @@ def make_df(resp) -> Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]:
             df.name = series['name']
         return df
 
+    def drop_zero_index(df):
+        if isinstance(df.index, pd.DatetimeIndex):
+            if all(i.value == 0 for i in df.index):
+                df.reset_index(drop=True, inplace=True)
+
     df_list = [(series['name'], maker(series))
                for statement in resp['results'] if 'series' in statement
                for series in statement['series']]
     if len(df_list) == 1:
+        drop_zero_index(df_list[0][1])
         return df_list[0][1]
     else:
         d = defaultdict(list)
         for k, df in sorted(df_list, key=lambda x: x[0]):
             d[k].append(df)
-        return {k: pd.concat(v, axis=0) for k, v in d.items()}
+        dfs = {k: pd.concat(v, axis=0) for k, v in d.items()}
+        for df in dfs.values():
+            drop_zero_index(df)
+        return dfs
 
 
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
