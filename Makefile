@@ -7,7 +7,7 @@ cov: test
 clean:
 	rm -rf build dist *.egg-info
 	rm -rf .cache htmlcov .coverage .pytest_cache
-	rm -f .DS_Store
+	rm -f .DS_Store README.html
 
 build: clean test
 	python setup.py sdist bdist_wheel
@@ -17,3 +17,6 @@ upload: build
 
 upload-test: build
 	twine upload --repository testpypi dist/*
+
+docs:
+	rst2html.py --stylesheet=../style.css README.rst README.html && open README.html
