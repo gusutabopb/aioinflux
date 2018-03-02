@@ -169,7 +169,8 @@ class InfluxDBClient:
             if resp.status == 204:
                 return True
             else:
-                msg = f'Error writing data. Response: {resp.status} | {resp.headers.get("X-Influxdb-Error", resp.reason)}'
+                msg = (f'Error writing data ({resp.status}): '
+                      f'{resp.headers.get("X-Influxdb-Error", resp.reason)}')
                 raise InfluxDBError(msg)
 
     @runner
