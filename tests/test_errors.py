@@ -1,7 +1,7 @@
 import pytest
 
 from aioinflux import testing_utils as utils
-from aioinflux import InfluxDBClient, InfluxDBError, logger, set_custom_queries
+from aioinflux import InfluxDBClient, InfluxDBError, logger, set_query_pattern
 
 
 def test_invalid_data_write(sync_client):
@@ -47,7 +47,7 @@ def test_invalid_query(sync_client):
 
 def test_invalid_query_pattern():
     with pytest.warns(UserWarning) as e:
-        set_custom_queries(my_query='SELECT {q} from {epoch}')
+        set_query_pattern(my_query='SELECT {q} from {epoch}')
     logger.warning(e)
 
 

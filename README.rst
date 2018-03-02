@@ -282,7 +282,7 @@ associated with the query pattern. Differently from plain |str_format|, position
 arguments are also supported and can be mixed with keyword arguments.
 
 Aioinflux comes with some built-in query patterns, defined in `queries.yml`_.
-Users can define additional query patterns by using the |set_custom_queries|_ helper function.
+Users can define additional query patterns by using the |set_qp|_ helper function.
 However, for one-off queries, passing a raw query to directly to
 ``InfluxDBClient.query`` can be simpler.
 
@@ -303,8 +303,8 @@ Please refer to InfluxDB documentation_ for further query-related information.
 .. _documentation: https://docs.influxdata.com/influxdb/latest/query_language/
 .. |str_format| replace:: ``str_format()``
 .. _str_format: https://docs.python.org/3/library/string.html#formatstrings
-.. |set_custom_queries| replace:: ``aioinflux.set_custom_queries``
-.. _set_custom_queries: aioinflux/client.py#L240
+.. |set_qp| replace:: ``aioinflux.set_query_pattern``
+.. _set_qp: aioinflux/client.py#L257
 
 Other functionality
 ~~~~~~~~~~~~~~~~~~~

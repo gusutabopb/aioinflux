@@ -254,7 +254,7 @@ class InfluxDBClient:
                     raise InfluxDBError(msg.format(d=statement))
 
 
-def set_custom_queries(queries: Optional[Union[Path, str, dict]] = None, **kwargs) -> None:
+def set_query_pattern(queries: Optional[Union[Path, str, dict]] = None, **kwargs) -> None:
     """Defines custom methods to provide quick access to commonly used query patterns.
 
     Query patterns are passed as dictionaries, where the key is name name of
@@ -278,11 +278,11 @@ def set_custom_queries(queries: Optional[Union[Path, str, dict]] = None, **kwarg
     restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
     for name, query in {**queries, **kwargs}.items():
         if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
-            warnings.warn(f'Ignoring invalid custom query: {query}')
+            warnings.warn(f'Ignoring invalid query pattern: {query}')
             continue
         f = partialmethod(InfluxDBClient.query, query)
         setattr(InfluxDBClient, name, f)
 
 
 # Loads built-in query patterns
-set_custom_queries(Path(__file__).parent / 'queries.yml')
+set_query_pattern(Path(__file__).parent / 'queries.yml')
