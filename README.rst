@@ -272,8 +272,8 @@ TODO
 Query patterns
 ^^^^^^^^^^^^^^
 
-Aioinflux provides some wrappers around ``InfluxDBClient.query`` in
-order to provide convenient access in IPython/Jupyter to commonly used query patterns.
+Aioinflux provides a wrapping mechanism around ``InfluxDBClient.query`` in
+order to provide convenient access to commonly used query patterns.
 
 Query patterns are query strings containing optional named "replacement fields"
 surrounded by curly braces ``{}``, just as in |str_format|_.
@@ -281,10 +281,14 @@ Replacement field values are defined by keyword arguments when calling the metho
 associated with the query pattern. Differently from plain |str_format|, positional
 arguments are also supported and can be mixed with keyword arguments.
 
-Aioinflux comes with some built-in query patterns, defined in `queries.yml`_.
-Users can define additional query patterns by using the |set_qp|_ helper function.
-However, for one-off queries, passing a raw query to directly to
-``InfluxDBClient.query`` can be simpler.
+Aioinflux built-in query patterns are defined here_.
+Users can also dynamically define additional query patterns by using
+the |set_qp|_ helper function.
+User-defined query patterns have the disadvantage of not being shown for
+auto-completion in IDEs such as Pycharm.
+However, they do show up in dynamic environments such as Jupyter.
+If you have a query pattern that you think will used by many people and should be built-in,
+please submit a PR.
 
 Built-in query pattern examples:
 
@@ -299,12 +303,12 @@ Built-in query pattern examples:
 
 Please refer to InfluxDB documentation_ for further query-related information.
 
-.. _`queries.yml`: aioinflux/queries.yml
+.. _here: aioinflux/client.py#L254
 .. _documentation: https://docs.influxdata.com/influxdb/latest/query_language/
 .. |str_format| replace:: ``str_format()``
 .. _str_format: https://docs.python.org/3/library/string.html#formatstrings
 .. |set_qp| replace:: ``aioinflux.set_query_pattern``
-.. _set_qp: aioinflux/client.py#L257
+.. _set_qp: aioinflux/client.py#L269
 
 Other functionality
 ~~~~~~~~~~~~~~~~~~~

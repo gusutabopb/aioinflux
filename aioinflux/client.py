@@ -4,14 +4,12 @@ import logging
 import re
 import warnings
 from collections import namedtuple, AsyncGenerator
-from functools import partialmethod, wraps
-from pathlib import Path
+from functools import wraps, partialmethod as pm
 from typing import Union, AnyStr, Mapping, Iterable, Optional
 from urllib.parse import urlencode
 
 import aiohttp
 import pandas as pd
-import yaml
 
 from .serialization import parse_data, make_df
 
@@ -253,36 +251,43 @@ class InfluxDBClient:
                     msg = '{d[error]} (statement {d[statement_id]})'
                     raise InfluxDBError(msg.format(d=statement))
 
+    # Built-in query patterns
+    create_database = pm(query, "CREATE DATABASE {db}")
+    drop_database = pm(query, "DROP DATABASE {db}")
+    drop_measurement = pm(query, "DROP MEASUREMENT {measurement}")
+    show_databases = pm(query, "SHOW DATABASES")
+    show_measurements = pm(query, "SHOW MEASUREMENTS")
+    show_retention_policies= pm(query, "SHOW RETENTION POLICIES")
+    show_users = pm(query, "SHOW USERS")
+    select_all = pm(query, "SELECT * FROM {measurement}")
+    show_tag_keys =  pm(query, "SHOW TAG KEYS")
+    show_tag_values =  pm(query, 'SHOW TAG VALUES WITH key = "{key}"')
+    show_tag_keys_from = pm(query, "SHOW TAG KEYS FROM {measurement}")
+    show_tag_values_from = pm(query, 'SHOW TAG VALUES FROM {measurement} WITH key = "{key}"')
 
-def set_query_pattern(queries: Optional[Union[Path, str, dict]] = None, **kwargs) -> None:
+
+def set_query_pattern(queries: Optional[Mapping] = None, **kwargs) -> None:
     """Defines custom methods to provide quick access to commonly used query patterns.
 
-    Query patterns are passed as dictionaries, where the key is name name of
+    Query patterns are passed as mappings, where the key is name name of
     the desired new method representing the query pattern and the value is the actual query pattern.
     Query patterns are plain strings, with optional the named placed holders. Named placed holders
-    are processed as keyword arguments in ``str.format``.
-    Positional arguments are also supported.
+    are processed as keyword arguments in ``str.format``. Positional arguments are also supported.
 
-    See queries.yml for examples.
+    Sample query pattern dictionary:
+    {"host_load": "SELECT mean(load) FROM cpu_stats WHERE host = '{host}' AND time > now() - {days}d",
+     "peak_load": "SELECT max(load) FROM cpu_stats WHERE host = '{host}' GROUP BY time(1d),host"}
 
-    :param queries: Dictionary (or path to YAML file) containing query patterns.
+    :param queries: Mapping (e.g. dictionary) containing query patterns.
         Can be used in conjunction with kwargs.
     :param kwargs: Alternative way to pass query patterns.
     """
     if queries is None:
         queries = {}
-    elif not isinstance(queries, dict):
-        with Path(queries).open() as f:
-            queries = yaml.load(f)
-
     restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
     for name, query in {**queries, **kwargs}.items():
         if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
             warnings.warn(f'Ignoring invalid query pattern: {query}')
             continue
-        f = partialmethod(InfluxDBClient.query, query)
+        f = pm(InfluxDBClient.query, query)
         setattr(InfluxDBClient, name, f)
-
-
-# Loads built-in query patterns
-set_query_pattern(Path(__file__).parent / 'queries.yml')
