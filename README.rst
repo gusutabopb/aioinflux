@@ -163,7 +163,7 @@ for the dataframe is that the index **must** be of type
 ``DatetimeIndex``. Also, any column whose ``dtype`` is ``object`` will
 be converted to a string representation.
 
-A typical DataFrame input should look something like the following:
+A typical dataframe input should look something like the following:
 
 .. code:: text
 
@@ -185,7 +185,7 @@ passed using arbitrary keyword arguments.
     client = InfluxDBClient(db='testdb', mode='blocking')
     client.write(df, measurement='prices', tag_columns=['tag'], asset_class='equities')
 
-In the example above, ``df`` is the DataFrame we are trying to write to
+In the example above, ``df`` is the dataframe we are trying to write to
 InfluxDB and ``measurement`` is the measurement we are writing to.
 
 ``tag_columns`` is in an optional iterable telling which of the
@@ -215,7 +215,7 @@ Querying data is as simple as passing an InfluxDB query string to
     client.query('SELECT myfield FROM mymeasurement')
 
 The result (in ``blocking`` and ``async`` modes) is a dictionary
-containing the raw JSON data returned by the InfluxDB `HTTP API`_:
+containing the parsed JSON data returned by the InfluxDB `HTTP API`_:
 
 .. _`HTTP API`: https://docs.influxdata.com/influxdb/latest/guides/querying_data/#querying-data-using-the-http-api
 
@@ -266,8 +266,72 @@ simply |changing_mode|_.
 
 Chunked responses
 ^^^^^^^^^^^^^^^^^
+Aioinfux support InfluxDB chunked queries. Passing ``chunked=True`` when calling
+``InfluxDBClient.query``, returns an AsyncGenerator object, which can asynchronously
+iterated. Using chunked requests allows response processing to be partially done before
+the full response is retrieved, reducing overall query time.
 
-TODO
+.. code:: python
+
+    chunks = await client.query("SELECT * FROM mymeasurement", chunked=True)
+    async for chunk in chunks:
+        # do something
+        await process_chunk(...)
+
+
+Iterating responses
+^^^^^^^^^^^^^^^^^^^
+
+In ``async`` and ``blocking`` modes, ``InfluxDBClient.query`` returns a parsed JSON response
+from InfluxDB. In order to easily iterate over that JSON response point by point, Aioinflux
+provides the ``iter_resp`` generator:
+
+.. code:: python
+
+    from aioinflux import iter_resp
+
+    r = client.query('SELECT * from h2o_quality LIMIT 10')
+    for i in iter_resp(r):
+        print(i)
+
+.. code:: text
+
+    [1439856000000000000, 41, 'coyote_creek', '1']
+    [1439856000000000000, 99, 'santa_monica', '2']
+    [1439856360000000000, 11, 'coyote_creek', '3']
+    [1439856360000000000, 56, 'santa_monica', '2']
+    [1439856720000000000, 65, 'santa_monica', '3']
+
+``iter_resp`` can also be used with chunked responses:
+
+.. code:: python
+
+    chunks = await client.query('SELECT * from h2o_quality', chunked=True)
+    async for chunk in chunks:
+        for point in iter_resp(chunk):
+            # do something
+
+By default, ``iter_resp`` yields a plain list of values without doing any expensive parsing.
+However, in case a specific format is needed, an optional ``parser`` argument can be passed.
+``parser`` is a function that takes the raw value list for each data point and an additional
+metadata dictionary containing all or a subset of the following:
+``{'columns', 'name', 'tags', 'statement_id'}``.
+
+
+.. code:: python
+
+    r = await client.query('SELECT * from h2o_quality LIMIT 5')
+    for i in iter_resp(r, lambda x, meta: dict(zip(meta['columns'], x))):
+        print(i)
+
+.. code:: text
+
+    {'time': 1439856000000000000, 'index': 41, 'location': 'coyote_creek', 'randtag': '1'}
+    {'time': 1439856000000000000, 'index': 99, 'location': 'santa_monica', 'randtag': '2'}
+    {'time': 1439856360000000000, 'index': 11, 'location': 'coyote_creek', 'randtag': '3'}
+    {'time': 1439856360000000000, 'index': 56, 'location': 'santa_monica', 'randtag': '2'}
+    {'time': 1439856720000000000, 'index': 65, 'location': 'santa_monica', 'randtag': '3'}
+
 
 Query patterns
 ^^^^^^^^^^^^^^
