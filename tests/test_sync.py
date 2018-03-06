@@ -1,8 +1,7 @@
-import pytest
-
 import aioinflux.testing_utils as utils
-from aioinflux.client import logger
 import numpy as np
+import pytest
+from aioinflux.client import logger
 
 
 def test_ping(sync_client):

@@ -1,7 +1,7 @@
 import pytest
 
 import aioinflux.testing_utils as utils
-from aioinflux import logger, InfluxDBError
+from aioinflux import logger, InfluxDBError, iter_resp
 
 
 @pytest.mark.asyncio
@@ -30,7 +30,10 @@ async def test_simple_query(async_client):
 @pytest.mark.asyncio
 async def test_chunked_query(async_client):
     resp = await async_client.select_all(measurement='test_measurement', chunked=True, chunk_size=10)
-    points = [i async for i in resp]
+    points = []
+    async for chunk in resp:
+        for point in iter_resp(chunk):
+            points.append(point)
     assert len(points) == 100
 
 
@@ -45,7 +48,10 @@ async def test_chunked_query_error(async_client):
 @pytest.mark.asyncio
 async def test_empty_chunked_query(async_client):
     resp = await async_client.select_all(measurement='fake', chunked=True, chunk_size=10)
-    points = [i async for i in resp]
+    points = []
+    async for chunk in resp:
+        for point in iter_resp(chunk):
+            points.append(point)
     assert len(points) == 0
 
 
