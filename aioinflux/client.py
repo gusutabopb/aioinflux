@@ -192,6 +192,7 @@ class InfluxDBClient:
         :return: Returns an async generator if chunked is ``True``, otherwise returns
             a dictionary containing the parsed JSON response.
         """
+
         async def _chunked_generator(url, data):
             async with self._session.post(url, data=data) as resp:
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
@@ -243,11 +244,11 @@ class InfluxDBClient:
     drop_measurement = pm(query, "DROP MEASUREMENT {measurement}")
     show_databases = pm(query, "SHOW DATABASES")
     show_measurements = pm(query, "SHOW MEASUREMENTS")
-    show_retention_policies= pm(query, "SHOW RETENTION POLICIES")
+    show_retention_policies = pm(query, "SHOW RETENTION POLICIES")
     show_users = pm(query, "SHOW USERS")
     select_all = pm(query, "SELECT * FROM {measurement}")
-    show_tag_keys =  pm(query, "SHOW TAG KEYS")
-    show_tag_values =  pm(query, 'SHOW TAG VALUES WITH key = "{key}"')
+    show_tag_keys = pm(query, "SHOW TAG KEYS")
+    show_tag_values = pm(query, 'SHOW TAG VALUES WITH key = "{key}"')
     show_tag_keys_from = pm(query, "SHOW TAG KEYS FROM {measurement}")
     show_tag_values_from = pm(query, 'SHOW TAG VALUES FROM {measurement} WITH key = "{key}"')
 
@@ -279,7 +280,7 @@ def set_query_pattern(queries: Optional[Mapping] = None, **kwargs) -> None:
         setattr(InfluxDBClient, name, f)
 
 
-def iter_resp(resp: dict, parser: Optional[Callable]=None) -> Generator:
+def iter_resp(resp: dict, parser: Optional[Callable] = None) -> Generator:
     """Iterates a response JSON yielding data point by point.
 
     Can be used with both regular and chunked responses.

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from aioinflux import InfluxDBClient, logger
+from aioinflux import InfluxDBClient
 
 with open(Path(__file__).parent / 'logging.yml') as f:
     logging.config.dictConfig(yaml.load(f))
