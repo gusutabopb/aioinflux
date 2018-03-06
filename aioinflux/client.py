@@ -3,9 +3,9 @@ import json
 import logging
 import re
 import warnings
-from collections import namedtuple, AsyncGenerator
 from functools import wraps, partialmethod as pm
-from typing import Union, AnyStr, Mapping, Iterable, Optional
+from typing import (Union, AnyStr, Mapping, Iterable,
+                    Optional, Generator, Callable, AsyncGenerator)
 from urllib.parse import urlencode
 
 import aiohttp
@@ -183,38 +183,24 @@ class InfluxDBClient:
         :param db: Database parameter. Defaults to `self.db`
         :param epoch: Precision level of response timestamps.
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
-        :param chunked: Retrieves the points in streamed batches instead of in a single
-            response and returns an AsyncGenerator which will yield point by point as
-            a Point namedtuple.  Non-alphanumeric field names are not supported.
-            WARNING: If there are more than one series in your query result
-            points may not be yielded in the correct ascending/descending order
-            If client side codes depends on such behavior, make sure queries will only
-            return a single series.
-        :param chunk_size: Max number of points for each chunk. InfluxDB chunks responses
-            by series or by every 10,000 points, whichever occurs first.
+        :param chunked: If ``True``, makes InfluxDB return results in streamed batches
+            rather than as a single response. Returns an AsyncGenerator which yields responses
+            in the same format as non-chunked queries.
+        :param chunk_size: Max number of points for each chunk. By default, InfluxDB chunks
+            responses by series or by every 10,000 points, whichever occurs first.
         :param kwargs: Keyword arguments for query patterns
-        :return: Returns an async generator if chunked is True, otherwise returns
+        :return: Returns an async generator if chunked is ``True``, otherwise returns
             a dictionary containing the parsed JSON response.
         """
-
         async def _chunked_generator(url, data):
             async with self._session.post(url, data=data) as resp:
+                # Hack to avoid aiohttp raising ValueError('Line is too long')
+                # The number 16 is arbitrary (may be too large/small).
+                resp.content._high_water *= 16
                 async for chunk in resp.content:
                     chunk = json.loads(chunk)
-                    if 'error' in chunk:
-                        raise InfluxDBError(chunk)
-                    for statement in chunk['results']:
-                        if 'series' not in statement:
-                            continue
-                        for series in statement['series']:
-                            # Non-alphanumeric field names are not supported for namedtuples
-                            # If that is a problem, a regular tuple can be yielded instead:
-                            # e.g., tuple(zip(series['columns'], point))
-                            field_names = [re.sub('[^0-9a-zA-Z]+', '_', col)
-                                           for col in series['columns']]
-                            Point = namedtuple('Point', field_names)
-                            for point in series['values']:
-                                yield Point(*point)
+                    self._check_error(chunk)
+                    yield chunk
 
         try:
             if args:
@@ -291,3 +277,36 @@ def set_query_pattern(queries: Optional[Mapping] = None, **kwargs) -> None:
             continue
         f = pm(InfluxDBClient.query, query)
         setattr(InfluxDBClient, name, f)
+
+
+def iter_resp(resp: dict, parser: Optional[Callable]=None) -> Generator:
+    """Iterates a response JSON yielding data point by point.
+
+    Can be used with both regular and chunked responses.
+    By default, returns just a plain list of values representing each point,
+    without column names, or other metadata.
+
+    In case a specific format is needed, an optional ``parser`` argument can be passed.
+    ``parser`` is a function that takes raw value list for each data point and a
+    metadata dictionary containing all or a subset of the following:
+    ``{'columns', 'name', 'tags', 'statement_id'}``.
+
+    Sample parser function:
+    .. code:: python
+        def parser(x, meta):
+            return dict(zip(meta['columns'], x))
+
+    :param resp: Dictionary containing parsed JSON (output from InfluxDBClient.query)
+    :param parser: Optional parser function
+    """
+    for statement in resp['results']:
+        if 'series' not in statement:
+            continue
+        for series in statement['series']:
+            meta = {k: series[k] for k in series if k != 'values'}
+            meta['statement_id'] = statement['statement_id']
+            for point in series['values']:
+                if parser is None:
+                    yield point
+                else:
+                    yield parser(point, meta)
