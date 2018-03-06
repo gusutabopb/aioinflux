@@ -1,10 +1,10 @@
 import inspect
 
-from aioinflux.client import set_query_pattern, iter_resp, logger
+from aioinflux.client import iter_resp, logger
 
 
 def test_set_query_patterns(sync_client):
-    set_query_pattern(my_query='SELECT * FROM my_measurement WHERE time > now() - {day}d')
+    sync_client.set_query_pattern(my_query='SELECT * FROM my_measurement WHERE time > now() - {day}d')
     assert inspect.ismethod(sync_client.my_query.func)
     assert sync_client.my_query(1)
 

@@ -252,32 +252,31 @@ class InfluxDBClient:
     show_tag_keys_from = pm(query, "SHOW TAG KEYS FROM {measurement}")
     show_tag_values_from = pm(query, 'SHOW TAG VALUES FROM {measurement} WITH key = "{key}"')
 
+    @classmethod
+    def set_query_pattern(cls, queries: Optional[Mapping] = None, **kwargs) -> None:
+        """Defines custom methods to provide quick access to commonly used query patterns.
 
-def set_query_pattern(queries: Optional[Mapping] = None, **kwargs) -> None:
-    """Defines custom methods to provide quick access to commonly used query patterns.
+        Query patterns are passed as mappings, where the key is name name of
+        the desired new method representing the query pattern and the value is the actual query pattern.
+        Query patterns are plain strings, with optional the named placed holders. Named placed holders
+        are processed as keyword arguments in ``str.format``. Positional arguments are also supported.
 
-    Query patterns are passed as mappings, where the key is name name of
-    the desired new method representing the query pattern and the value is the actual query pattern.
-    Query patterns are plain strings, with optional the named placed holders. Named placed holders
-    are processed as keyword arguments in ``str.format``. Positional arguments are also supported.
+        Sample query pattern dictionary:
+        {"host_load": "SELECT mean(load) FROM cpu_stats WHERE host = '{host}' AND time > now() - {days}d",
+         "peak_load": "SELECT max(load) FROM cpu_stats WHERE host = '{host}' GROUP BY time(1d),host"}
 
-    Sample query pattern dictionary:
-    {"host_load": "SELECT mean(load) FROM cpu_stats WHERE host = '{host}' AND time > now() - {days}d",
-     "peak_load": "SELECT max(load) FROM cpu_stats WHERE host = '{host}' GROUP BY time(1d),host"}
-
-    :param queries: Mapping (e.g. dictionary) containing query patterns.
-        Can be used in conjunction with kwargs.
-    :param kwargs: Alternative way to pass query patterns.
-    """
-    if queries is None:
-        queries = {}
-    restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
-    for name, query in {**queries, **kwargs}.items():
-        if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
-            warnings.warn(f'Ignoring invalid query pattern: {query}')
-            continue
-        f = pm(InfluxDBClient.query, query)
-        setattr(InfluxDBClient, name, f)
+        :param queries: Mapping (e.g. dictionary) containing query patterns.
+            Can be used in conjunction with kwargs.
+        :param kwargs: Alternative way to pass query patterns.
+        """
+        if queries is None:
+            queries = {}
+        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
+        for name, query in {**queries, **kwargs}.items():
+            if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
+                warnings.warn(f'Ignoring invalid query pattern: {query}')
+                continue
+            setattr(cls, name, pm(cls.query, query))
 
 
 def iter_resp(resp: dict, parser: Optional[Callable] = None) -> Generator:
