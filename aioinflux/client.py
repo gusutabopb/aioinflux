@@ -12,8 +12,10 @@ import aiohttp
 import pandas as pd
 
 from .serialization import parse_data, make_df
+from .iterutils import InfluxDBResult, InfluxDBChunkedResult
 
 PointType = Union[AnyStr, Mapping, pd.DataFrame]
+ResultType = Union[AsyncGenerator, dict, InfluxDBResult, InfluxDBChunkedResult]
 
 # Aioinflux uses logging mainly for debugging purposes.
 # Please attach your own handlers if you need logging.
@@ -172,8 +174,15 @@ class InfluxDBClient:
                 raise InfluxDBError(msg)
 
     @runner
-    async def query(self, q: AnyStr, *args, db=None, epoch='ns',
-                    chunked=False, chunk_size=None, **kwargs) -> Union[AsyncGenerator, dict]:
+    async def query(self, q: AnyStr,
+                    *args,
+                    epoch: str = 'ns',
+                    chunked: bool = False,
+                    chunk_size: Optional[int] = None,
+                    db: Optional[str] = None,
+                    wrap: bool = False,
+                    parser: Optional[Callable] = None,
+                    **kwargs) -> ResultType:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
         https://docs.influxdata.com/influxdb/latest/query_language/
@@ -189,6 +198,9 @@ class InfluxDBClient:
         :param chunk_size: Max number of points for each chunk. By default, InfluxDB chunks
             responses by series or by every 10,000 points, whichever occurs first.
         :param kwargs: Keyword arguments for query patterns
+        :param wrap: If ``True`` returns the response wrapped in a
+            ``InfluxDBResponse`` or ``InfluxDBChunkedResponse`` object.
+        :param parser: Optional parser function passed to the response wrapper
         :return: Returns an async generator if chunked is ``True``, otherwise returns
             a dictionary containing the parsed JSON response.
         """
@@ -218,13 +230,18 @@ class InfluxDBClient:
 
         url = self._url.format(endpoint='query')
         if chunked:
-            return _chunked_generator(url, data)
+            g = _chunked_generator(url, data)
+            if wrap:
+                return InfluxDBChunkedResult(g, parser=parser, query=query)
+            return g
 
         async with self._session.post(url, data=data) as resp:
             logger.debug(resp)
             output = await resp.json()
             logger.debug(output)
             self._check_error(output)
+            if wrap:
+                return InfluxDBResult(output, parser=parser, query=query)
             return output
 
     @staticmethod
