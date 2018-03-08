@@ -22,7 +22,7 @@ class InfluxDBResult:
         return sum(self._count())
 
     def __repr__(self):
-        q = self.query[:50] + '...' if len(self.query) > 50 else ''
+        q = self.query[:50] + '...' if len(self.query) > 50 else self.query
         return f'<{type(self).__name__} [q="{q}"]>'
 
     def __iter__(self):
@@ -47,7 +47,7 @@ class InfluxDBChunkedResult:
         return self._gen
 
     def __repr__(self):
-        q = self.query[:50] + '...' if len(self.query) > 50 else ''
+        q = self.query[:50] + '...' if len(self.query) > 50 else self.query
         return f'<{type(self).__name__} [q="{q}"]>'
 
     def __aiter__(self):
