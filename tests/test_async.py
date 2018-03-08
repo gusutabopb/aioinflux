@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 
 import aioinflux.testing_utils as utils
@@ -54,6 +56,15 @@ async def test_empty_chunked_query(async_client):
         for point in iterpoints(chunk):
             points.append(point)
     assert len(points) == 0
+
+
+@pytest.mark.asyncio
+async def test_set_query_patterns(async_client):
+    async_client.set_query_pattern(my_query='SELECT * FROM test_measurement WHERE time > now() - {day}d')
+    assert inspect.ismethod(async_client.my_query.func)
+    coro = async_client.my_query(1)
+    assert inspect.iscoroutine(coro)
+    assert await coro
 
 
 @pytest.mark.asyncio
