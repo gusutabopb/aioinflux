@@ -5,7 +5,7 @@ import re
 import warnings
 from functools import wraps, partialmethod as pm
 from typing import (Union, AnyStr, Mapping, Iterable,
-                    Optional, Generator, Callable, AsyncGenerator)
+                    Optional, Callable, AsyncGenerator)
 from urllib.parse import urlencode
 
 import aiohttp
@@ -277,36 +277,3 @@ class InfluxDBClient:
                 warnings.warn(f'Ignoring invalid query pattern: {query}')
                 continue
             setattr(cls, name, pm(cls.query, query))
-
-
-def iter_resp(resp: dict, parser: Optional[Callable] = None) -> Generator:
-    """Iterates a response JSON yielding data point by point.
-
-    Can be used with both regular and chunked responses.
-    By default, returns just a plain list of values representing each point,
-    without column names, or other metadata.
-
-    In case a specific format is needed, an optional ``parser`` argument can be passed.
-    ``parser`` is a function that takes raw value list for each data point and a
-    metadata dictionary containing all or a subset of the following:
-    ``{'columns', 'name', 'tags', 'statement_id'}``.
-
-    Sample parser function:
-    .. code:: python
-        def parser(x, meta):
-            return dict(zip(meta['columns'], x))
-
-    :param resp: Dictionary containing parsed JSON (output from InfluxDBClient.query)
-    :param parser: Optional parser function
-    """
-    for statement in resp['results']:
-        if 'series' not in statement:
-            continue
-        for series in statement['series']:
-            meta = {k: series[k] for k in series if k != 'values'}
-            meta['statement_id'] = statement['statement_id']
-            for point in series['values']:
-                if parser is None:
-                    yield point
-                else:
-                    yield parser(point, meta)
