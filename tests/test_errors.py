@@ -39,6 +39,12 @@ def test_invalid_client_mode():
     logger.error(e)
 
 
+def test_chunked_dataframe(df_client):
+    with pytest.raises(ValueError) as e:
+        _ = df_client.select_all('foo', chunked=True)
+    logger.error(e)
+
+
 def test_invalid_query(sync_client):
     with pytest.raises(InfluxDBError) as e:
         sync_client.query('NOT A VALID QUERY')

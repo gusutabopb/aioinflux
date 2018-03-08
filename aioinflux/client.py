@@ -230,6 +230,8 @@ class InfluxDBClient:
 
         url = self._url.format(endpoint='query')
         if chunked:
+            if self.mode != 'async':
+                raise ValueError("Can't use 'chunked' with non-async mode")
             g = _chunked_generator(url, data)
             if wrap:
                 return InfluxDBChunkedResult(g, parser=parser, query=query)
@@ -240,7 +242,7 @@ class InfluxDBClient:
             output = await resp.json()
             logger.debug(output)
             self._check_error(output)
-            if wrap:
+            if wrap and self.mode != 'dataframe':
                 return InfluxDBResult(output, parser=parser, query=query)
             return output
 
