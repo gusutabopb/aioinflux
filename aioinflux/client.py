@@ -290,7 +290,7 @@ class InfluxDBClient:
         """
         if queries is None:
             queries = {}
-        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
+        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'wrap', 'parser')
         for name, query in {**queries, **kwargs}.items():
             if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
                 warnings.warn(f'Ignoring invalid query pattern: {query}')
