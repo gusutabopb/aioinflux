@@ -40,3 +40,17 @@ def random_dataframe():
 
 def random_string():
     return ''.join(random.choices(string.ascii_lowercase, k=random.randint(4, 10)))
+
+
+def cpu_load_generator(n):
+    p = 'cpu_load,direction={d},host=server{s:02d},region=us-{r} value={f:.5f} {t}'
+    t = 1520535379386016000
+    d = ['in', 'out']
+    r = ['north', 'south', 'west', 'east']
+    for _ in range(n):
+        t += random.randint(1, 10**10)
+        yield p.format(t=t,
+                       d=random.choice(d),
+                       r=random.choice(r),
+                       s=random.randint(1, 99),
+                       f=random.random() * 10)
