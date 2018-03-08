@@ -1,6 +1,6 @@
 import inspect
 
-from aioinflux.client import iter_resp, logger
+from aioinflux import iterpoints, logger
 
 
 def test_set_query_patterns(sync_client):
@@ -9,11 +9,11 @@ def test_set_query_patterns(sync_client):
     assert sync_client.my_query(1)
 
 
-def test_iter_resp_with_parser(sync_client):
+def test_iterpoints_with_parser(sync_client):
     point = 'm1,host=server02,region=us-west load=0.55 1422568543702900257'
     assert sync_client.write(point)
     r = sync_client.query("SELECT * FROM m1 LIMIT 10")
-    for i in iter_resp(r, parser=lambda x, meta: dict(zip(meta['columns'], x))):
+    for i in iterpoints(r, parser=lambda x, meta: dict(zip(meta['columns'], x))):
         logger.info(i)
         assert 'time' in i
         assert 'load' in i
