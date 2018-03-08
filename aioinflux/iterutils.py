@@ -14,10 +14,6 @@ class InfluxDBResult:
         return self._data
 
     @property
-    def data(self):
-        return self._data
-
-    @property
     def series_count(self):
         return len(self._count())
 
@@ -33,7 +29,7 @@ class InfluxDBResult:
         return iterpoints(self.data, parser=self.parser)
 
     def _count(self):
-        return [len(series)
+        return [len(series['values'])
                 for statement in self._data['results'] if 'series' in statement
                 for series in statement['series']]
 
