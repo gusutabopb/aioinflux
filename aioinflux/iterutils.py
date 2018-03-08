@@ -28,6 +28,9 @@ class InfluxDBResult:
     def __iter__(self):
         return iterpoints(self.data, parser=self.parser)
 
+    def show(self):
+        return list(self)
+
     def _count(self):
         return [len(series['values'])
                 for statement in self._data['results'] if 'series' in statement

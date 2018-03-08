@@ -58,7 +58,4 @@ async def test_iter_wrap(iter_client):
     resp = await iter_client.select_all(measurement='cpu_load', wrap=True)
     assert 'results' in resp.data
     logger.info(resp)
-    points = []
-    for point in resp:
-        points.append(point)
-    assert len(points) == len(resp)
+    assert len(resp.show()) == len(resp)
