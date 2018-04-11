@@ -1,5 +1,5 @@
 test:
-	pytest --verbose --cov=aioinflux --cov-report html tests/
+	pytest --verbose --cov=aioinflux --cov-append --cov-report html tests/
 
 cov: test
 	open htmlcov/index.html
