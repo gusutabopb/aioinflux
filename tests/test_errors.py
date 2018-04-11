@@ -22,6 +22,9 @@ def test_invalid_data_write(sync_client):
         sync_client.write(point)
     logger.error(e)
 
+
+@utils.requires_pandas
+def test_invalid_data_write_dataframe(sync_client):
     with pytest.raises(ValueError) as e:
         # Non-DatetimeIndex DataFrame
         sync_client.write(utils.random_dataframe().reset_index(), measurement='foo')
@@ -39,6 +42,7 @@ def test_invalid_client_mode():
     logger.error(e)
 
 
+@utils.requires_pandas
 def test_chunked_dataframe(df_client):
     with pytest.raises(ValueError) as e:
         _ = df_client.select_all('foo', chunked=True)

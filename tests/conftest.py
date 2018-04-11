@@ -5,8 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from aioinflux import InfluxDBClient
-from aioinflux.testing_utils import cpu_load_generator
+from aioinflux import InfluxDBClient, testing_utils as utils
 
 with open(Path(__file__).parent / 'logging.yml') as f:
     logging.config.dictConfig(yaml.load(f))
@@ -38,6 +37,8 @@ async def async_client():
 
 @pytest.fixture(scope='module')
 def df_client():
+    if utils.pd is None:
+        return
     with InfluxDBClient(db='mytestdb', mode='dataframe') as client:
         client.create_database()
         yield client
@@ -48,6 +49,6 @@ def df_client():
 async def iter_client():
     async with InfluxDBClient(db='cpu', mode='async') as client:
         await client.create_database()
-        await client.write([p for p in cpu_load_generator(100)])
+        await client.write([p for p in utils.cpu_load_generator(100)])
         yield client
         await client.drop_database()

@@ -1,7 +1,5 @@
-import aioinflux.testing_utils as utils
-import numpy as np
 import pytest
-from aioinflux.client import logger
+from aioinflux import logger, testing_utils as utils
 
 
 def test_ping(sync_client):
@@ -33,12 +31,13 @@ def test_special_values_write(sync_client):
     point = utils.random_point()
     point['tags']['boolean_tag'] = True
     point['tags']['none_tag'] = None
-    point['tags']['nan_tag'] = np.nan
     point['tags']['blank_tag'] = ''
     point['fields']['boolean_field'] = False
     point['fields']['none_field'] = None
-    point['fields']['nan_field'] = np.nan
     point['measurement'] = 'special_values'
+    if utils.pd is not None:
+        point['tags']['nan_tag'] = utils.np.nan
+        point['fields']['nan_field'] = utils.np.nan
     with pytest.warns(UserWarning) as e:
         assert sync_client.write(point)
     logger.warning(e)

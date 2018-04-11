@@ -3,14 +3,20 @@ import string
 import random
 import datetime
 
-import numpy as np
-import pandas as pd
+from . import pd, np, no_pandas_warning
+
+try:
+    import pytest
+    requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
+except ModuleNotFoundError:
+    pass
 
 
 def random_point():
+    now = datetime.datetime.now()
     point = {'measurement': 'test_measurement',  # '"measurement with quo⚡️es and emoji"',
              'tags': {'tag key with sp🚀ces': 'tag,value,with"commas"'},
-             'time': datetime.datetime.now(),
+             'time': random.choice([now, str(now)]),
              'fields': {
                  'fi\neld_k\ey': random.randint(0, 200),
                  'quote': '"'
@@ -48,7 +54,7 @@ def cpu_load_generator(n):
     d = ['in', 'out']
     r = ['north', 'south', 'west', 'east']
     for _ in range(n):
-        t += random.randint(1, 10**10)
+        t += random.randint(1, 10 ** 10)
         yield p.format(t=t,
                        d=random.choice(d),
                        r=random.choice(r),

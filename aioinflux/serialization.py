@@ -2,8 +2,10 @@ import warnings
 from collections import defaultdict
 from typing import Iterable, Mapping, Union, Dict
 
-import pandas as pd
-import numpy as np
+from . import pd, np
+
+if pd is None:
+    import ciso8601
 
 # Special characters documentation:
 # https://docs.influxdata.com/influxdb/v1.4/write_protocols/line_protocol_reference/#special-characters
@@ -30,7 +32,7 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
         return data
     elif isinstance(data, str):
         return data.encode('utf-8')
-    elif isinstance(data, pd.DataFrame):
+    elif pd is not None and isinstance(data, pd.DataFrame):
         if measurement is None:
             raise ValueError("Missing 'measurement'")
         return parse_df(data, measurement, tag_columns, **extra_tags)
@@ -84,8 +86,14 @@ def _parse_tags(point, extra_tags):
 def _parse_timestamp(point):
     if 'time' not in point:
         return ''
-    else:
+    elif pd is not None:
         return pd.Timestamp(point['time']).value
+    elif isinstance(point['time'], (str, bytes)):
+        dt = ciso8601.parse_datetime(point['time'])
+        return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
+    else:
+        dt = point['time']
+        return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
 
 
 def _parse_fields(point):
@@ -95,11 +103,11 @@ def _parse_fields(point):
         # noinspection PyUnresolvedReferences
         if isinstance(v, bool):
             output.append('{k}={v}'.format(k=k, v=str(v).upper()))
-        elif isinstance(v, (int, np.integer)):
+        elif isinstance(v, int):
             output.append('{k}={v}i'.format(k=k, v=v))
         elif isinstance(v, str):
             output.append('{k}="{v}"'.format(k=k, v=v.translate(str_escape)))
-        elif v is None or np.isnan(v):
+        elif v is None or (np is not None and np.isnan(v)):
             continue
         else:
             # Floats and other numerical formats go here.
@@ -108,7 +116,10 @@ def _parse_fields(point):
     return ','.join(output)
 
 
-def make_df(resp) -> Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]:
+DataFrameType = None if pd is None else Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]
+
+
+def make_df(resp) -> DataFrameType:
     """Makes list of DataFrames from a response object"""
 
     def maker(series) -> pd.DataFrame:
@@ -148,6 +159,7 @@ def make_df(resp) -> Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]:
 
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
     """Converts a Pandas DataFrame into line protocol format"""
+
     # Calling t._asdict is more straightforward
     # but about 40% slower than using indexes
     def parser(df):

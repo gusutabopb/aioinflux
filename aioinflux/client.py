@@ -9,12 +9,12 @@ from typing import (Union, AnyStr, Mapping, Iterable,
 from urllib.parse import urlencode
 
 import aiohttp
-import pandas as pd
 
+from . import pd, no_pandas_warning
 from .serialization import parse_data, make_df
 from .iterutils import InfluxDBResult, InfluxDBChunkedResult
 
-PointType = Union[AnyStr, Mapping, pd.DataFrame]
+PointType = Union[AnyStr, Mapping] if pd is None else Union[AnyStr, Mapping, pd.DataFrame]
 ResultType = Union[AsyncGenerator, dict, InfluxDBResult, InfluxDBChunkedResult]
 
 # Aioinflux uses logging mainly for debugging purposes.
@@ -103,6 +103,8 @@ class InfluxDBClient:
     def mode(self, mode):
         if mode not in ('async', 'blocking', 'dataframe'):
             raise ValueError('Invalid mode')
+        elif pd is None and mode == 'dataframe':
+            raise ValueError(no_pandas_warning)
         self._mode = mode
 
     def __enter__(self):
