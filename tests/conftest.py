@@ -19,36 +19,27 @@ def event_loop():
 
 
 @pytest.fixture(scope='module')
+async def async_client():
+    async with InfluxDBClient(db='async_client_test', mode='async') as client:
+        await client.create_database()
+        await client.write([p for p in utils.cpu_load_generator(100)])
+        yield client
+        await client.drop_database()
+
+
+@pytest.fixture(scope='module')
 def sync_client():
-    with InfluxDBClient(db='mytestdb', mode='blocking') as client:
+    with InfluxDBClient(db='sync_client_test', mode='blocking') as client:
         client.create_database()
         yield client
         client.drop_database()
-
-
-@pytest.mark.asyncio
-@pytest.fixture(scope='module')
-async def async_client():
-    async with InfluxDBClient(db='mytestdb', mode='async') as client:
-        await client.create_database()
-        yield client
-        await client.drop_database()
 
 
 @pytest.fixture(scope='module')
 def df_client():
     if utils.pd is None:
         return
-    with InfluxDBClient(db='mytestdb', mode='dataframe') as client:
+    with InfluxDBClient(db='dataframe_client_test', mode='dataframe') as client:
         client.create_database()
         yield client
         client.drop_database()
-
-
-@pytest.fixture(scope='module')
-async def iter_client():
-    async with InfluxDBClient(db='cpu', mode='async') as client:
-        await client.create_database()
-        await client.write([p for p in utils.cpu_load_generator(100)])
-        yield client
-        await client.drop_database()

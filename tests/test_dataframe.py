@@ -1,10 +1,9 @@
-import aioinflux.testing_utils as utils
-from aioinflux import logger, pd
+import pytest
+from aioinflux import logger, pd, testing_utils as utils
 
 if pd is not None:
     pd.set_option('display.max_columns', 10)
     pd.set_option('display.width', 100)
-
 
 
 @utils.requires_pandas
@@ -58,3 +57,27 @@ def test_mixed_args_kwargs_query_pattern(df_client):
     assert (df1 == df2).all().all()
     assert (df1 == df3).all().all()
     assert (df2 == df3).all().all()
+
+
+###############
+# Error tests #
+###############
+
+@utils.requires_pandas
+def test_invalid_data_write_dataframe(sync_client):
+    with pytest.raises(ValueError) as e:
+        # Non-DatetimeIndex DataFrame
+        sync_client.write(utils.random_dataframe().reset_index(), measurement='foo')
+    logger.error(e)
+
+    with pytest.raises(ValueError) as e:
+        # DataFrame write without specifying measurement
+        sync_client.write(utils.random_dataframe())
+    logger.error(e)
+
+
+@utils.requires_pandas
+def test_chunked_dataframe(df_client):
+    with pytest.raises(ValueError) as e:
+        _ = df_client.select_all('foo', chunked=True)
+    logger.error(e)
