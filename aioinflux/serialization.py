@@ -119,9 +119,8 @@ def _parse_fields(point):
 DataFrameType = None if pd is None else Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]
 
 
-def make_df(resp) -> DataFrameType:
+def make_df(resp, tag_cache=None) -> DataFrameType:
     """Makes list of DataFrames from a response object"""
-
     def maker(series) -> pd.DataFrame:
         df = pd.DataFrame(series['values'], columns=series['columns'])
         if 'time' not in df.columns:
@@ -141,20 +140,33 @@ def make_df(resp) -> DataFrameType:
             if all(i.value == 0 for i in df.index):
                 df.reset_index(drop=True, inplace=True)
 
+    # Parsing
     df_list = [(series['name'], maker(series))
                for statement in resp['results'] if 'series' in statement
                for series in statement['series']]
-    if len(df_list) == 1:
-        drop_zero_index(df_list[0][1])
-        return df_list[0][1]
-    else:
-        d = defaultdict(list)
-        for k, df in sorted(df_list, key=lambda x: x[0]):
-            d[k].append(df)
-        dfs = {k: pd.concat(v, axis=0) for k, v in d.items()}
-        for df in dfs.values():
-            drop_zero_index(df)
-        return dfs
+
+    # Concatenation
+    d = defaultdict(list)
+    for k, df in sorted(df_list, key=lambda x: x[0]):
+        d[k].append(df)
+    dfs = {k: pd.concat(v, axis=0) for k, v in d.items()}
+
+    # Post-processing
+    for k, df in dfs.items():
+        drop_zero_index(df)
+        df.name = k
+        if tag_cache is None:
+            continue
+        for col, dtype in tag_cache[k].items():
+            if col not in df.columns:
+                continue
+            # Change tag columns dtype from object to categorical
+            df[col] = df[col].astype(dtype=dtype)
+
+    # Return
+    if len(dfs) == 1:
+        return dfs[list(dfs.keys())[0]]
+    return dfs
 
 
 def parse_df(df, measurement, tag_columns=None, **extra_tags):

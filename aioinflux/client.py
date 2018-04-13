@@ -33,7 +33,7 @@ def runner(coro):
             return coro(self, *args, **kwargs)
         resp = self._loop.run_until_complete(coro(self, *args, **kwargs))
         if self.mode == 'dataframe' and coro.__name__ == 'query':
-            return make_df(resp)
+            return make_df(resp, self.tag_cache[self.db])
         else:
             return resp
 
