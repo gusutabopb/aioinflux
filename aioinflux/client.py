@@ -7,6 +7,8 @@ from functools import wraps, partialmethod as pm
 from typing import (Union, AnyStr, Mapping, Iterable,
                     Optional, Callable, AsyncGenerator)
 from urllib.parse import urlencode
+from itertools import chain
+from collections import defaultdict
 
 import aiohttp
 
@@ -91,13 +93,19 @@ class InfluxDBClient:
         self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
         self.host = host
         self.port = port
-        self.db = database or db
         self._mode = None
+        self._db = None
+        self.tag_cache = defaultdict(lambda: defaultdict(dict))
         self.mode = mode
+        self.db = database or db
 
     @property
     def mode(self):
         return self._mode
+
+    @property
+    def db(self):
+        return self._db
 
     @mode.setter
     def mode(self, mode):
@@ -106,6 +114,17 @@ class InfluxDBClient:
         elif pd is None and mode == 'dataframe':
             raise ValueError(no_pandas_warning)
         self._mode = mode
+
+    @db.setter
+    def db(self, db):
+        self._db = db
+        if db is None:
+            return
+        elif self.mode == 'dataframe' and db not in self.tag_cache:
+            print('Caching tags from all measurements')
+            cache = self._loop.run_until_complete(self._cache_tags())
+            if cache:
+                self.tag_cache[db] = cache
 
     def __enter__(self):
         return self
@@ -258,6 +277,33 @@ class InfluxDBClient:
                 if 'error' in statement:
                     msg = '{d[error]} (statement {d[statement_id]})'
                     raise InfluxDBError(msg.format(d=statement))
+
+    # noinspection PyCallingNonCallable
+    async def _cache_tags(self):
+        """Gathers tag key/value information for measurements in current database"""
+        # noinspection PyCallingNonCallable
+        async def cache_measurement(m, cache):
+            keys = (await self.show_tag_keys_from(m))['results'][0]
+            if 'series' not in keys:
+                return
+            for series in keys['series']:
+                cache[series['name']] = defaultdict(list)
+                for tag in chain(*series['values']):
+                    tag_values = await self.show_tag_values_from(series['name'], tag)
+                    for _, v in tag_values['results'][0]['series'][0]['values']:
+                        cache[series['name']][tag].append(v)
+        cache = {}
+        mode = self.mode
+        self.mode = 'async'
+        measurements = (await self.show_measurements())['results'][0]
+        if 'series' not in measurements:
+            self.mode = mode
+            return
+        await asyncio.gather(*[cache_measurement(m[0], cache) for m in measurements['series'][0]['values']])
+        for m in cache:
+            cache[m] = {k: pd.api.types.CategoricalDtype(categories=v) for k, v in cache[m].items()}
+        self.mode = mode
+        return cache
 
     # Built-in query patterns
     create_database = pm(query, "CREATE DATABASE {db}")
