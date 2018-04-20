@@ -22,7 +22,6 @@ def event_loop():
 async def async_client():
     async with InfluxDBClient(db='async_client_test', mode='async') as client:
         await client.create_database()
-        await client.write([p for p in utils.cpu_load_generator(100)])
         yield client
         await client.drop_database()
 
@@ -39,7 +38,16 @@ def sync_client():
 def df_client():
     if utils.pd is None:
         return
-    with InfluxDBClient(db='dataframe_client_test', mode='dataframe') as client:
+    with InfluxDBClient(db='df_client_test', mode='blocking', output='dataframe') as client:
         client.create_database()
         yield client
         client.drop_database()
+
+
+@pytest.fixture(scope='module')
+async def iter_client():
+    async with InfluxDBClient(db='iter_client_test', mode='async', output='iterable') as client:
+        await client.create_database()
+        await client.write([p for p in utils.cpu_load_generator(100)])
+        yield client
+        await client.drop_database()

@@ -1,5 +1,6 @@
 import pytest
-from aioinflux import InfluxDBClient, InfluxDBError, logger, testing_utils as utils
+from aioinflux import (InfluxDBClient, InfluxDBError,
+                       pd, logger, testing_utils as utils)
 
 
 def test_ping(sync_client):
@@ -11,8 +12,10 @@ def test_create_database(sync_client):
     resp = sync_client.create_database(db='mytestdb')
     assert resp
 
+
 def test_drop_database(sync_client):
     sync_client.drop_database(db='mytestdb')
+
 
 def test_simple_write(sync_client):
     logger.debug(sync_client.db)
@@ -102,6 +105,11 @@ def test_repr(sync_client):
     logger.info(sync_client)
 
 
+def test_get_tag_info(sync_client):
+    tag_info = sync_client.get_tag_info()
+    logger.info(tag_info)
+
+
 ###############
 # Error tests #
 ###############
@@ -129,6 +137,16 @@ def test_invalid_client_mode():
     with pytest.raises(ValueError) as e:
         _ = InfluxDBClient(db='mytestdb', mode=utils.random_string())
     logger.error(e)
+
+
+def test_invalid_output_format(sync_client):
+    with pytest.raises(ValueError) as e:
+        sync_client.output = utils.random_string()
+    logger.error(e)
+    if pd is None:
+        with pytest.raises(ValueError) as e:
+            sync_client.output = 'dataframe'
+        logger.error(e)
 
 
 def test_invalid_query(sync_client):
