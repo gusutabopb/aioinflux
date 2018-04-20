@@ -152,7 +152,7 @@ def make_df(resp, tag_cache=None) -> DataFrameType:
     dfs = {k: pd.concat(v, axis=0) for k, v in d.items()}
 
     # Post-processing
-    for (name, tags), df in dfs.items():
+    for (name, _), df in dfs.items():
         drop_zero_index(df)
         df.name = name
         if not tag_cache or name not in tag_cache:

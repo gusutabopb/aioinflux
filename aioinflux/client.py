@@ -3,18 +3,18 @@ import json
 import logging
 import re
 import warnings
+from collections import defaultdict
 from functools import wraps, partialmethod as pm
+from itertools import chain
 from typing import (Union, AnyStr, Mapping, Iterable,
                     Optional, Callable, AsyncGenerator)
 from urllib.parse import urlencode
-from itertools import chain
-from collections import defaultdict
 
 import aiohttp
 
 from . import pd, no_pandas_warning
-from .serialization import parse_data, make_df
 from .iterutils import InfluxDBResult, InfluxDBChunkedResult
+from .serialization import parse_data, make_df
 
 PointType = Union[AnyStr, Mapping] if pd is None else Union[AnyStr, Mapping, pd.DataFrame]
 ResultType = Union[AsyncGenerator, dict, InfluxDBResult, InfluxDBChunkedResult]
