@@ -141,7 +141,7 @@ def make_df(resp, tag_cache=None) -> DataFrameType:
                 df.reset_index(drop=True, inplace=True)
 
     # Parsing
-    df_list = [(series['name'], maker(series))
+    df_list = [((series['name'], tuple(series.get('tags', {}).items())), maker(series))
                for statement in resp['results'] if 'series' in statement
                for series in statement['series']]
 
@@ -152,15 +152,16 @@ def make_df(resp, tag_cache=None) -> DataFrameType:
     dfs = {k: pd.concat(v, axis=0) for k, v in d.items()}
 
     # Post-processing
-    for k, df in dfs.items():
+    for (name, tags), df in dfs.items():
         drop_zero_index(df)
-        df.name = k
-        if tag_cache is None:
+        df.name = name
+        if not tag_cache or name not in tag_cache:
             continue
-        for col, dtype in tag_cache[k].items():
+        for col, tags in tag_cache[name].items():
             if col not in df.columns:
                 continue
             # Change tag columns dtype from object to categorical
+            dtype = pd.api.types.CategoricalDtype(categories=tags)
             df[col] = df[col].astype(dtype=dtype)
 
     # Return
