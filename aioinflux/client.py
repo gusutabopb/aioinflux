@@ -148,7 +148,7 @@ class InfluxDBClient:
         await self.close()
 
     def __del__(self):
-        if not self._loop.is_closed() and self._session and self.mode != 'async':
+        if not self._loop.is_closed() and self._session:
             asyncio.ensure_future(self._session.close(), loop=self._loop)
 
     def __repr__(self):
