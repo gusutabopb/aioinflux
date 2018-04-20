@@ -1,6 +1,6 @@
 import warnings
 from collections import defaultdict
-from typing import Iterable, Mapping, Union, Dict
+from typing import Mapping, Union, Dict
 
 from . import pd, np
 
@@ -36,9 +36,9 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
         if measurement is None:
             raise ValueError("Missing 'measurement'")
         return parse_df(data, measurement, tag_columns, **extra_tags)
-    elif isinstance(data, Mapping):
+    elif isinstance(data, dict):
         return make_line(data, measurement, **extra_tags)
-    elif isinstance(data, Iterable):
+    elif hasattr(data, '__iter__'):
         return b'\n'.join([parse_data(i, measurement, tag_columns, **extra_tags) for i in data])
     else:
         raise ValueError('Invalid input', data)
@@ -97,21 +97,21 @@ def _parse_timestamp(point):
 
 
 def _parse_fields(point):
+    """Field values can be floats, integers, strings, or Booleans."""
     output = []
     for k, v in point['fields'].items():
         k = escape(k, key_escape)
-        # noinspection PyUnresolvedReferences
         if isinstance(v, bool):
-            output.append('{k}={v}'.format(k=k, v=str(v).upper()))
+            output.append('{k}={v}'.format(k=k, v=v))
         elif isinstance(v, int):
             output.append('{k}={v}i'.format(k=k, v=v))
         elif isinstance(v, str):
             output.append('{k}="{v}"'.format(k=k, v=v.translate(str_escape)))
         elif v is None or (np is not None and np.isnan(v)):
+            # Empty values
             continue
         else:
-            # Floats and other numerical formats go here.
-            # TODO: Add unit test
+            # Floats
             output.append('{k}={v}'.format(k=k, v=v))
     return ','.join(output)
 
