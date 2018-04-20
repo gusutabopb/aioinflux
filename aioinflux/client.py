@@ -57,8 +57,9 @@ class InfluxDBClient:
                  ):
         """
         The InfluxDBClient object holds information necessary to interact with InfluxDB.
-        It is async by default, but can also be used as a sync/blocking client and even generate
-        Pandas DataFrames from queries.
+        It is async by default, but can also be used as a sync/blocking client.
+        When querying, responses are returned as raw JSON by default, but can also be wrapped in easily iterable
+        wrapper object or be parsed to Pandas DataFrames.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
         1) InfluxDBClient.ping
         2) InfluxDBClient.write
@@ -72,8 +73,11 @@ class InfluxDBClient:
             Available options are: 'async', 'blocking' and 'dataframe'.
             - 'async': Default mode. Each query/request to the backend will
             - 'blocking': Behaves in sync/blocking fashion, similar to the official InfluxDB-Python client.
-            - 'dataframe': Behaves in a sync/blocking fashion, but parsing results into Pandas DataFrames.
-                           Similar to InfluxDB-Python's `DataFrameClient`.
+        :param output: Output format of the response received from InfluxDB.
+            - 'raw': Default format. Returns JSON as received from InfluxDB.
+            - 'iterable': Wraps the raw response in a `InfluxDBResult` or `InfluxDBChunkedResult`,
+                          which can be used for easier iteration over retrieved data points.
+            - 'dataframe': Parses results into Pandas DataFrames. Not compatible with chunked responses.
         :param db: Default database to be used by the client.
         :param ssl: If https should be used.
         :param unix_socket: Path to the InfluxDB Unix domain socket.
@@ -81,7 +85,7 @@ class InfluxDBClient:
         :param password: User password.
         :param database: Default database to be used by the client.
             This field is for argument consistency with the official InfluxDB Python client.
-        :param loop: Event loop used for processing HTTP requests.
+        :param loop: Asyncio event loop.
         """
         self._loop = asyncio.get_event_loop() if loop is None else loop
         self._connector = aiohttp.UnixConnector(path=unix_socket, loop=self._loop) if unix_socket else None
@@ -227,9 +231,7 @@ class InfluxDBClient:
         :param chunk_size: Max number of points for each chunk. By default, InfluxDB chunks
             responses by series or by every 10,000 points, whichever occurs first.
         :param kwargs: Keyword arguments for query patterns
-        :param wrap: If ``True`` returns the response wrapped in a
-            ``InfluxDBResponse`` or ``InfluxDBChunkedResponse`` object.
-        :param parser: Optional parser function passed to the response wrapper
+        :param parser: Optional parser function for 'iterable' mode
         :return: Returns an async generator if chunked is ``True``, otherwise returns
             a dictionary containing the parsed JSON response.
         """
