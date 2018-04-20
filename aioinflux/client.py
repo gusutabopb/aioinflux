@@ -31,11 +31,7 @@ def runner(coro):
     def inner(self, *args, **kwargs):
         if self.mode == 'async':
             return coro(self, *args, **kwargs)
-        resp = self._loop.run_until_complete(coro(self, *args, **kwargs))
-        if self.mode == 'dataframe' and coro.__name__ == 'query':
-            return make_df(resp, self.tag_cache[self.db])
-        else:
-            return resp
+        return self._loop.run_until_complete(coro(self, *args, **kwargs))
 
     return inner
 
@@ -49,6 +45,7 @@ class InfluxDBClient:
                  host: str = 'localhost',
                  port: int = 8086,
                  mode: str = 'async',
+                 output: str = 'raw',
                  db: str = 'testdb',
                  *,
                  ssl: bool = False,
@@ -94,9 +91,11 @@ class InfluxDBClient:
         self.host = host
         self.port = port
         self._mode = None
+        self._output = None
         self._db = None
         self.tag_cache = defaultdict(lambda: defaultdict(dict))
         self.mode = mode
+        self.output = output
         self.db = database or db
 
     @property
@@ -104,27 +103,37 @@ class InfluxDBClient:
         return self._mode
 
     @property
+    def output(self):
+        return self._output
+
+    @property
     def db(self):
         return self._db
 
     @mode.setter
     def mode(self, mode):
-        if mode not in ('async', 'blocking', 'dataframe'):
-            raise ValueError('Invalid mode')
-        elif pd is None and mode == 'dataframe':
-            raise ValueError(no_pandas_warning)
+        if mode not in ('async', 'blocking'):
+            raise ValueError('Invalid running mode')
         self._mode = mode
+
+    @output.setter
+    def output(self, output):
+        if pd is None and output == 'dataframe':
+            raise ValueError(no_pandas_warning)
+        if output not in ('raw', 'iterable', 'dataframe'):
+            raise ValueError('Invalid output format')
+        self._output = output
 
     @db.setter
     def db(self, db):
         self._db = db
         if db is None:
             return
-        elif self.mode == 'dataframe' and db not in self.tag_cache:
-            print('Caching tags from all measurements')
-            cache = self._loop.run_until_complete(self._cache_tags())
-            if cache:
-                self.tag_cache[db] = cache
+        elif self.output == 'dataframe' and db not in self.tag_cache:
+            if self.mode == 'async':
+                asyncio.ensure_future(self.get_tag_info(), loop=self._loop)
+            else:
+                self.get_tag_info()
 
     def __enter__(self):
         return self
@@ -201,7 +210,6 @@ class InfluxDBClient:
                     chunked: bool = False,
                     chunk_size: Optional[int] = None,
                     db: Optional[str] = None,
-                    wrap: bool = False,
                     parser: Optional[Callable] = None,
                     **kwargs) -> ResultType:
         """Sends a query to InfluxDB.
@@ -254,18 +262,24 @@ class InfluxDBClient:
             if self.mode != 'async':
                 raise ValueError("Can't use 'chunked' with non-async mode")
             g = _chunked_generator(url, data)
-            if wrap:
+            if self.output == 'raw':
+                return g
+            elif self.output == 'iterable':
                 return InfluxDBChunkedResult(g, parser=parser, query=query)
-            return g
+            elif self.output == 'dataframe':
+                raise ValueError("Chunked queries are not support with 'dataframe' output")
 
         async with self._session.post(url, data=data) as resp:
             logger.debug(resp)
             output = await resp.json()
             logger.debug(output)
             self._check_error(output)
-            if wrap and self.mode != 'dataframe':
+            if self.output == 'raw':
+                return output
+            elif self.output == 'iterable':
                 return InfluxDBResult(output, parser=parser, query=query)
-            return output
+            elif self.output == 'dataframe':
+                return make_df(output, self.tag_cache[self.db])
 
     @staticmethod
     def _check_error(response):
@@ -279,10 +293,11 @@ class InfluxDBClient:
                     raise InfluxDBError(msg.format(d=statement))
 
     # noinspection PyCallingNonCallable
-    async def _cache_tags(self):
+    @runner
+    async def get_tag_info(self):
         """Gathers tag key/value information for measurements in current database"""
         # noinspection PyCallingNonCallable
-        async def cache_measurement(m, cache):
+        async def get_measurement_tags(m, cache):
             keys = (await self.show_tag_keys_from(m))['results'][0]
             if 'series' not in keys:
                 return
@@ -292,17 +307,22 @@ class InfluxDBClient:
                     tag_values = await self.show_tag_values_from(series['name'], tag)
                     for _, v in tag_values['results'][0]['series'][0]['values']:
                         cache[series['name']][tag].append(v)
+
+        logger.info(f"Caching tags from all measurements from '{self.db}'")
         cache = {}
-        mode = self.mode
+        state = self.mode, self.output
         self.mode = 'async'
-        measurements = (await self.show_measurements())['results'][0]
-        if 'series' not in measurements:
-            self.mode = mode
+        self.output = 'raw'
+        ms = (await self.show_measurements())['results'][0]
+        if 'series' not in ms:
+            self.mode, self.output = state
             return
-        await asyncio.gather(*[cache_measurement(m[0], cache) for m in measurements['series'][0]['values']])
+        await asyncio.gather(*[get_measurement_tags(m[0], cache) for m in ms['series'][0]['values']])
         for m in cache:
-            cache[m] = {k: pd.api.types.CategoricalDtype(categories=v) for k, v in cache[m].items()}
-        self.mode = mode
+            cache[m] = {k: v for k, v in cache[m].items()}
+        if cache:
+            self.tag_cache[self._db] = cache
+        self.mode, self.output = state
         return cache
 
     # Built-in query patterns
