@@ -20,7 +20,7 @@ def test_write_dataframe(df_client):
 def test_select_into(df_client):
     df_client.query("SELECT * INTO m2_copy from m2")
     df = df_client.select_all(measurement='m2_copy')
-    assert df.shape == (50, 7)
+    assert df.shape == (50, 8)
     logger.info(f'\n{df.head()}')
 
 
@@ -28,7 +28,7 @@ def test_select_into(df_client):
 def test_read_dataframe(df_client):
     df = df_client.select_all(measurement='m1')
     logger.info(f'\n{df.head()}')
-    assert df.shape == (50, 7)
+    assert df.shape == (50, 8)
 
 
 @utils.requires_pandas
@@ -48,7 +48,7 @@ def test_read_dataframe_with_tag_info(df_client):
     logger.info(df_client.tag_cache)
     df = df_client.select_all(measurement='m1')
     assert pd.api.types.CategoricalDtype in {type(d) for d in df.dtypes}
-    assert df.shape == (50, 7)
+    assert df.shape == (50, 8)
 
 
 @utils.requires_pandas

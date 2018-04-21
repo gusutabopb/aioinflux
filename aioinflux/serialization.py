@@ -173,35 +173,36 @@ def make_df(resp, tag_cache=None) -> DataFrameType:
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
     """Converts a Pandas DataFrame into line protocol format"""
 
-    # Calling t._asdict is more straightforward
-    # but about 40% slower than using indexes
-    def parser(df):
-        for t in df.itertuples():
-            tags = dict()
-            fields = dict()
-            # noinspection PyProtectedMember
-            for i, k in enumerate(t._fields):
-                if i in tag_indexes:
-                    tags[k] = t[i]
-                elif i == 0:
-                    continue
-                else:
-                    fields[k] = t[i]
-            tags.update(extra_tags)
-            yield dict(measurement=measurement,
-                       time=t[0],
-                       tags=tags,
-                       fields=fields)
-
+    # Pre-processing
     # Make a copy because modifications are made to the dataframe before insertion
     df = df.copy()
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError('DataFrame index is not DatetimeIndex')
     for key, value in extra_tags.items():
         df[key] = value
-    if tag_columns:
-        tag_indexes = [df.columns.get_loc(tag) + 1 for tag in tag_columns + list(extra_tags)]
-    else:
-        tag_indexes = list()
-    lines = [make_line(p) for p in parser(df)]
-    return b'\n'.join(lines)
+    tag_columns = set(tag_columns or [])
+    tag_columns.update(extra_tags)
+
+    # Make parser function
+    tags = []
+    fields = []
+    for i, (k, v) in enumerate(dict(df.dtypes).items()):
+        k = k.translate(key_escape)
+        if isinstance(v, pd.api.types.CategoricalDtype) or k in tag_columns:
+            tags.append(f"{k}={{p[{i+1}]}}")
+        elif issubclass(v.type, np.integer):
+            fields.append(f"{k}={{p[{i+1}]}}i")
+        elif issubclass(v.type, (np.float, np.bool_)):
+            fields.append(f"{k}={{p[{i+1}]}}")
+        else:
+            # String escaping is skipped for performance reasons
+            # Strings containing double-quotes can cause strange write errors
+            # and should be sanitized by the user.
+            # e.g., df[k] = df[k].astype('str').str.translate(str_escape)
+            fields.append(f"{k}=\"{{p[{i+1}]}}\"")
+    fmt = ('{m}' + f'{"," if tags else ""}' + ','.join(tags)
+           + ' ' + ','.join(fields) + ' {p[0].value}')
+    f = eval("lambda m, p: f'{}'".format(fmt))
+
+    # Map/concat
+    return '\n'.join(f(measurement, p) for p in df.itertuples()).encode('utf-8')
