@@ -88,6 +88,7 @@ def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Generator:
 
     :param resp: Dictionary containing parsed JSON (output from InfluxDBClient.query)
     :param parser: Optional parser function
+    :return: Generator object
     """
     for statement in resp['results']:
         if 'series' not in statement:
@@ -95,8 +96,7 @@ def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Generator:
         for series in statement['series']:
             meta = {k: series[k] for k in series if k != 'values'}
             meta['statement_id'] = statement['statement_id']
-            for point in series['values']:
-                if parser is None:
-                    yield point
-                else:
-                    yield parser(point, meta)
+            if parser is None:
+                return (x for x in series['values'])
+            else:
+                return (parser(x, meta) for x in series['values'])
