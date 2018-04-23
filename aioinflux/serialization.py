@@ -1,5 +1,6 @@
 import warnings
 from collections import defaultdict
+from itertools import chain
 from typing import Mapping, Union, Dict
 
 from . import pd, np
@@ -37,14 +38,14 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
             raise ValueError("Missing 'measurement'")
         return parse_df(data, measurement, tag_columns, **extra_tags)
     elif isinstance(data, dict):
-        return make_line(data, measurement, **extra_tags)
+        return make_line(data, measurement, **extra_tags).encode('utf-8')
     elif hasattr(data, '__iter__'):
         return b'\n'.join([parse_data(i, measurement, tag_columns, **extra_tags) for i in data])
     else:
         raise ValueError('Invalid input', data)
 
 
-def make_line(point: Mapping, measurement=None, **extra_tags):
+def make_line(point: Mapping, measurement=None, **extra_tags) -> str:
     """Converts dictionary-like data into a single line protocol line (point)"""
     p = dict(measurement=_parse_measurement(point, measurement),
              tags=_parse_tags(point, extra_tags),
@@ -54,7 +55,7 @@ def make_line(point: Mapping, measurement=None, **extra_tags):
         line = '{measurement},{tags} {fields} {timestamp}'.format(**p)
     else:
         line = '{measurement} {fields} {timestamp}'.format(**p)
-    return line.encode('utf-8')
+    return line
 
 
 def _parse_measurement(point, measurement):
@@ -107,7 +108,7 @@ def _parse_fields(point):
             output.append('{k}={v}i'.format(k=k, v=v))
         elif isinstance(v, str):
             output.append('{k}="{v}"'.format(k=k, v=v.translate(str_escape)))
-        elif v is None or (np is not None and np.isnan(v)):
+        elif v is None:
             # Empty values
             continue
         else:
@@ -170,6 +171,23 @@ def make_df(resp, tag_cache=None) -> DataFrameType:
     return dfs
 
 
+def itertuples(df):
+    """Custom implementation of ``DataFrame.itertuples`` that
+    returns plain tuples instead of namedtuples. About 50% faster.
+    """
+    cols = [df.iloc[:, k] for k in range(len(df.columns))]
+    return zip(df.index, *cols)
+
+
+def make_mapping(t, tag_columns, field_columns, measurement):
+    t = t._asdict()
+    return {
+        'time': t['Index'],
+        'tags': {k: v for k, v in t.items() if k in tag_columns and not pd.isnull(v)},
+        'fields': {k: v for k, v in t.items() if k in field_columns and not pd.isnull(v)},
+        'measurement': measurement,
+    }
+
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
     """Converts a Pandas DataFrame into line protocol format"""
 
@@ -182,13 +200,17 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
         df[key] = value
     tag_columns = set(tag_columns or [])
     tag_columns.update(extra_tags)
+    tag_columns.update(k for k, v in dict(df.dtypes).items()
+                       if isinstance(v, pd.api.types.CategoricalDtype))
+    field_columns = set(df.columns) - tag_columns
+    isnull = df.isnull().any(axis=1)
 
     # Make parser function
     tags = []
     fields = []
     for i, (k, v) in enumerate(dict(df.dtypes).items()):
         k = k.translate(key_escape)
-        if isinstance(v, pd.api.types.CategoricalDtype) or k in tag_columns:
+        if k in tag_columns:
             tags.append(f"{k}={{p[{i+1}]}}")
         elif issubclass(v.type, np.integer):
             fields.append(f"{k}={{p[{i+1}]}}i")
@@ -205,4 +227,10 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
     f = eval("lambda m, p: f'{}'".format(fmt))
 
     # Map/concat
-    return '\n'.join(f(measurement, p) for p in df.itertuples()).encode('utf-8')
+    if isnull.any():
+        lp = (f(measurement, p) for p in itertuples(df[~isnull]))
+        lp_nan = (make_line(make_mapping(t, tag_columns, field_columns, measurement))
+                    for t in df[isnull].itertuples())
+        return '\n'.join(chain(lp, lp_nan)).encode('utf-8')
+    else:
+        return '\n'.join(f(measurement, p) for p in itertuples(df)).encode('utf-8')
