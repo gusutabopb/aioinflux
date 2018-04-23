@@ -15,12 +15,13 @@ except ModuleNotFoundError:
 
 def random_point():
     now = datetime.datetime.now()
-    point = {'measurement': 'test_measurement',  # '"measurement with quo⚡️es and emoji"',
+    point = {'measurement': 'test_measurement',
              'tags': {'tag key with sp🚀ces': 'tag,value,with"commas"'},
              'time': random.choice([now, str(now)]),
              'fields': {
                  'fi\neld_k\ey': random.randint(0, 200),
-                 'quote': '"'
+                 'quote': '"',
+                 'value': random.random(),
                 }
              }
     return point

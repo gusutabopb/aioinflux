@@ -39,7 +39,7 @@ def test_special_values_write(sync_client):
     point['tags']['blank_tag'] = ''
     point['fields']['boolean_field'] = False
     point['fields']['none_field'] = None
-    point['measurement'] = 'special_values'
+    point['measurement'] = '"quo⚡️es and emoji"'
     with pytest.warns(UserWarning) as e:
         assert sync_client.write(point)
     logger.warning(e)
