@@ -156,7 +156,8 @@ class InfluxDBClient:
             asyncio.ensure_future(self._session.close(), loop=self._loop)
 
     def __repr__(self):
-        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')]
+        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')
+                 and k != 'tag_cache']
         items.append(f'mode={self.mode}')
         return f'{type(self).__name__}({", ".join(items)})'
 
