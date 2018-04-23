@@ -1,5 +1,7 @@
+import re
 import warnings
 from collections import defaultdict
+from functools import reduce
 from itertools import chain
 from typing import Mapping, Union, Dict
 
@@ -179,14 +181,18 @@ def itertuples(df):
     return zip(df.index, *cols)
 
 
-def make_mapping(t, tag_columns, field_columns, measurement):
-    t = t._asdict()
-    return {
-        'time': t['Index'],
-        'tags': {k: v for k, v in t.items() if k in tag_columns and not pd.isnull(v)},
-        'fields': {k: v for k, v in t.items() if k in field_columns and not pd.isnull(v)},
-        'measurement': measurement,
-    }
+def make_replacements(df):
+    obj_cols = {k for k, v in dict(df.dtypes).items() if v is np.dtype('O')}
+    other_cols = set(df.columns) - obj_cols
+    obj_nans = (f'{k}="nan"' for k in obj_cols)
+    other_nans = (f'{k}=nan' for k in other_cols)
+    replacements = [
+        ('|'.join(chain(obj_nans, other_nans)), ''),
+        (',{2,}', ','),
+        ('|'.join([', ,', ', ', ' ,']), ' '),
+        ]
+    return replacements
+
 
 def parse_df(df, measurement, tag_columns=None, **extra_tags):
     """Converts a Pandas DataFrame into line protocol format"""
@@ -197,7 +203,6 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
     tag_columns = set(tag_columns or [])
     tag_columns.update(k for k, v in dict(df.dtypes).items()
                        if isinstance(v, pd.api.types.CategoricalDtype))
-    field_columns = set(df.columns) - tag_columns
     isnull = df.isnull().any(axis=1)
 
     # Make parser function
@@ -226,8 +231,8 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
     # Map/concat
     if isnull.any():
         lp = (f(measurement, p) for p in itertuples(df[~isnull]))
-        lp_nan = (make_line(make_mapping(t, tag_columns, field_columns, measurement))
-                    for t in df[isnull].itertuples())
+        lp_nan = (reduce(lambda a, b: re.sub(*b, a), make_replacements(df), f(measurement, p))
+                  for p in itertuples(df[isnull]))
         return '\n'.join(chain(lp, lp_nan)).encode('utf-8')
     else:
         return '\n'.join(f(measurement, p) for p in itertuples(df)).encode('utf-8')
