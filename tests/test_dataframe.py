@@ -1,5 +1,5 @@
 import pytest
-from aioinflux import logger, pd, testing_utils as utils
+from aioinflux import logger, pd, np, testing_utils as utils
 
 if pd is not None:
     pd.set_option('display.max_columns', 10)
@@ -14,6 +14,17 @@ def test_write_dataframe(df_client):
     assert df_client.write(df1, measurement='m1', mytag='foo', tag_columns=['tag'])
     assert df_client.write(df2, measurement='m2', mytag='foo', tag_columns=['tag'])
     assert df_client.write(utils.random_dataframe(), measurement='m3')  # tag-less
+
+
+@utils.requires_pandas
+def test_write_dataframe_with_nan(df_client):
+    df = utils.trading_df()
+    cols = [k for k, v in df.dtypes.items() if v.type != np.int64]
+    df_client.write(df, f'fills00')
+    for i in range(10):
+        for _ in range(int(len(df)/5)):
+            df.ix[np.random.randint(len(df)), np.random.choice(cols)] = np.nan
+        df_client.write(df, f'fills{i+1:02d}')
 
 
 @utils.requires_pandas

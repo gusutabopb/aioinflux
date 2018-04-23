@@ -1,6 +1,7 @@
 import datetime
 import random
 import string
+import uuid
 from itertools import combinations, cycle, islice
 
 from . import pd, np, no_pandas_warning
@@ -44,6 +45,20 @@ def random_dataframe():
     df.index = ix
     return df
 
+def trading_df(N=100):
+    sym = [''.join(i) for i in combinations('ABCDE', 3)]
+
+    df = pd.DataFrame({
+        'str_id': [str(uuid.uuid4()) for _ in range(N)],
+        'px': 1000 + np.cumsum(np.random.randint(-10, 11, N)) / 2,
+        'sym': np.random.choice(sym, N),
+        'side': np.random.choice(['BUY', 'SELL'], N),
+        'size': np.random.randint(1, 10, size=N) * 100,
+        'valid': np.random.randint(2, size=N).astype('bool')
+    })
+    df.index = pd.date_range(end=pd.Timestamp.utcnow(), periods=N, freq='1s')
+    df['side'] = df['side'].astype('category')
+    return df
 
 def random_string():
     return ''.join(random.choices(string.ascii_lowercase, k=random.randint(4, 10)))
