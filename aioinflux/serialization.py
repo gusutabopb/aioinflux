@@ -192,14 +192,9 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
     """Converts a Pandas DataFrame into line protocol format"""
 
     # Pre-processing
-    # Make a copy because modifications are made to the dataframe before insertion
-    df = df.copy()
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError('DataFrame index is not DatetimeIndex')
-    for key, value in extra_tags.items():
-        df[key] = value
     tag_columns = set(tag_columns or [])
-    tag_columns.update(extra_tags)
     tag_columns.update(k for k, v in dict(df.dtypes).items()
                        if isinstance(v, pd.api.types.CategoricalDtype))
     field_columns = set(df.columns) - tag_columns
@@ -208,6 +203,8 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
     # Make parser function
     tags = []
     fields = []
+    for k, v in extra_tags.items():
+        tags.append(f"{k}={escape(v, key_escape)}")
     for i, (k, v) in enumerate(dict(df.dtypes).items()):
         k = k.translate(key_escape)
         if k in tag_columns:
