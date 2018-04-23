@@ -6,11 +6,8 @@ from itertools import combinations, cycle, islice
 
 from . import pd, np, no_pandas_warning
 
-try:
-    import pytest
-    requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
-except ModuleNotFoundError:
-    pass
+import pytest
+requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
 
 
 def random_point():
@@ -46,6 +43,7 @@ def random_dataframe():
     df.index = ix
     return df
 
+
 def trading_df(N=100):
     sym = [''.join(i) for i in combinations('ABCDE', 3)]
 
@@ -60,6 +58,7 @@ def trading_df(N=100):
     df.index = pd.date_range(end=pd.Timestamp.utcnow(), periods=N, freq='1s')
     df['side'] = df['side'].astype('category')
     return df
+
 
 def random_string():
     return ''.join(random.choices(string.ascii_lowercase, k=random.randint(4, 10)))

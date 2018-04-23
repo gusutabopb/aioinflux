@@ -210,7 +210,7 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
     fields = []
     for k, v in extra_tags.items():
         tags.append(f"{k}={escape(v, key_escape)}")
-    for i, (k, v) in enumerate(dict(df.dtypes).items()):
+    for i, (k, v) in enumerate(df.dtypes.items()):
         k = k.translate(key_escape)
         if k in tag_columns:
             tags.append(f"{k}={{p[{i+1}]}}")
