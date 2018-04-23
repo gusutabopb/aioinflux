@@ -40,9 +40,6 @@ def test_special_values_write(sync_client):
     point['fields']['boolean_field'] = False
     point['fields']['none_field'] = None
     point['measurement'] = 'special_values'
-    if utils.pd is not None:
-        point['tags']['nan_tag'] = utils.np.nan
-        point['fields']['nan_field'] = utils.np.nan
     with pytest.warns(UserWarning) as e:
         assert sync_client.write(point)
     logger.warning(e)
