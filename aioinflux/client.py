@@ -329,6 +329,7 @@ class InfluxDBClient:
         return cache
 
     # Built-in query patterns
+    _user_query_patterns = set()
     create_database = pm(query, "CREATE DATABASE {db}")
     drop_database = pm(query, "DROP DATABASE {db}")
     drop_measurement = pm(query, "DROP MEASUREMENT {measurement}")
@@ -361,9 +362,16 @@ class InfluxDBClient:
         """
         if queries is None:
             queries = {}
-        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'wrap', 'parser')
+        if not isinstance(queries, Mapping):
+            raise ValueError('Query patterns must be passed in a dictionary '
+                             'or by using keyword arguments')
+        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'parser')
         for name, query in {**queries, **kwargs}.items():
             if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
                 warnings.warn(f'Ignoring invalid query pattern: {query}')
                 continue
+            if name in dir(cls) and name not in cls._user_query_patterns:
+                warnings.warn(f'Ignoring invalid query pattern name: {name}')
+                continue
+            cls._user_query_patterns.add(name)
             setattr(cls, name, pm(cls.query, query))
