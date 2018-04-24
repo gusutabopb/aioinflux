@@ -263,8 +263,7 @@ Output formats
 
 When querying data, ``InfluxDBClient`` can return data in one of the following formats:
 
-1) ``raw``: Default. Returns the a dictionary containing the
-   raw JSON data received from InfluxDB.
+1) ``raw``: Default. Returns the a dictionary containing the JSON response received from InfluxDB.
 2) ``iterable``: Wraps the JSON response in a ``InfluxDBResult`` or ``InfluxDBChunkedResult``
    object. This object main purpose is to facilitate iteration of data.
    See `Iterating responses <#iterating-responses>`__ for details.
@@ -345,7 +344,7 @@ Iterating responses
 
 By default, ``InfluxDBClient.query`` returns a parsed JSON response from InfluxDB.
 In order to easily iterate over that JSON response point by point, Aioinflux
-provides the ``iterpoints`` generator:
+provides the ``iterpoints`` function, which returns a generator object:
 
 .. code:: python
 
@@ -372,7 +371,8 @@ provides the ``iterpoints`` generator:
         for point in iterpoints(chunk):
             # do something
 
-By default, ``iterpoints`` yields a plain list of values without doing any expensive parsing.
+By default, the generator returned by ``iterpoints`` yields a plain list of values without
+doing any expensive parsing.
 However, in case a specific format is needed, an optional ``parser`` argument can be passed.
 ``parser`` is a function that takes the raw value list for each data point and an additional
 metadata dictionary containing all or a subset of the following:
@@ -393,10 +393,30 @@ metadata dictionary containing all or a subset of the following:
     {'time': 1439856360000000000, 'index': 56, 'location': 'santa_monica', 'randtag': '2'}
     {'time': 1439856720000000000, 'index': 65, 'location': 'santa_monica', 'randtag': '3'}
 
+Besides being explicitly with a raw response, ``iterpoints`` is also be used "automatically"
+by ``InfluxDBResult`` and ``InfluxDBChunkedResult`` when using ``iterable`` mode:
+
+.. code:: python
+
+    client.output = 'iterable'
+    r = client.query('SELECT * from h2o_quality LIMIT 10')
+    for i in r:
+        # do something
+
+    r = await client.query('SELECT * from h2o_quality', chunked=True)
+    async for i in r:
+        # do something
+
+    r = await client.query('SELECT * from h2o_quality', chunked=True)
+    async for chunk in r.iterchunks():
+        # do something with JSON chunk
+
+
 Getting tag key/value info
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-TODO
+In order to properly parse dataframes, ``InfluxDBClient`` internally uses the ``get_tag_info``,
+which basically sends a series of ``SHOW TAG KEYS`` and ``SHOW TAG VALUES`` queries and gathers
+key/value information for all measurements of the active database in a dictionary.
 
 Query patterns
 ^^^^^^^^^^^^^^
@@ -432,12 +452,12 @@ Built-in query pattern examples:
 
 Please refer to InfluxDB documentation_ for further query-related information.
 
-.. _here: aioinflux/client.py#L254
+.. _here: aioinflux/client.py#L330
 .. _documentation: https://docs.influxdata.com/influxdb/latest/query_language/
 .. |str_format| replace:: ``str_format()``
 .. _str_format: https://docs.python.org/3/library/string.html#formatstrings
-.. |set_qp| replace:: ``aioinflux.set_query_pattern``
-.. _set_qp: aioinflux/client.py#L269
+.. |set_qp| replace:: ``InfluxDBClient.set_query_pattern``
+.. _set_qp: aioinflux/client.py#L345
 
 Other functionality
 ~~~~~~~~~~~~~~~~~~~

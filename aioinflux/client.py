@@ -297,8 +297,15 @@ class InfluxDBClient:
 
     # noinspection PyCallingNonCallable
     @runner
-    async def get_tag_info(self):
-        """Gathers tag key/value information for measurements in current database"""
+    async def get_tag_info(self) -> Optional[dict]:
+        """Gathers tag key/value information for measurements in current database
+
+        This method sends a series of ``SHOW TAG KEYS`` and ``SHOW TAG VALUES`` queries
+        to InfluxDB and gathers key/value information for all measurements of the active
+        database in a dictionary.
+        This is used internally automatically when using ``dataframe`` mode in order to
+        correctly parse dataframes.
+        """
         # noinspection PyCallingNonCallable
         async def get_measurement_tags(m, cache):
             keys = (await self.show_tag_keys_from(m))['results'][0]
