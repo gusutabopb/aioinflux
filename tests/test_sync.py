@@ -158,6 +158,18 @@ def test_invalid_query_pattern(sync_client):
     logger.warning(e)
 
 
+def test_invalid_query_pattern_name(sync_client):
+    with pytest.warns(UserWarning) as e:
+        sync_client.set_query_pattern(write='SELECT {foo} from {bar}')
+    logger.warning(e)
+
+
+def test_invalid_query_pattern_without_name(sync_client):
+    with pytest.raises(ValueError) as e:
+        sync_client.set_query_pattern('SELECT {foo} from {bar}')
+    logger.warning(e)
+
+
 def test_missing_kwargs(sync_client):
     with pytest.raises(ValueError) as e:
         sync_client.select_all()
