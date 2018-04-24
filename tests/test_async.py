@@ -1,7 +1,7 @@
-import pytest
+import inspect
 
-import aioinflux.testing_utils as utils
-from aioinflux import logger, InfluxDBError, iter_resp
+import pytest
+from aioinflux import logger, InfluxDBError, iterpoints, testing_utils as utils
 
 
 @pytest.mark.asyncio
@@ -13,6 +13,12 @@ async def test_ping(async_client):
 @pytest.mark.asyncio
 async def test_create_database(async_client):
     resp = await async_client.create_database(db='mytestdb')
+    assert resp
+
+
+@pytest.mark.asyncio
+async def test_drop_database(async_client):
+    resp = await async_client.drop_database(db='mytestdb')
     assert resp
 
 
@@ -29,10 +35,11 @@ async def test_simple_query(async_client):
 
 @pytest.mark.asyncio
 async def test_chunked_query(async_client):
-    resp = await async_client.select_all(measurement='test_measurement', chunked=True, chunk_size=10)
+    resp = await async_client.select_all(measurement='test_measurement',
+                                         chunked=True, chunk_size=10, wrap=False)
     points = []
     async for chunk in resp:
-        for point in iter_resp(chunk):
+        for point in iterpoints(chunk):
             points.append(point)
     assert len(points) == 100
 
@@ -50,16 +57,26 @@ async def test_empty_chunked_query(async_client):
     resp = await async_client.select_all(measurement='fake', chunked=True, chunk_size=10)
     points = []
     async for chunk in resp:
-        for point in iter_resp(chunk):
+        for point in iterpoints(chunk):
             points.append(point)
     assert len(points) == 0
 
 
 @pytest.mark.asyncio
-async def test_drop_measurement(async_client):
-    await async_client.drop_measurement(measurement='test_measurement')
+async def test_get_tag_info(async_client):
+    tag_info = await async_client.get_tag_info()
+    logger.info(tag_info)
 
 
 @pytest.mark.asyncio
-async def test_drop_database(async_client):
-    await async_client.drop_database(db='mytestdb')
+async def test_set_query_patterns(async_client):
+    async_client.set_query_pattern(my_query='SELECT * FROM test_measurement WHERE time > now() - {day}d')
+    assert inspect.ismethod(async_client.my_query.func)
+    coro = async_client.my_query(1)
+    assert inspect.iscoroutine(coro)
+    assert await coro
+
+
+@pytest.mark.asyncio
+async def test_drop_measurement(async_client):
+    await async_client.drop_measurement(measurement='test_measurement')

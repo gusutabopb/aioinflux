@@ -1,7 +1,6 @@
-import aioinflux.testing_utils as utils
-import numpy as np
 import pytest
-from aioinflux.client import logger
+from aioinflux import (InfluxDBClient, InfluxDBError,
+                       pd, logger, testing_utils as utils)
 
 
 def test_ping(sync_client):
@@ -12,6 +11,10 @@ def test_ping(sync_client):
 def test_create_database(sync_client):
     resp = sync_client.create_database(db='mytestdb')
     assert resp
+
+
+def test_drop_database(sync_client):
+    sync_client.drop_database(db='mytestdb')
 
 
 def test_simple_write(sync_client):
@@ -33,12 +36,10 @@ def test_special_values_write(sync_client):
     point = utils.random_point()
     point['tags']['boolean_tag'] = True
     point['tags']['none_tag'] = None
-    point['tags']['nan_tag'] = np.nan
     point['tags']['blank_tag'] = ''
     point['fields']['boolean_field'] = False
     point['fields']['none_field'] = None
-    point['fields']['nan_field'] = np.nan
-    point['measurement'] = 'special_values'
+    point['measurement'] = '"quo⚡️es and emoji"'
     with pytest.warns(UserWarning) as e:
         assert sync_client.write(point)
     logger.warning(e)
@@ -97,9 +98,85 @@ def test_write_non_string_identifier_and_tags(sync_client):
     assert len(resp['results'][0]['series'][0]['values']) == 1
 
 
-def test_drop_database(sync_client):
-    sync_client.drop_database(db='mytestdb')
-
-
 def test_repr(sync_client):
     logger.info(sync_client)
+
+
+def test_get_tag_info(sync_client):
+    tag_info = sync_client.get_tag_info()
+    logger.info(tag_info)
+
+
+###############
+# Error tests #
+###############
+
+def test_invalid_data_write(sync_client):
+    with pytest.raises(InfluxDBError) as e:
+        # Plain invalid data
+        sync_client.write(utils.random_string())
+    logger.error(e)
+
+    with pytest.raises(ValueError) as e:
+        # Pass function as input data
+        sync_client.write(utils.random_string)
+    logger.error(e)
+
+    with pytest.raises(ValueError) as e:
+        # Measurement missing
+        point = utils.random_point()
+        point.pop('measurement')
+        sync_client.write(point)
+    logger.error(e)
+
+
+def test_invalid_client_mode():
+    with pytest.raises(ValueError) as e:
+        _ = InfluxDBClient(db='mytestdb', mode=utils.random_string())
+    logger.error(e)
+
+
+def test_invalid_output_format(sync_client):
+    with pytest.raises(ValueError) as e:
+        sync_client.output = utils.random_string()
+    logger.error(e)
+    if pd is None:
+        with pytest.raises(ValueError) as e:
+            sync_client.output = 'dataframe'
+        logger.error(e)
+
+
+def test_invalid_query(sync_client):
+    with pytest.raises(InfluxDBError) as e:
+        sync_client.query('NOT A VALID QUERY')
+    logger.error(e)
+
+
+def test_invalid_query_pattern(sync_client):
+    with pytest.warns(UserWarning) as e:
+        sync_client.set_query_pattern(my_query='SELECT {q} from {epoch}')
+    logger.warning(e)
+
+
+def test_invalid_query_pattern_name(sync_client):
+    with pytest.warns(UserWarning) as e:
+        sync_client.set_query_pattern(write='SELECT {foo} from {bar}')
+    logger.warning(e)
+
+
+def test_invalid_query_pattern_without_name(sync_client):
+    with pytest.raises(ValueError) as e:
+        sync_client.set_query_pattern('SELECT {foo} from {bar}')
+    logger.warning(e)
+
+
+def test_missing_kwargs(sync_client):
+    with pytest.raises(ValueError) as e:
+        sync_client.select_all()
+    logger.error(e)
+
+
+def test_statement_error(sync_client):
+    with pytest.raises(InfluxDBError) as e:
+        sync_client.query('SELECT * FROM my_measurement', db='fake_db')
+    logger.error(e)

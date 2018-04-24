@@ -24,6 +24,7 @@ To install the latest release:
 .. code:: bash
 
     $ pip install aioinflux
+    $ pip install aioinflux[pandas]  # For DataFrame parsing support
 
 The library is still in beta, so you may also want to install the latest version from
 the development branch:
@@ -36,10 +37,15 @@ Dependencies
 ~~~~~~~~~~~~
 
 Aioinflux supports Python 3.6+ **ONLY**. For older Python versions
-please use the `official Python client`_
+please use the `official Python client`_.
+However, there is `some discussion <https://github.com/plugaai/aioinflux/issues/10>`_
+regarding Pypy/Python 3.5 support.
 
-Third-party library dependencies are: |aiohttp|_ for all HTTP
-request handling and |pandas|_ for ``DataFrame`` reading/writing support.
+The main third-party library dependency is |aiohttp|_, for all HTTP
+request handling. and |pandas|_ for ``DataFrame`` reading/writing support.
+
+There are currently no plans to support other HTTP libraries besides ``aiohttp``.
+If ``aiohttp`` + ``asyncio`` is not your soup, see `Alternatives <#alternatives>`__.
 
 .. |asyncio| replace:: ``asyncio``
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
@@ -70,23 +76,32 @@ This sums most of what you can do with ``aioinflux``:
 
     client = InfluxDBClient(db='testdb')
 
-    coros = [client.create_database(db='testdb'),
-             client.write(point),
-             client.query('SELECT value FROM cpu_load_short')]
+    async def main():
+        await client.create_database(db='testdb'),
+        await client.write(point),
+        resp = await client.query('SELECT value FROM cpu_load_short')
+        print(resp)
 
-    loop = asyncio.get_event_loop()
-    results = loop.run_until_complete(asyncio.gather(*coros))
-    for result in results:
-        print(result)
+    asyncio.get_event_loop().run_until_complete(main())
 
 Client modes
 ~~~~~~~~~~~~
 
 Despite the library's name, ``InfluxDBClient`` can also run in non-async
-modes. Available modes are: ``async`` (default), ``blocking`` and
-``dataframe``.
+mode (a.k.a ``blocking``) mode. It can be useful for debugging and exploratory
+data analysis.
 
-Example using ``blocking`` mode:
+The running mode for can be switched on-the-fly by changing the ``mode`` attribute:
+
+.. code:: python
+
+    client = InfluxDBClient(mode='blocking')
+    client.mode = 'async'
+
+The ``blocking`` mode is implemented through a decorator that automatically runs coroutines on
+the event loop as soon as they are generated.
+Usage is almost the same as in the ``async`` mode, but without the need of using ``await`` and
+being able to run from outside of a coroutine function:
 
 .. code:: python
 
@@ -95,8 +110,6 @@ Example using ``blocking`` mode:
     client.write(point)
     client.query('SELECT value FROM cpu_load_short')
 
-See `Retrieving DataFrames <#retrieving-dataframes>`__ for ``dataframe``
-mode usage.
 
 Writing data
 ~~~~~~~~~~~~
@@ -104,19 +117,21 @@ Writing data
 Input data can be:
 
 1. A string properly formatted in InfluxDB's line protocol
-2. A dictionary containing the following keys: ``measurement``, ``time``, ``tags``, ``fields``
+2. A mapping (e.g. dictionary) containing the following keys: ``measurement``, ``time``, ``tags``, ``fields``
 3. A Pandas ``DataFrame`` with a ``DatetimeIndex``
 4. An iterable of one of the above
 
 Input data in formats 2-4 are parsed into the `line protocol`_ before being written to InfluxDB.
-All parsing functionality is located at |serialization|_.
+All parsing functionality is located in the |serialization|_ module.
 Beware that serialization is not highly optimized (cythonization PRs are welcome!) and may become
-a bottleneck depending on your application.
+a bottleneck depending on your application. It is however, `reasonably faster`_ than
+InfluxDB's official Python client.
 
 The ``write`` method returns ``True`` when successful and raises an
 ``InfluxDBError`` otherwise.
 
 .. _`line protocol`: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/
+.. _`reasonably faster`: https://gist.github.com/gusutabopb/42550f0f07628ba61b0ed6322f02855b
 .. |serialization| replace:: ``serialization.py``
 .. _serialization: aioinflux/serialization.py
 
@@ -132,16 +147,20 @@ following keys:
    by passing a ``measurement`` argument.
 2) **time**: Optional. The value can be ``datetime.datetime``,
    date-like string (e.g., ``2017-01-01``, ``2009-11-10T23:00:00Z``) or
-   anything else that can be parsed by Pandas' |Timestamp|_ class initializer.
+   anything else that can be parsed by Pandas' |Timestamp|_ class initializer
+   (or |ciso8601|_ if Pandas is not available).
+   Use of ISO 8601 compliant strings is highly recommended.
 3) **tags**: Optional. This must contain another mapping of field
    names and values. Both tag keys and values should be strings.
 4) **fields**: Mandatory. This must contain another mapping of field
    names and values. Field keys should be strings. Field values can be
-   ``float``, ``int``, ``str``, or ``bool`` or any equivalent type (e.g. Numpy types).
+   ``float``, ``int``, ``str``, or ``bool`` or ``None`` any subclass of the respective types.
+   Numpy will cause errors. Use dataframes for writing data using Numpy classes.
 
 .. |Timestamp| replace:: ``Timestamp``
 .. _Timestamp: https://pandas.pydata.org/pandas-docs/stable/timeseries.html
-
+.. |ciso8601| replace:: ``ciso8601``
+.. _ciso8601: https://github.com/closeio/ciso8601/
 
 Any fields other then the above will be ignored when writing data to
 InfluxDB.
@@ -175,8 +194,11 @@ A typical dataframe input should look something like the following:
     2017-06-24 14:45:17.929097+00:00  0.390137 -0.016709 -0.667895   E
 
 The measurement name must be specified with the ``measurement`` argument
-when calling ``InfluxDBClient.write``. Additional tags can also be
-passed using arbitrary keyword arguments.
+when calling ``InfluxDBClient.write``.
+Columns of dtype ``pd.Categorical`` will be automatically treated as tags.
+Columns whose dtype is not ``pd.Categorical`` but should be treated as tags
+must be specified by passing a sequence as the ``tag_columns`` argument.
+Additional tags (not present in the actual dataframe) can also be passed using arbitrary keyword arguments.
 
 **Example:**
 
@@ -190,14 +212,14 @@ InfluxDB and ``measurement`` is the measurement we are writing to.
 
 ``tag_columns`` is in an optional iterable telling which of the
 dataframe columns should be parsed as tag values. If ``tag_columns`` is
-not explicitly passed, all columns in the dataframe will be treated as
-InfluxDB field values.
+not explicitly passed, all columns in the dataframe whose dtype is not
+``pd.Categorical`` will be treated as InfluxDB field values.
 
 Any other keyword arguments passed to ``InfluxDBClient.write`` are
 treated as extra tags which will be attached to the data being written
 to InfluxDB. Any string which is a valid `InfluxDB identifier`_ and
 valid `Python identifier`_ can be used as an extra tag key (with the
-exception of they strings ``data``, ``measurement`` and ``tag_columns``).
+exception of the strings ``data``, ``measurement`` and ``tag_columns``).
 
 See ``InfluxDBClient.write`` docstring for details.
 
@@ -235,6 +257,28 @@ containing the parsed JSON data returned by the InfluxDB `HTTP API`_:
           [1491963442314710000, 5782, 100]]}],
        'statement_id': 0}]}
 
+
+Output formats
+^^^^^^^^^^^^^^
+
+When querying data, ``InfluxDBClient`` can return data in one of the following formats:
+
+1) ``raw``: Default. Returns the a dictionary containing the JSON response received from InfluxDB.
+2) ``iterable``: Wraps the JSON response in a ``InfluxDBResult`` or ``InfluxDBChunkedResult``
+   object. This object main purpose is to facilitate iteration of data.
+   See `Iterating responses <#iterating-responses>`__ for details.
+3) ``dataframe``: Parses the result into a Pandas dataframe or a dictionary of dataframes.
+   See `Retrieving DataFrames <#retrieving-dataframes>`__ for details.
+
+
+The output format for can be switched on-the-fly by changing the ``output`` attribute:
+
+.. code:: python
+
+    client = InfluxDBClient(output='dataframe')
+    client.mode = 'raw'
+
+
 Retrieving DataFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -256,18 +300,33 @@ return a Pandas ``DataFrame``:
     2017-04-12 02:17:22.274658+00:00   5781    3200
     2017-04-12 02:17:22.314710+00:00   5782     100
 
-Mode can be chosen not only during object instantiation but also by
-simply |changing_mode|_.
 
+When generating dataframes, InfluxDB types are mapped to the following Numpy/Pandas dtypes:
 
-.. |changing_mode| replace:: changing the ``mode`` attribute
-.. _changing_mode: #switching-modes
+.. list-table::
+   :header-rows: 1
+   :align: center
+
+   * - InfluxDB type
+     - Dataframe column ``dtype``
+   * - Float
+     - ``float64``
+   * - Integer
+     - ``int64``
+   * - String
+     - ``object``
+   * - String (tag values)
+     - ``CategoricalDtype``
+   * - Boolean
+     - ``bool``
+   * - Timestamp
+     - ``datetime64``
 
 
 Chunked responses
 ^^^^^^^^^^^^^^^^^
-Aioinfux support InfluxDB chunked queries. Passing ``chunked=True`` when calling
-``InfluxDBClient.query``, returns an AsyncGenerator object, which can asynchronously
+Aioinflux supports InfluxDB chunked queries. Passing ``chunked=True`` when calling
+``InfluxDBClient.query``, returns an ``AsyncGenerator`` object, which can asynchronously
 iterated. Using chunked requests allows response processing to be partially done before
 the full response is retrieved, reducing overall query time.
 
@@ -278,20 +337,21 @@ the full response is retrieved, reducing overall query time.
         # do something
         await process_chunk(...)
 
+Chunked responses are not supported when using the ``dataframe`` output format.
 
 Iterating responses
 ^^^^^^^^^^^^^^^^^^^
 
-In ``async`` and ``blocking`` modes, ``InfluxDBClient.query`` returns a parsed JSON response
-from InfluxDB. In order to easily iterate over that JSON response point by point, Aioinflux
-provides the ``iter_resp`` generator:
+By default, ``InfluxDBClient.query`` returns a parsed JSON response from InfluxDB.
+In order to easily iterate over that JSON response point by point, Aioinflux
+provides the ``iterpoints`` function, which returns a generator object:
 
 .. code:: python
 
-    from aioinflux import iter_resp
+    from aioinflux import iterpoints
 
     r = client.query('SELECT * from h2o_quality LIMIT 10')
-    for i in iter_resp(r):
+    for i in iterpoints(r):
         print(i)
 
 .. code:: text
@@ -302,16 +362,17 @@ provides the ``iter_resp`` generator:
     [1439856360000000000, 56, 'santa_monica', '2']
     [1439856720000000000, 65, 'santa_monica', '3']
 
-``iter_resp`` can also be used with chunked responses:
+``iterpoints`` can also be used with chunked responses:
 
 .. code:: python
 
     chunks = await client.query('SELECT * from h2o_quality', chunked=True)
     async for chunk in chunks:
-        for point in iter_resp(chunk):
+        for point in iterpoints(chunk):
             # do something
 
-By default, ``iter_resp`` yields a plain list of values without doing any expensive parsing.
+By default, the generator returned by ``iterpoints`` yields a plain list of values without
+doing any expensive parsing.
 However, in case a specific format is needed, an optional ``parser`` argument can be passed.
 ``parser`` is a function that takes the raw value list for each data point and an additional
 metadata dictionary containing all or a subset of the following:
@@ -321,7 +382,7 @@ metadata dictionary containing all or a subset of the following:
 .. code:: python
 
     r = await client.query('SELECT * from h2o_quality LIMIT 5')
-    for i in iter_resp(r, lambda x, meta: dict(zip(meta['columns'], x))):
+    for i in iterpoints(r, lambda x, meta: dict(zip(meta['columns'], x))):
         print(i)
 
 .. code:: text
@@ -332,6 +393,30 @@ metadata dictionary containing all or a subset of the following:
     {'time': 1439856360000000000, 'index': 56, 'location': 'santa_monica', 'randtag': '2'}
     {'time': 1439856720000000000, 'index': 65, 'location': 'santa_monica', 'randtag': '3'}
 
+Besides being explicitly with a raw response, ``iterpoints`` is also be used "automatically"
+by ``InfluxDBResult`` and ``InfluxDBChunkedResult`` when using ``iterable`` mode:
+
+.. code:: python
+
+    client.output = 'iterable'
+    r = client.query('SELECT * from h2o_quality LIMIT 10')
+    for i in r:
+        # do something
+
+    r = await client.query('SELECT * from h2o_quality', chunked=True)
+    async for i in r:
+        # do something
+
+    r = await client.query('SELECT * from h2o_quality', chunked=True)
+    async for chunk in r.iterchunks():
+        # do something with JSON chunk
+
+
+Getting tag key/value info
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+In order to properly parse dataframes, ``InfluxDBClient`` internally uses the ``get_tag_info``,
+which basically sends a series of ``SHOW TAG KEYS`` and ``SHOW TAG VALUES`` queries and gathers
+key/value information for all measurements of the active database in a dictionary.
 
 Query patterns
 ^^^^^^^^^^^^^^
@@ -367,12 +452,12 @@ Built-in query pattern examples:
 
 Please refer to InfluxDB documentation_ for further query-related information.
 
-.. _here: aioinflux/client.py#L254
+.. _here: aioinflux/client.py#L330
 .. _documentation: https://docs.influxdata.com/influxdb/latest/query_language/
 .. |str_format| replace:: ``str_format()``
 .. _str_format: https://docs.python.org/3/library/string.html#formatstrings
-.. |set_qp| replace:: ``aioinflux.set_query_pattern``
-.. _set_qp: aioinflux/client.py#L269
+.. |set_qp| replace:: ``InfluxDBClient.set_query_pattern``
+.. _set_qp: aioinflux/client.py#L345
 
 Other functionality
 ~~~~~~~~~~~~~~~~~~~
@@ -437,17 +522,6 @@ InfluxDB requires that a databases is explicitly created (by using the
 .. |CREATE_DATABASE| replace:: ``CREATE DATABASE``
 .. _`CREATE_DATABASE`: https://docs.influxdata.com/influxdb/latest/query_language/database_management/#create-database
 
-Switching modes
-^^^^^^^^^^^^^^^
-
-After the instantiation of the ``InfluxDBClient`` object, database
-can be switched on-the-fly by changing the ``mode`` attribute:
-
-.. code:: python
-
-    client = InfluxDBClient(mode='blocking')
-    client.mode = 'dataframe'
-
 
 Debugging
 ^^^^^^^^^
@@ -496,3 +570,10 @@ Contributing
 | Aioinflux is not a mature project yet, so just simply raising issues
   is also greatly appreciated :)
 
+Alternatives
+------------
+
+- `InfluxDB-Python <https://github.com/influxdata/influxdb-python>`__: The official
+  blocking-only client. Based on Requests.
+- `influx-sansio <https://github.com/miracle2k/influx-sansio>`__: Fork of aioinflux
+  using curio/trio and asks as a backend.

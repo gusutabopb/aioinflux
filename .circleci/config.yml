@@ -21,6 +21,12 @@ jobs:
           name: Run test
           command: make test
       - run:
+          name: Install pandas extras
+          command: sudo pip install -e .[pandas]
+      - run:
+          name: Run test again (w/ Pandas support)
+          command: make test
+      - run:
           name: Upload coverage report to Codecov
           command: bash <(curl -s https://codecov.io/bash)
 

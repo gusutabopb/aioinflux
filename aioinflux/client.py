@@ -3,17 +3,21 @@ import json
 import logging
 import re
 import warnings
+from collections import defaultdict
 from functools import wraps, partialmethod as pm
+from itertools import chain
 from typing import (Union, AnyStr, Mapping, Iterable,
-                    Optional, Generator, Callable, AsyncGenerator)
+                    Optional, Callable, AsyncGenerator)
 from urllib.parse import urlencode
 
 import aiohttp
-import pandas as pd
 
+from . import pd, no_pandas_warning
+from .iterutils import InfluxDBResult, InfluxDBChunkedResult
 from .serialization import parse_data, make_df
 
-PointType = Union[AnyStr, Mapping, pd.DataFrame]
+PointType = Union[AnyStr, Mapping] if pd is None else Union[AnyStr, Mapping, pd.DataFrame]
+ResultType = Union[AsyncGenerator, dict, InfluxDBResult, InfluxDBChunkedResult]
 
 # Aioinflux uses logging mainly for debugging purposes.
 # Please attach your own handlers if you need logging.
@@ -27,11 +31,7 @@ def runner(coro):
     def inner(self, *args, **kwargs):
         if self.mode == 'async':
             return coro(self, *args, **kwargs)
-        resp = self._loop.run_until_complete(coro(self, *args, **kwargs))
-        if self.mode == 'dataframe' and coro.__name__ == 'query':
-            return make_df(resp)
-        else:
-            return resp
+        return self._loop.run_until_complete(coro(self, *args, **kwargs))
 
     return inner
 
@@ -45,6 +45,7 @@ class InfluxDBClient:
                  host: str = 'localhost',
                  port: int = 8086,
                  mode: str = 'async',
+                 output: str = 'raw',
                  db: str = 'testdb',
                  *,
                  ssl: bool = False,
@@ -56,8 +57,9 @@ class InfluxDBClient:
                  ):
         """
         The InfluxDBClient object holds information necessary to interact with InfluxDB.
-        It is async by default, but can also be used as a sync/blocking client and even generate
-        Pandas DataFrames from queries.
+        It is async by default, but can also be used as a sync/blocking client.
+        When querying, responses are returned as raw JSON by default, but can also be wrapped in easily iterable
+        wrapper object or be parsed to Pandas DataFrames.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
         1) InfluxDBClient.ping
         2) InfluxDBClient.write
@@ -71,8 +73,11 @@ class InfluxDBClient:
             Available options are: 'async', 'blocking' and 'dataframe'.
             - 'async': Default mode. Each query/request to the backend will
             - 'blocking': Behaves in sync/blocking fashion, similar to the official InfluxDB-Python client.
-            - 'dataframe': Behaves in a sync/blocking fashion, but parsing results into Pandas DataFrames.
-                           Similar to InfluxDB-Python's `DataFrameClient`.
+        :param output: Output format of the response received from InfluxDB.
+            - 'raw': Default format. Returns JSON as received from InfluxDB.
+            - 'iterable': Wraps the raw response in a `InfluxDBResult` or `InfluxDBChunkedResult`,
+                          which can be used for easier iteration over retrieved data points.
+            - 'dataframe': Parses results into Pandas DataFrames. Not compatible with chunked responses.
         :param db: Default database to be used by the client.
         :param ssl: If https should be used.
         :param unix_socket: Path to the InfluxDB Unix domain socket.
@@ -80,7 +85,7 @@ class InfluxDBClient:
         :param password: User password.
         :param database: Default database to be used by the client.
             This field is for argument consistency with the official InfluxDB Python client.
-        :param loop: Event loop used for processing HTTP requests.
+        :param loop: Asyncio event loop.
         """
         self._loop = asyncio.get_event_loop() if loop is None else loop
         self._connector = aiohttp.UnixConnector(path=unix_socket, loop=self._loop) if unix_socket else None
@@ -89,19 +94,50 @@ class InfluxDBClient:
         self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
         self.host = host
         self.port = port
-        self.db = database or db
         self._mode = None
+        self._output = None
+        self._db = None
+        self.tag_cache = defaultdict(lambda: defaultdict(dict))
         self.mode = mode
+        self.output = output
+        self.db = database or db
 
     @property
     def mode(self):
         return self._mode
 
+    @property
+    def output(self):
+        return self._output
+
+    @property
+    def db(self):
+        return self._db
+
     @mode.setter
     def mode(self, mode):
-        if mode not in ('async', 'blocking', 'dataframe'):
-            raise ValueError('Invalid mode')
+        if mode not in ('async', 'blocking'):
+            raise ValueError('Invalid running mode')
         self._mode = mode
+
+    @output.setter
+    def output(self, output):
+        if pd is None and output == 'dataframe':
+            raise ValueError(no_pandas_warning)
+        if output not in ('raw', 'iterable', 'dataframe'):
+            raise ValueError('Invalid output format')
+        self._output = output
+
+    @db.setter
+    def db(self, db):
+        self._db = db
+        if db is None:
+            return
+        elif self.output == 'dataframe' and db not in self.tag_cache:
+            if self.mode == 'async':
+                asyncio.ensure_future(self.get_tag_info(), loop=self._loop)
+            else:
+                self.get_tag_info()
 
     def __enter__(self):
         return self
@@ -116,11 +152,12 @@ class InfluxDBClient:
         await self.close()
 
     def __del__(self):
-        if not self._loop.is_closed() and self._session and self.mode != 'async':
+        if not self._loop.is_closed() and self._session:
             asyncio.ensure_future(self._session.close(), loop=self._loop)
 
     def __repr__(self):
-        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')]
+        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')
+                 and k != 'tag_cache']
         items.append(f'mode={self.mode}')
         return f'{type(self).__name__}({", ".join(items)})'
 
@@ -172,8 +209,14 @@ class InfluxDBClient:
                 raise InfluxDBError(msg)
 
     @runner
-    async def query(self, q: AnyStr, *args, db=None, epoch='ns',
-                    chunked=False, chunk_size=None, **kwargs) -> Union[AsyncGenerator, dict]:
+    async def query(self, q: AnyStr,
+                    *args,
+                    epoch: str = 'ns',
+                    chunked: bool = False,
+                    chunk_size: Optional[int] = None,
+                    db: Optional[str] = None,
+                    parser: Optional[Callable] = None,
+                    **kwargs) -> ResultType:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
         https://docs.influxdata.com/influxdb/latest/query_language/
@@ -189,6 +232,7 @@ class InfluxDBClient:
         :param chunk_size: Max number of points for each chunk. By default, InfluxDB chunks
             responses by series or by every 10,000 points, whichever occurs first.
         :param kwargs: Keyword arguments for query patterns
+        :param parser: Optional parser function for 'iterable' mode
         :return: Returns an async generator if chunked is ``True``, otherwise returns
             a dictionary containing the parsed JSON response.
         """
@@ -218,14 +262,27 @@ class InfluxDBClient:
 
         url = self._url.format(endpoint='query')
         if chunked:
-            return _chunked_generator(url, data)
+            if self.mode != 'async':
+                raise ValueError("Can't use 'chunked' with non-async mode")
+            g = _chunked_generator(url, data)
+            if self.output == 'raw':
+                return g
+            elif self.output == 'iterable':
+                return InfluxDBChunkedResult(g, parser=parser, query=query)
+            elif self.output == 'dataframe':
+                raise ValueError("Chunked queries are not support with 'dataframe' output")
 
         async with self._session.post(url, data=data) as resp:
             logger.debug(resp)
             output = await resp.json()
             logger.debug(output)
             self._check_error(output)
-            return output
+            if self.output == 'raw':
+                return output
+            elif self.output == 'iterable':
+                return InfluxDBResult(output, parser=parser, query=query)
+            elif self.output == 'dataframe':
+                return make_df(output, self.tag_cache[self.db])
 
     @staticmethod
     def _check_error(response):
@@ -238,7 +295,48 @@ class InfluxDBClient:
                     msg = '{d[error]} (statement {d[statement_id]})'
                     raise InfluxDBError(msg.format(d=statement))
 
+    # noinspection PyCallingNonCallable
+    @runner
+    async def get_tag_info(self) -> Optional[dict]:
+        """Gathers tag key/value information for measurements in current database
+
+        This method sends a series of ``SHOW TAG KEYS`` and ``SHOW TAG VALUES`` queries
+        to InfluxDB and gathers key/value information for all measurements of the active
+        database in a dictionary.
+        This is used internally automatically when using ``dataframe`` mode in order to
+        correctly parse dataframes.
+        """
+        # noinspection PyCallingNonCallable
+        async def get_measurement_tags(m, cache):
+            keys = (await self.show_tag_keys_from(m))['results'][0]
+            if 'series' not in keys:
+                return
+            for series in keys['series']:
+                cache[series['name']] = defaultdict(list)
+                for tag in chain(*series['values']):
+                    tag_values = await self.show_tag_values_from(series['name'], tag)
+                    for _, v in tag_values['results'][0]['series'][0]['values']:
+                        cache[series['name']][tag].append(v)
+
+        logger.info(f"Caching tags from all measurements from '{self.db}'")
+        cache = {}
+        state = self.mode, self.output
+        self.mode = 'async'
+        self.output = 'raw'
+        ms = (await self.show_measurements())['results'][0]
+        if 'series' not in ms:
+            self.mode, self.output = state
+            return
+        await asyncio.gather(*[get_measurement_tags(m[0], cache) for m in ms['series'][0]['values']])
+        for m in cache:
+            cache[m] = {k: v for k, v in cache[m].items()}
+        if cache:
+            self.tag_cache[self._db] = cache
+        self.mode, self.output = state
+        return cache
+
     # Built-in query patterns
+    _user_query_patterns = set()
     create_database = pm(query, "CREATE DATABASE {db}")
     drop_database = pm(query, "DROP DATABASE {db}")
     drop_measurement = pm(query, "DROP MEASUREMENT {measurement}")
@@ -271,42 +369,16 @@ class InfluxDBClient:
         """
         if queries is None:
             queries = {}
-        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size')
+        if not isinstance(queries, Mapping):
+            raise ValueError('Query patterns must be passed in a dictionary '
+                             'or by using keyword arguments')
+        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'parser')
         for name, query in {**queries, **kwargs}.items():
             if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
                 warnings.warn(f'Ignoring invalid query pattern: {query}')
                 continue
+            if name in dir(cls) and name not in cls._user_query_patterns:
+                warnings.warn(f'Ignoring invalid query pattern name: {name}')
+                continue
+            cls._user_query_patterns.add(name)
             setattr(cls, name, pm(cls.query, query))
-
-
-def iter_resp(resp: dict, parser: Optional[Callable] = None) -> Generator:
-    """Iterates a response JSON yielding data point by point.
-
-    Can be used with both regular and chunked responses.
-    By default, returns just a plain list of values representing each point,
-    without column names, or other metadata.
-
-    In case a specific format is needed, an optional ``parser`` argument can be passed.
-    ``parser`` is a function that takes raw value list for each data point and a
-    metadata dictionary containing all or a subset of the following:
-    ``{'columns', 'name', 'tags', 'statement_id'}``.
-
-    Sample parser function:
-    .. code:: python
-        def parser(x, meta):
-            return dict(zip(meta['columns'], x))
-
-    :param resp: Dictionary containing parsed JSON (output from InfluxDBClient.query)
-    :param parser: Optional parser function
-    """
-    for statement in resp['results']:
-        if 'series' not in statement:
-            continue
-        for series in statement['series']:
-            meta = {k: series[k] for k in series if k != 'values'}
-            meta['statement_id'] = statement['statement_id']
-            for point in series['values']:
-                if parser is None:
-                    yield point
-                else:
-                    yield parser(point, meta)
