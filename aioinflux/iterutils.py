@@ -100,3 +100,4 @@ def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Generator:
                 return (x for x in series['values'])
             else:
                 return (parser(x, meta) for x in series['values'])
+    return (x for x in [])
