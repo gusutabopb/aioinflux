@@ -68,19 +68,21 @@ This sums most of what you can do with ``aioinflux``:
     import asyncio
     from aioinflux import InfluxDBClient
 
-    point = dict(time='2009-11-10T23:00:00Z',
-                 measurement='cpu_load_short',
-                 tags={'host': 'server01',
-                       'region': 'us-west'},
-                 fields={'value': 0.64})
-
-    client = InfluxDBClient(db='testdb')
+    point = {
+        'time': '2009-11-10T23:00:00Z',
+        'measurement': 'cpu_load_short',
+        'tags': {'host': 'server01',
+                 'region': 'us-west'},
+        'fields': {'value': 0.64}
+    }
 
     async def main():
-        await client.create_database(db='testdb'),
-        await client.write(point),
+        client = InfluxDBClient(db='testdb')
+        await client.create_database(db='testdb')
+        await client.write(point)
         resp = await client.query('SELECT value FROM cpu_load_short')
         print(resp)
+
 
     asyncio.get_event_loop().run_until_complete(main())
 
@@ -154,8 +156,10 @@ following keys:
    names and values. Both tag keys and values should be strings.
 4) **fields**: Mandatory. This must contain another mapping of field
    names and values. Field keys should be strings. Field values can be
-   ``float``, ``int``, ``str``, or ``bool`` or ``None`` any subclass of the respective types.
-   Numpy will cause errors. Use dataframes for writing data using Numpy classes.
+   ``float``, ``int``, ``str``, ``bool`` or ``None`` or any its subclasses.
+   Attempting to use Numpy types will cause errors as ``np.int64``, ``np.float64``, etc are not
+   subclasses of Python's builti-in numeric types.
+   Use dataframes for writing data using Numpy types.
 
 .. |Timestamp| replace:: ``Timestamp``
 .. _Timestamp: https://pandas.pydata.org/pandas-docs/stable/timeseries.html
@@ -399,14 +403,17 @@ by ``InfluxDBResult`` and ``InfluxDBChunkedResult`` when using ``iterable`` mode
 .. code:: python
 
     client.output = 'iterable'
+    # Returns InfluxDBResult object
     r = client.query('SELECT * from h2o_quality LIMIT 10')
     for i in r:
         # do something
 
+    # Returns InfluxDBChunkedResult object
     r = await client.query('SELECT * from h2o_quality', chunked=True)
     async for i in r:
         # do something
 
+    # Returns InfluxDBChunkedResult object
     r = await client.query('SELECT * from h2o_quality', chunked=True)
     async for chunk in r.iterchunks():
         # do something with JSON chunk
