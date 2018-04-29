@@ -224,15 +224,16 @@ def parse_df(df, measurement, tag_columns=None, **extra_tags):
             # and should be sanitized by the user.
             # e.g., df[k] = df[k].astype('str').str.translate(str_escape)
             fields.append(f"{k}=\"{{p[{i+1}]}}\"")
-    fmt = ('{m}' + f'{"," if tags else ""}' + ','.join(tags)
-           + ' ' + ','.join(fields) + ' {p[0].value}')
-    f = eval("lambda m, p: f'{}'".format(fmt))
+    fmt = (f'{measurement}', f'{"," if tags else ""}', ','.join(tags),
+           ' ', ','.join(fields), ' {p[0].value}')
+    f = eval("lambda p: f'{}'".format(''.join(fmt)))
 
     # Map/concat
     if isnull.any():
-        lp = (f(measurement, p) for p in itertuples(df[~isnull]))
-        lp_nan = (reduce(lambda a, b: re.sub(*b, a), make_replacements(df), f(measurement, p))
+        lp = map(f, itertuples(df[~isnull]))
+        rep = make_replacements(df)
+        lp_nan = (reduce(lambda a, b: re.sub(*b, a), rep, f(p))
                   for p in itertuples(df[isnull]))
         return '\n'.join(chain(lp, lp_nan)).encode('utf-8')
     else:
-        return '\n'.join(f(measurement, p) for p in itertuples(df)).encode('utf-8')
+        return '\n'.join(map(f, itertuples(df))).encode('utf-8')
