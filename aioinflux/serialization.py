@@ -1,4 +1,5 @@
 import re
+import time
 import warnings
 from collections import defaultdict
 from functools import reduce
@@ -89,14 +90,17 @@ def _parse_tags(point, extra_tags):
 def _parse_timestamp(point):
     if 'time' not in point:
         return ''
-    elif pd is not None:
-        return pd.Timestamp(point['time']).value
-    elif isinstance(point['time'], (str, bytes)):
-        dt = ciso8601.parse_datetime(point['time'])
-        return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
-    else:
-        dt = point['time']
-        return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
+    dt = point['time']
+    if pd is not None:
+        return pd.Timestamp(dt).value
+    if isinstance(dt, (str, bytes)):
+        dt = ciso8601.parse_datetime(dt)
+        if not dt:
+            raise ValueError('Invalid datetime string')
+    if not dt.tzinfo:
+        # Assume tz-naive input to be in UTC, not local time
+        return int(dt.timestamp() - time.timezone) * 10 ** 9 + dt.microsecond * 1000
+    return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
 
 
 def _parse_fields(point):

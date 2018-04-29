@@ -150,7 +150,7 @@ following keys:
 2) **time**: Optional. The value can be ``datetime.datetime``,
    date-like string (e.g., ``2017-01-01``, ``2009-11-10T23:00:00Z``) or
    anything else that can be parsed by Pandas' |Timestamp|_ class initializer
-   (or |ciso8601|_ if Pandas is not available).
+   (or |ciso8601|_ if Pandas is not available). See `below <#note-on-timestamps-and-timezones>`_ for details.
    Use of ISO 8601 compliant strings is highly recommended.
 3) **tags**: Optional. This must contain another mapping of field
    names and values. Both tag keys and values should be strings.
@@ -177,6 +177,21 @@ A typical dictionary-like point would look something like the following:
     'measurement': 'cpu_load_short',
     'tags': {'host': 'server01', 'region': 'us-west'},
     'fields': {'value1': 0.64, 'value2': True, 'value3': 10}}
+
+Note on timestamps and timezones
+""""""""""""""""""""""""""""""""
+
+Working with timezones in computing tends to be quite messy.
+To avoid such problems, the `broadly agreed`_ upon idea is to store
+timestamps in UTC. This is how both InfluxDB and Pandas treat timestamps internally.
+
+Pandas and many other libraries also assume all input timestamps are in UTC unless otherwise
+explicitly noted. Aioinflux does the same and assumes any timezone-unaware ``datetime`` object
+or datetime-like strings is in UTC.
+Aioinflux does not raise any warnings when timezone-unaware input is passed
+and silently assumes it to be in UTC.
+
+.. _`broadly agreed`: http://lucumr.pocoo.org/2011/7/15/eppur-si-muove/
 
 Writing DataFrames
 ^^^^^^^^^^^^^^^^^^
