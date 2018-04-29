@@ -13,4 +13,4 @@ except ModuleNotFoundError:
 from .client import InfluxDBClient, InfluxDBError, logger
 from .iterutils import iterpoints, InfluxDBResult, InfluxDBChunkedResult
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
