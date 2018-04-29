@@ -124,6 +124,7 @@ DataFrameType = None if pd is None else Union[bool, pd.DataFrame, Dict[str, pd.D
 
 def make_df(resp, tag_cache=None) -> DataFrameType:
     """Makes list of DataFrames from a response object"""
+
     def maker(series) -> pd.DataFrame:
         df = pd.DataFrame(series['values'], columns=series['columns'])
         if 'time' not in df.columns:
@@ -190,7 +191,7 @@ def make_replacements(df):
         ('|'.join(chain(obj_nans, other_nans)), ''),
         (',{2,}', ','),
         ('|'.join([', ,', ', ', ' ,']), ' '),
-        ]
+    ]
     return replacements
 
 

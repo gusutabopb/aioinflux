@@ -306,6 +306,7 @@ class InfluxDBClient:
         This is used internally automatically when using ``dataframe`` mode in order to
         correctly parse dataframes.
         """
+
         # noinspection PyCallingNonCallable
         async def get_measurement_tags(m, cache):
             keys = (await self.show_tag_keys_from(m))['results'][0]

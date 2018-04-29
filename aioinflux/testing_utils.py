@@ -7,6 +7,7 @@ from itertools import combinations, cycle, islice
 from . import pd, np, no_pandas_warning
 
 import pytest
+
 requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
 
 
