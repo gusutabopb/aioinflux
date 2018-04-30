@@ -10,7 +10,7 @@ except ModuleNotFoundError:
     np = None
     warnings.warn(no_pandas_warning)
 
-from .client import InfluxDBClient, InfluxDBError, logger
+from .client import InfluxDBClient, InfluxDBError, InfluxDBWriteError, logger
 from .iterutils import iterpoints, InfluxDBResult, InfluxDBChunkedResult
 
 __version__ = '0.3.0'

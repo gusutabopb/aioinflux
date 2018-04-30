@@ -1,5 +1,5 @@
 import pytest
-from aioinflux import (InfluxDBClient, InfluxDBError,
+from aioinflux import (InfluxDBClient, InfluxDBError, InfluxDBWriteError,
                        pd, logger, testing_utils as utils)
 
 
@@ -113,7 +113,7 @@ def test_get_tag_info(sync_client):
 ###############
 
 def test_invalid_data_write(sync_client):
-    with pytest.raises(InfluxDBError) as e:
+    with pytest.raises(InfluxDBWriteError) as e:
         # Plain invalid data
         sync_client.write(utils.random_string())
     logger.error(e)

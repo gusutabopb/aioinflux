@@ -40,6 +40,15 @@ class InfluxDBError(Exception):
     pass
 
 
+class InfluxDBWriteError(InfluxDBError):
+    def __init__(self, resp):
+        self.status = resp.status
+        self.headers = resp.headers
+        self.reason = resp.reason
+        super().__init__(f'Error writing data ({self.status} - {self.reason}): '
+                         f'{self.headers.get("X-Influxdb-Error", "")}')
+
+
 class InfluxDBClient:
     def __init__(self,
                  host: str = 'localhost',
@@ -204,9 +213,7 @@ class InfluxDBClient:
             if resp.status == 204:
                 return True
             else:
-                msg = (f'Error writing data ({resp.status}): '
-                       f'{resp.headers.get("X-Influxdb-Error", resp.reason)}')
-                raise InfluxDBError(msg)
+                raise InfluxDBWriteError(resp)
 
     @runner
     async def query(self, q: AnyStr,
