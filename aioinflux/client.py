@@ -55,7 +55,7 @@ class InfluxDBClient:
                  port: int = 8086,
                  mode: str = 'async',
                  output: str = 'raw',
-                 db: str = 'testdb',
+                 db: Optional[str] = None,
                  *,
                  ssl: bool = False,
                  unix_socket: Optional[str] = None,
@@ -140,8 +140,9 @@ class InfluxDBClient:
     @db.setter
     def db(self, db):
         self._db = db
-        if db is None:
-            return
+        if not db:
+            warnings.warn(f'No default databases is set. '
+                          f'Database must be specified when querying/writing.')
         elif self.output == 'dataframe' and db not in self.tag_cache:
             if self.mode == 'async':
                 asyncio.ensure_future(self.get_tag_info(), loop=self._loop)
@@ -186,9 +187,12 @@ class InfluxDBClient:
             return dict(resp.headers.items())
 
     @runner
-    async def write(self, data: Union[PointType, Iterable[PointType]],
+    async def write(self,
+                    data: Union[PointType, Iterable[PointType]],
                     measurement: Optional[str] = None,
-                    tag_columns: Optional[Iterable] = None, **extra_tags) -> bool:
+                    db: Optional[str] = None,
+                    tag_columns: Optional[Iterable] = None,
+                    **extra_tags) -> bool:
         """Writes data to InfluxDB.
         Input can be:
         1) a string properly formatted in InfluxDB's line protocol
@@ -199,16 +203,17 @@ class InfluxDBClient:
         See also: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/
 
         :param data: Input data (see description above).
-        :param tag_columns: Columns that should be treated as tags (used when writing DataFrames only)
         :param measurement: Measurement name. Mandatory when when writing DataFrames only.
             When writing dictionary-like data, this field is treated as the default value
             for points that do not contain a `measurement` field.
+        :param db: Database to be written to. Defaults to `self.db`.
+        :param tag_columns: Columns that should be treated as tags (used when writing DataFrames only)
         :param extra_tags: Additional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
         data = parse_data(data, measurement, tag_columns, **extra_tags)
         logger.debug(data)
-        url = self._url.format(endpoint='write') + '?' + urlencode(dict(db=self.db))
+        url = self._url.format(endpoint='write') + '?' + urlencode(dict(db=db or self.db))
         async with self._session.post(url, data=data) as resp:
             if resp.status == 204:
                 return True
@@ -230,7 +235,7 @@ class InfluxDBClient:
 
         :param q: Raw query string
         :param args: Positional arguments for query patterns
-        :param db: Database parameter. Defaults to `self.db`
+        :param db: Database to be queried. Defaults to `self.db`.
         :param epoch: Precision level of response timestamps.
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
         :param chunked: If ``True``, makes InfluxDB return results in streamed batches

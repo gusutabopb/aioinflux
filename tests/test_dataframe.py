@@ -87,7 +87,6 @@ async def test_change_db(async_client):
     state = async_client.db, async_client.output
     async_client.output = 'dataframe'
 
-    async_client.db = None
     async_client.db = 'foo'
     await async_client.ping()
 
