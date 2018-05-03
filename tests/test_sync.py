@@ -1,5 +1,5 @@
 import pytest
-from aioinflux import (InfluxDBClient, InfluxDBError,
+from aioinflux import (InfluxDBClient, InfluxDBError, InfluxDBWriteError,
                        pd, logger, testing_utils as utils)
 
 
@@ -39,6 +39,7 @@ def test_special_values_write(sync_client):
     point['tags']['blank_tag'] = ''
     point['fields']['boolean_field'] = False
     point['fields']['none_field'] = None
+    point['fields']['backslash'] = "This is a backslash: \\"
     point['measurement'] = '"quo⚡️es and emoji"'
     with pytest.warns(UserWarning) as e:
         assert sync_client.write(point)
@@ -98,6 +99,17 @@ def test_write_non_string_identifier_and_tags(sync_client):
     assert len(resp['results'][0]['series'][0]['values']) == 1
 
 
+def test_write_to_non_default_db(sync_client):
+    points = [p for p in utils.random_points(5)]
+    sync_client.create_database(db='temp_db')
+    assert sync_client.db != 'temp_db'
+    assert sync_client.write(points, db='temp_db')
+    resp = sync_client.select_all(db='temp_db', measurement='test_measurement')
+    logger.info(resp)
+    assert len(resp['results'][0]['series'][0]['values']) == 5
+    sync_client.drop_database(db='temp_db')
+
+
 def test_repr(sync_client):
     logger.info(sync_client)
 
@@ -112,7 +124,7 @@ def test_get_tag_info(sync_client):
 ###############
 
 def test_invalid_data_write(sync_client):
-    with pytest.raises(InfluxDBError) as e:
+    with pytest.raises(InfluxDBWriteError) as e:
         # Plain invalid data
         sync_client.write(utils.random_string())
     logger.error(e)
@@ -133,6 +145,12 @@ def test_invalid_data_write(sync_client):
 def test_invalid_client_mode():
     with pytest.raises(ValueError) as e:
         _ = InfluxDBClient(db='mytestdb', mode=utils.random_string())
+    logger.error(e)
+
+
+def test_no_default_database_warning():
+    with pytest.warns(UserWarning) as e:
+        _ = InfluxDBClient(db=None)
     logger.error(e)
 
 

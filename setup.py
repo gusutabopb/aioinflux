@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 from setuptools import setup
+from pathlib import Path
 
 with open('README.rst', 'r') as f:
     long_description = f.read()
 
+meta = {}
+with open(Path(__file__).parent / 'aioinflux' / '__init__.py') as f:
+    exec('\n'.join(l for l in f if l.startswith('__')), meta)
+
+
 setup(name='aioinflux',
-      version='0.3.1',
+      version=meta['__version__'],
       description='Asynchronous Python client for InfluxDB',
       long_description=long_description,
       author='Gustavo Bezerra',
