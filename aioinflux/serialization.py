@@ -50,15 +50,12 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
 
 def make_line(point: Mapping, measurement=None, **extra_tags) -> str:
     """Converts dictionary-like data into a single line protocol line (point)"""
-    p = dict(measurement=_parse_measurement(point, measurement),
-             tags=_parse_tags(point, extra_tags),
-             fields=_parse_fields(point),
-             timestamp=_parse_timestamp(point))
-    if p['tags']:
-        line = '{measurement},{tags} {fields} {timestamp}'.format(**p)
-    else:
-        line = '{measurement} {fields} {timestamp}'.format(**p)
-    return line
+    tags = _parse_tags(point, extra_tags)
+    if tags:
+        return (f'{_parse_measurement(point, measurement)},{tags} '
+                f'{_parse_fields(point)} {_parse_timestamp(point)}')
+    return (f'{_parse_measurement(point, measurement)} '
+            f'{_parse_fields(point)} {_parse_timestamp(point)}')
 
 
 def _parse_measurement(point, measurement):
@@ -78,7 +75,7 @@ def _parse_tags(point, extra_tags):
             v = escape(v, tag_escape)
             if not v:
                 continue  # ignore blank/null string tags
-            output.append('{k}={v}'.format(k=k, v=v))
+            output.append(f'{k}={v}')
     except KeyError:
         pass
     if output:
@@ -109,17 +106,17 @@ def _parse_fields(point):
     for k, v in point['fields'].items():
         k = escape(k, key_escape)
         if isinstance(v, bool):
-            output.append('{k}={v}'.format(k=k, v=v))
+            output.append(f'{k}={v}')
         elif isinstance(v, int):
-            output.append('{k}={v}i'.format(k=k, v=v))
+            output.append(f'{k}={v}i')
         elif isinstance(v, str):
-            output.append('{k}="{v}"'.format(k=k, v=v.translate(str_escape)))
+            output.append(f'{k}="{v.translate(str_escape)}"')
         elif v is None:
             # Empty values
             continue
         else:
             # Floats
-            output.append('{k}={v}'.format(k=k, v=v))
+            output.append(f'{k}={v}')
     return ','.join(output)
 
 
