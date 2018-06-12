@@ -26,6 +26,7 @@ setup(name='aioinflux',
                                'pytest-cov',
                                'pyyaml',
                                'pytz',
+                               'flake8',
                                ],
                       'pandas': ['pandas>=0.21', 'numpy']},
       classifiers=[

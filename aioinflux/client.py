@@ -67,7 +67,8 @@ class InfluxDBClient:
         """
         The InfluxDBClient object holds information necessary to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client.
-        When querying, responses are returned as raw JSON by default, but can also be wrapped in easily iterable
+        When querying, responses are returned as raw JSON by default,
+        but can also be wrapped in easily iterable
         wrapper object or be parsed to Pandas DataFrames.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
         1) InfluxDBClient.ping
@@ -81,12 +82,14 @@ class InfluxDBClient:
         :param mode: Mode in which client should run.
             Available options are: 'async', 'blocking' and 'dataframe'.
             - 'async': Default mode. Each query/request to the backend will
-            - 'blocking': Behaves in sync/blocking fashion, similar to the official InfluxDB-Python client.
+            - 'blocking': Behaves in sync/blocking fashion,
+                          similar to the official InfluxDB-Python client.
         :param output: Output format of the response received from InfluxDB.
             - 'raw': Default format. Returns JSON as received from InfluxDB.
             - 'iterable': Wraps the raw response in a `InfluxDBResult` or `InfluxDBChunkedResult`,
                           which can be used for easier iteration over retrieved data points.
-            - 'dataframe': Parses results into Pandas DataFrames. Not compatible with chunked responses.
+            - 'dataframe': Parses results into Pandas DataFrames.
+                           Not compatible with chunked responses.
         :param db: Default database to be used by the client.
         :param ssl: If https should be used.
         :param unix_socket: Path to the InfluxDB Unix domain socket.
@@ -169,8 +172,8 @@ class InfluxDBClient:
             asyncio.ensure_future(self._session.close(), loop=self._loop)
 
     def __repr__(self):
-        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')
-                 and k != 'tag_cache']
+        items = [f'{k}={v}' for k, v in vars(self).items()
+                 if not k.startswith('_') and k != 'tag_cache']
         items.append(f'mode={self.mode}')
         return f'{type(self).__name__}({", ".join(items)})'
 
@@ -203,14 +206,14 @@ class InfluxDBClient:
         3) a Pandas DataFrame with a DatetimeIndex
         4) an iterable of one of above
         Input data in formats 2-4 are parsed to the line protocol before being written to InfluxDB.
-        See also: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/
+        See also: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/  # noqa
 
         :param data: Input data (see description above).
         :param measurement: Measurement name. Mandatory when when writing DataFrames only.
             When writing dictionary-like data, this field is treated as the default value
             for points that do not contain a `measurement` field.
         :param db: Database to be written to. Defaults to `self.db`.
-        :param tag_columns: Columns that should be treated as tags (used when writing DataFrames only)
+        :param tag_columns: Columns to be treated as tags (used when writing DataFrames only)
         :param extra_tags: Additional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
@@ -323,8 +326,8 @@ class InfluxDBClient:
         """
 
         # noinspection PyCallingNonCallable
-        async def get_measurement_tags(m, cache):
-            keys = (await self.show_tag_keys_from(m))['results'][0]
+        async def get_tags(measurement, cache):
+            keys = (await self.show_tag_keys_from(measurement))['results'][0]
             if 'series' not in keys:
                 return
             for series in keys['series']:
@@ -343,7 +346,7 @@ class InfluxDBClient:
         if 'series' not in ms:
             self.mode, self.output = state
             return
-        await asyncio.gather(*[get_measurement_tags(m[0], cache) for m in ms['series'][0]['values']])
+        await asyncio.gather(*[get_tags(m[0], cache) for m in ms['series'][0]['values']])
         for m in cache:
             cache[m] = {k: v for k, v in cache[m].items()}
         if cache:
@@ -370,14 +373,17 @@ class InfluxDBClient:
     def set_query_pattern(cls, queries: Optional[Mapping] = None, **kwargs) -> None:
         """Defines custom methods to provide quick access to commonly used query patterns.
 
-        Query patterns are passed as mappings, where the key is name name of
-        the desired new method representing the query pattern and the value is the actual query pattern.
-        Query patterns are plain strings, with optional the named placed holders. Named placed holders
-        are processed as keyword arguments in ``str.format``. Positional arguments are also supported.
+        Query patterns are passed as mappings, with the key being name of the new method
+        and the value the actual query pattern.
+        Query patterns are plain strings, with optional the named placed holders.
+        Named placed holders are processed as keyword arguments in ``str.format``.
+        Positional arguments are also supported.
 
         Sample query pattern dictionary:
-        {"host_load": "SELECT mean(load) FROM cpu_stats WHERE host = '{host}' AND time > now() - {days}d",
-         "peak_load": "SELECT max(load) FROM cpu_stats WHERE host = '{host}' GROUP BY time(1d),host"}
+        {"host_load": "SELECT mean(load) FROM cpu_stats
+                       WHERE host = '{host}' AND time > now() - {days}d",
+         "peak_load": "SELECT max(load) FROM cpu_stats
+                       WHERE host = '{host}' GROUP BY time(1d),host"}
 
         :param queries: Mapping (e.g. dictionary) containing query patterns.
             Can be used in conjunction with kwargs.
