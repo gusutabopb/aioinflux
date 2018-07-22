@@ -198,6 +198,7 @@ class InfluxDBClient:
                     measurement: Optional[str] = None,
                     db: Optional[str] = None,
                     tag_columns: Optional[Iterable] = None,
+                    epoch: Optional[str] = 'ns',
                     **extra_tags) -> bool:
         """Writes data to InfluxDB.
         Input can be:
@@ -214,12 +215,14 @@ class InfluxDBClient:
             for points that do not contain a `measurement` field.
         :param db: Database to be written to. Defaults to `self.db`.
         :param tag_columns: Columns to be treated as tags (used when writing DataFrames only)
+         :param epoch: Precision level of response timestamps.
+            Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
         :param extra_tags: Additional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
         data = parse_data(data, measurement, tag_columns, **extra_tags)
         logger.debug(data)
-        url = self._url.format(endpoint='write') + '?' + urlencode(dict(db=db or self.db))
+        url = self._url.format(endpoint='write') + '?' + urlencode({'db': db or self.db, 'precision': epoch})
         async with self._session.post(url, data=data) as resp:
             if resp.status == 204:
                 return True
