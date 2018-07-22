@@ -1,16 +1,17 @@
+---
 version: 2
 jobs:
-  build:
+  build: &build
     docker:
-      - image: circleci/python:3.6.4
+      - image: circleci/python:3.7.0
     steps:
       - checkout
       - run:
           name: Install
           command: sudo pip install -e .
-  test:
+  test: &test
     docker:
-      - image: circleci/python:3.6.4
+      - image: circleci/python:3.7.0
       - image: influxdb:latest
     steps:
       - checkout
@@ -29,7 +30,15 @@ jobs:
       - run:
           name: Upload coverage report to Codecov
           command: bash <(curl -s https://codecov.io/bash)
-
+  build-3.6:
+    <<: *build
+    docker:
+      - image: circleci/python::3.6.6
+  test-3.6:
+    <<: *test
+    docker:
+      - image: circleci/python::3.6.6
+      - image: influxdb:latest
 workflows:
   version: 2
   build_and_test:
