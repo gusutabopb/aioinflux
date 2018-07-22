@@ -50,20 +50,21 @@ class InfluxDBWriteError(InfluxDBError):
 
 
 class InfluxDBClient:
-    def __init__(self,
-                 host: str = 'localhost',
-                 port: int = 8086,
-                 mode: str = 'async',
-                 output: str = 'raw',
-                 db: Optional[str] = None,
-                 *,
-                 ssl: bool = False,
-                 unix_socket: Optional[str] = None,
-                 username: Optional[str] = None,
-                 password: Optional[str] = None,
-                 database: Optional[str] = None,
-                 loop: Optional[asyncio.BaseEventLoop] = None,
-                 ):
+    def __init__(
+        self,
+        host: str = 'localhost',
+        port: int = 8086,
+        mode: str = 'async',
+        output: str = 'raw',
+        db: Optional[str] = None,
+        *,
+        ssl: bool = False,
+        unix_socket: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
+        loop: Optional[asyncio.BaseEventLoop] = None,
+    ):
         """
         The InfluxDBClient object holds information necessary to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client.
@@ -193,12 +194,14 @@ class InfluxDBClient:
             return dict(resp.headers.items())
 
     @runner
-    async def write(self,
-                    data: Union[PointType, Iterable[PointType]],
-                    measurement: Optional[str] = None,
-                    db: Optional[str] = None,
-                    tag_columns: Optional[Iterable] = None,
-                    **extra_tags) -> bool:
+    async def write(
+        self,
+        data: Union[PointType, Iterable[PointType]],
+        measurement: Optional[str] = None,
+        db: Optional[str] = None,
+        tag_columns: Optional[Iterable] = None,
+        **extra_tags,
+    ) -> bool:
         """Writes data to InfluxDB.
         Input can be:
         1) a string properly formatted in InfluxDB's line protocol
@@ -227,14 +230,17 @@ class InfluxDBClient:
                 raise InfluxDBWriteError(resp)
 
     @runner
-    async def query(self, q: AnyStr,
-                    *args,
-                    epoch: str = 'ns',
-                    chunked: bool = False,
-                    chunk_size: Optional[int] = None,
-                    db: Optional[str] = None,
-                    parser: Optional[Callable] = None,
-                    **kwargs) -> ResultType:
+    async def query(
+        self,
+        q: AnyStr,
+        *args,
+        epoch: str = 'ns',
+        chunked: bool = False,
+        chunk_size: Optional[int] = None,
+        db: Optional[str] = None,
+        parser: Optional[Callable] = None,
+        **kwargs,
+    ) -> ResultType:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
         https://docs.influxdata.com/influxdb/latest/query_language/

@@ -73,8 +73,10 @@ def cpu_load_generator(n):
     r = ['north', 'south', 'west', 'east']
     for _ in range(n):
         t += random.randint(1, 10 ** 10)
-        yield p.format(t=t,
-                       d=random.choice(d),
-                       r=random.choice(r),
-                       s=random.randint(1, 99),
-                       f=random.random() * 10)
+        yield p.format(
+            t=t,
+            d=random.choice(d),
+            r=random.choice(r),
+            s=random.randint(1, 99),
+            f=random.random() * 10,
+        )
