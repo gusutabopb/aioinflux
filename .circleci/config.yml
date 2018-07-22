@@ -33,11 +33,11 @@ jobs:
   build-3.6:
     <<: *build
     docker:
-      - image: circleci/python::3.6.6
+      - image: circleci/python:3.6.6
   test-3.6:
     <<: *test
     docker:
-      - image: circleci/python::3.6.6
+      - image: circleci/python:3.6.6
       - image: influxdb:latest
 workflows:
   version: 2
@@ -47,3 +47,9 @@ workflows:
       - test:
           requires:
             - build
+  build_and_test-3.6:
+    jobs:
+      - build-3.6
+      - test-3.6:
+          requires:
+            - build-3.6
