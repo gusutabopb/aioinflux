@@ -212,8 +212,8 @@ class InfluxDBClient:
         4) an iterable of one of above
 
         Input data in formats 2-4 are parsed to the line protocol before being written to InfluxDB.
-        See the `InfluxDB docs <https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/>`_
-        for more details.
+        See the `InfluxDB docs <https://docs.influxdata.com/influxdb/latest/
+        write_protocols/line_protocol_reference/>`_ for more details.
 
         :param data: Input data (see description above).
         :param measurement: Measurement name. Mandatory when when writing DataFrames only.

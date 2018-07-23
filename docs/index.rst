@@ -7,7 +7,7 @@ Welcome to aioinflux's documentation!
 =====================================
 
 .. include:: ../README.rst
-   :start-line: 1
+   :start-line: 2
    :end-line: 26
 
 
