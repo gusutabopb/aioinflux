@@ -8,6 +8,9 @@ aioinflux
     :target: https://pypi.python.org/pypi/aioinflux
 .. image:: https://img.shields.io/pypi/pyversions/aioinflux.svg
     :target: https://pypi.python.org/pypi/aioinflux
+.. image:: https://readthedocs.org/projects/aioinflux/badge/?version=latest
+    :target: https://aioinflux.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 
 Asynchronous Python client for InfluxDB. Built on top of
@@ -15,6 +18,12 @@ Asynchronous Python client for InfluxDB. Built on top of
 
 InfluxDB is an open-source distributed time series database. Find more
 about InfluxDB at http://influxdata.com/
+
+.. |asyncio| replace:: ``asyncio``
+.. _asyncio: https://docs.python.org/3/library/asyncio.html
+.. |aiohttp| replace:: ``aiohttp``
+.. _aiohttp: https://github.com/aio-libs/aiohttp
+
 
 Installation
 ------------
@@ -47,10 +56,6 @@ request handling. and |pandas|_ for ``DataFrame`` reading/writing support.
 There are currently no plans to support other HTTP libraries besides ``aiohttp``.
 If ``aiohttp`` + ``asyncio`` is not your soup, see `Alternatives <#alternatives>`__.
 
-.. |asyncio| replace:: ``asyncio``
-.. _asyncio: https://docs.python.org/3/library/asyncio.html
-.. |aiohttp| replace:: ``aiohttp``
-.. _aiohttp: https://github.com/aio-libs/aiohttp
 .. |pandas| replace:: ``pandas``
 .. _pandas: https://github.com/pandas-dev/pandas
 .. _`official Python Client`: https://github.com/influxdata/influxdb-python
@@ -89,7 +94,7 @@ This sums most of what you can do with ``aioinflux``:
 Client modes
 ~~~~~~~~~~~~
 
-Despite the library's name, ``InfluxDBClient`` can also run in non-async
+Despite the library's name, :class:`~aioinflux.client.InfluxDBClient` can also run in non-async
 mode (a.k.a ``blocking``) mode. It can be useful for debugging and exploratory
 data analysis.
 

@@ -27,6 +27,7 @@ setup(name='aioinflux',
                                'pyyaml',
                                'pytz',
                                'flake8',
+                               'sphinx-autodoc-typehints',
                                ],
                       'pandas': ['pandas>=0.21', 'numpy']},
       classifiers=[

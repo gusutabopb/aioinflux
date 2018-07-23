@@ -204,12 +204,16 @@ class InfluxDBClient:
     ) -> bool:
         """Writes data to InfluxDB.
         Input can be:
+
         1) a string properly formatted in InfluxDB's line protocol
-        2) a dictionary-like object containing four keys: 'measurement', 'time', 'tags', 'fields'
+        2) a dictionary-like object containing four keys:
+           ``measurement``, ``time``, ``tags``, ``fields``
         3) a Pandas DataFrame with a DatetimeIndex
         4) an iterable of one of above
+
         Input data in formats 2-4 are parsed to the line protocol before being written to InfluxDB.
-        See also: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/  # noqa
+        See the `InfluxDB docs <https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/>`_
+        for more details.
 
         :param data: Input data (see description above).
         :param measurement: Measurement name. Mandatory when when writing DataFrames only.
@@ -386,10 +390,14 @@ class InfluxDBClient:
         Positional arguments are also supported.
 
         Sample query pattern dictionary:
-        {"host_load": "SELECT mean(load) FROM cpu_stats
-                       WHERE host = '{host}' AND time > now() - {days}d",
-         "peak_load": "SELECT max(load) FROM cpu_stats
-                       WHERE host = '{host}' GROUP BY time(1d),host"}
+
+        .. code:: python
+
+           {"host_load": "SELECT mean(load) FROM cpu_stats "
+                         "WHERE host = '{host}' AND time > now() - {days}d",
+            "peak_load": "SELECT max(load) FROM cpu_stats "
+                         "WHERE host = '{host}' GROUP BY time(1d),host"}
+
 
         :param queries: Mapping (e.g. dictionary) containing query patterns.
             Can be used in conjunction with kwargs.
