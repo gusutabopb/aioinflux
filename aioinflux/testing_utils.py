@@ -13,15 +13,16 @@ requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
 
 def random_point():
     now = datetime.datetime.now()
-    point = {'measurement': 'test_measurement',
-             'tags': {'tag key with sp🚀ces': 'tag,value,with"commas"'},
-             'time': random.choice([now, str(now)]),
-             'fields': {
-                 'fi\neld_k\ey': random.randint(0, 200),
-                 'quote': '"',
-                 'value': random.random(),
-                }
-             }
+    point = {
+        'measurement': 'test_measurement',
+        'tags': {'tag key with sp🚀ces': 'tag,value,with"commas"'},
+        'time': random.choice([now, str(now)]),
+        'fields': {
+            'fi\neld_k\ey': random.randint(0, 200),
+            'quote': '"',
+            'value': random.random(),
+        }
+    }
     return point
 
 
@@ -72,8 +73,10 @@ def cpu_load_generator(n):
     r = ['north', 'south', 'west', 'east']
     for _ in range(n):
         t += random.randint(1, 10 ** 10)
-        yield p.format(t=t,
-                       d=random.choice(d),
-                       r=random.choice(r),
-                       s=random.randint(1, 99),
-                       f=random.random() * 10)
+        yield p.format(
+            t=t,
+            d=random.choice(d),
+            r=random.choice(r),
+            s=random.randint(1, 99),
+            f=random.random() * 10,
+        )

@@ -1,3 +1,4 @@
+# flake8: noqa
 import warnings
 
 no_pandas_warning = "Pandas/Numpy is not available. Support for 'dataframe' mode is disabled."
