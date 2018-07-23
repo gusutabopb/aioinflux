@@ -106,7 +106,7 @@ Input data can be:
 
 1. A string properly formatted in InfluxDB's line protocol
 2. A mapping (e.g. dictionary) containing the following keys: ``measurement``, ``time``, ``tags``, ``fields``
-3. A Pandas ``DataFrame`` with a ``DatetimeIndex``
+3. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
 4. An iterable of one of the above
 
 Input data in formats 2-4 are parsed into the `line protocol`_ before being written to InfluxDB.
@@ -131,13 +131,13 @@ However, that dictionary must be properly formatted and contain the
 following keys:
 
 1) **measurement**: Optional. Must be a string-like object. If
-   omitted, must be specified when calling ``InfluxDBClient.write``
+   omitted, must be specified when calling :meth:`~aioinflux.client.InfluxDBClient.write`
    by passing a ``measurement`` argument.
-2) **time**: Optional. The value can be ``datetime.datetime``,
+2) **time**: Optional. The value can be :class:`datetime.datetime`,
    date-like string (e.g., ``2017-01-01``, ``2009-11-10T23:00:00Z``) or
-   anything else that can be parsed by Pandas' |Timestamp|_ class initializer
-   (or |ciso8601|_ if Pandas is not available). See `below <#note-on-timestamps-and-timezones>`_ for details.
-   Use of ISO 8601 compliant strings is highly recommended.
+   anything else that can be parsed by :class:`pandas.Timestamp`.
+   See the :ref:`Pandas documentation <pandas:timeseries>` for details.
+   If Pandas is not available, |ciso8601|_ is used instead for string parsing.
 3) **tags**: Optional. This must contain another mapping of field
    names and values. Both tag keys and values should be strings.
 4) **fields**: Mandatory. This must contain another mapping of field
@@ -147,8 +147,6 @@ following keys:
    subclasses of Python's builti-in numeric types.
    Use dataframes for writing data using Numpy types.
 
-.. |Timestamp| replace:: ``Timestamp``
-.. _Timestamp: https://pandas.pydata.org/pandas-docs/stable/timeseries.html
 .. |ciso8601| replace:: ``ciso8601``
 .. _ciso8601: https://github.com/closeio/ciso8601/
 
@@ -164,18 +162,17 @@ A typical dictionary-like point would look something like the following:
     'tags': {'host': 'server01', 'region': 'us-west'},
     'fields': {'value1': 0.64, 'value2': True, 'value3': 10}}
 
-Note on timestamps and timezones
-""""""""""""""""""""""""""""""""
+.. note:: Note on timestamps and timezones
 
-Working with timezones in computing tends to be quite messy.
-To avoid such problems, the `broadly agreed`_ upon idea is to store
-timestamps in UTC. This is how both InfluxDB and Pandas treat timestamps internally.
+   Working with timezones in computing tends to be quite messy.
+   To avoid such problems, the `broadly agreed`_ upon idea is to store
+   timestamps in UTC. This is how both InfluxDB and Pandas treat timestamps internally.
 
-Pandas and many other libraries also assume all input timestamps are in UTC unless otherwise
-explicitly noted. Aioinflux does the same and assumes any timezone-unaware ``datetime`` object
-or datetime-like strings is in UTC.
-Aioinflux does not raise any warnings when timezone-unaware input is passed
-and silently assumes it to be in UTC.
+   Pandas and many other libraries also assume all input timestamps are in UTC unless otherwise
+   explicitly noted. Aioinflux does the same and assumes any timezone-unaware ``datetime`` object
+   or datetime-like strings is in UTC.
+   Aioinflux does not raise any warnings when timezone-unaware input is passed
+   and silently assumes it to be in UTC.
 
 .. _`broadly agreed`: http://lucumr.pocoo.org/2011/7/15/eppur-si-muove/
 
@@ -184,7 +181,7 @@ Writing DataFrames
 
 Aioinflux also accepts Pandas dataframes as input. The only requirements
 for the dataframe is that the index **must** be of type
-``DatetimeIndex``. Also, any column whose ``dtype`` is ``object`` will
+:class:`~pandas.DatetimeIndex`. Also, any column whose ``dtype`` is ``object`` will
 be converted to a string representation.
 
 A typical dataframe input should look something like the following:
@@ -199,9 +196,9 @@ A typical dataframe input should look something like the following:
     2017-06-24 14:45:17.929097+00:00  0.390137 -0.016709 -0.667895   E
 
 The measurement name must be specified with the ``measurement`` argument
-when calling ``InfluxDBClient.write``.
-Columns of dtype ``pd.Categorical`` will be automatically treated as tags.
-Columns whose dtype is not ``pd.Categorical`` but should be treated as tags
+when calling :meth:`~aioinflux.client.InfluxDBClient.write`.
+Columns of dtype :class:`~pandas.api.types.CategoricalDtype` will be automatically treated as tags.
+Columns with other dtypes which should be treated as tags
 must be specified by passing a sequence as the ``tag_columns`` argument.
 Additional tags (not present in the actual dataframe) can also be passed using arbitrary keyword arguments.
 
@@ -218,15 +215,15 @@ InfluxDB and ``measurement`` is the measurement we are writing to.
 ``tag_columns`` is in an optional iterable telling which of the
 dataframe columns should be parsed as tag values. If ``tag_columns`` is
 not explicitly passed, all columns in the dataframe whose dtype is not
-``pd.Categorical`` will be treated as InfluxDB field values.
+:class:`~pandas.DatetimeIndex` will be treated as InfluxDB field values.
 
-Any other keyword arguments passed to ``InfluxDBClient.write`` are
+Any other keyword arguments passed to :meth:`~aioinflux.client.InfluxDBClient.write` are
 treated as extra tags which will be attached to the data being written
 to InfluxDB. Any string which is a valid `InfluxDB identifier`_ and
 valid `Python identifier`_ can be used as an extra tag key (with the
 exception of the strings ``data``, ``measurement`` and ``tag_columns``).
 
-See ``InfluxDBClient.write`` docstring for details.
+See `API reference <api.html#aioinflux.client.InfluxDBClient.write>`__ for details.
 
 .. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/latest/query_language/spec/#identifiers
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
@@ -235,7 +232,7 @@ Querying data
 ~~~~~~~~~~~~~
 
 Querying data is as simple as passing an InfluxDB query string to
-``InfluxDBClient.query``:
+:meth:`~aioinflux.client.InfluxDBClient.query`:
 
 .. code:: python
 
@@ -287,8 +284,8 @@ The output format for can be switched on-the-fly by changing the ``output`` attr
 Retrieving DataFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
-When the client is in ``dataframe`` mode, ``InfluxDBClient.query`` will
-return a Pandas ``DataFrame``:
+When the client is in ``dataframe`` mode, :meth:`~aioinflux.client.InfluxDBClient.query`
+will return a :class:`pandas.DataFrame`:
 
 
 .. code:: text
@@ -331,8 +328,9 @@ When generating dataframes, InfluxDB types are mapped to the following Numpy/Pan
 Chunked responses
 ^^^^^^^^^^^^^^^^^
 Aioinflux supports InfluxDB chunked queries. Passing ``chunked=True`` when calling
-``InfluxDBClient.query``, returns an ``AsyncGenerator`` object, which can asynchronously
-iterated. Using chunked requests allows response processing to be partially done before
+:meth:`~aioinflux.client.InfluxDBClient.query`, returns an ``AsyncGenerator`` object,
+which can asynchronously iterated.
+Using chunked requests allows response processing to be partially done before
 the full response is retrieved, reducing overall query time.
 
 .. code:: python
@@ -347,7 +345,8 @@ Chunked responses are not supported when using the ``dataframe`` output format.
 Iterating responses
 ^^^^^^^^^^^^^^^^^^^
 
-By default, ``InfluxDBClient.query`` returns a parsed JSON response from InfluxDB.
+By default, :meth:`~aioinflux.client.InfluxDBClient.query`
+returns a parsed JSON response from InfluxDB.
 In order to easily iterate over that JSON response point by point, Aioinflux
 provides the ``iterpoints`` function, which returns a generator object:
 
