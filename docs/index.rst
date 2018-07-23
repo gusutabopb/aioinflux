@@ -8,14 +8,14 @@ Welcome to aioinflux's documentation!
 
 .. include:: ../README.rst
    :start-line: 2
-   :end-line: 26
+   :end-line: 35
 
 
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
 
-   readme
+   usage
    api
 
 

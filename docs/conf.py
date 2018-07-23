@@ -19,14 +19,20 @@
 
 # -- Project information -----------------------------------------------------
 
+from pathlib import Path
+
+meta = {}
+with open(Path(__file__).parent.parent / 'aioinflux' / '__init__.py') as f:
+    exec('\n'.join(l for l in f if l.startswith('__')), meta)
+
 project = 'aioinflux'
 copyright = '2018, Gustavo Bezerra'
 author = 'Gustavo Bezerra'
 
 # The short X.Y version
-version = ''
+version = meta['__version__']
 # The full version, including alpha/beta/rc tags
-release = '0.3.2'
+release = meta['__version__']
 
 
 # -- General configuration ---------------------------------------------------
