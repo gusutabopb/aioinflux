@@ -21,3 +21,6 @@ upload: build
 
 upload-test: build
 	twine upload --repository testpypi dist/*
+
+readme:
+	rst2html.py --stylesheet=docs/_static/rst2html.css README.rst README.html
