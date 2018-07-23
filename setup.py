@@ -6,7 +6,7 @@ with open('README.rst', 'r') as f:
     long_description = f.read()
 
 meta = {}
-with open(Path('aioinflux') / '__init__.py') as f:
+with open(Path(__file__).parent / 'aioinflux' / '__init__.py') as f:
     exec('\n'.join(l for l in f if l.startswith('__')), meta)
 
 
@@ -21,15 +21,25 @@ setup(name='aioinflux',
       include_package_data=True,
       python_requires='>=3.6',
       install_requires=['aiohttp>=3.0', 'ciso8601'],
-      extras_require={'test': ['pytest',
-                               'pytest-asyncio',
-                               'pytest-cov',
-                               'pyyaml',
-                               'pytz',
-                               'flake8',
-                               'sphinx-autodoc-typehints',
-                               ],
-                      'pandas': ['pandas>=0.21', 'numpy']},
+      extras_require={
+          'test': [
+              'pytest',
+              'pytest-asyncio',
+              'pytest-cov',
+              'pyyaml',
+              'pytz',
+              'flake8',
+          ],
+          'docs': [
+              'sphinx',
+              'sphinx_rtd_theme',
+              'sphinx-autodoc-typehints',
+          ],
+          'pandas': [
+              'pandas>=0.21',
+              'numpy'
+          ]
+      },
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
