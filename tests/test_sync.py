@@ -114,10 +114,6 @@ def test_repr(sync_client):
     logger.info(sync_client)
 
 
-def test_get_tag_info(sync_client):
-    tag_info = sync_client.get_tag_info()
-    logger.info(tag_info)
-
 def test_query_pattern_keyword(sync_client):
     assert sync_client.select_all("order")
 

@@ -63,12 +63,6 @@ async def test_empty_chunked_query(async_client):
 
 
 @pytest.mark.asyncio
-async def test_get_tag_info(async_client):
-    tag_info = await async_client.get_tag_info()
-    logger.info(tag_info)
-
-
-@pytest.mark.asyncio
 async def test_set_query_patterns(async_client):
     query = "SELECT * FROM test_measurement WHERE time > now() - {day}d"
     async_client.set_query_pattern(my_query=query)

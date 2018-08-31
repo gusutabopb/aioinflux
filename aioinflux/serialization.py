@@ -123,7 +123,7 @@ def _parse_fields(point):
 DataFrameType = None if pd is None else Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]
 
 
-def make_df(resp, tag_cache=None) -> DataFrameType:
+def make_df(resp) -> DataFrameType:
     """Makes list of DataFrames from a response object"""
 
     def maker(series) -> pd.DataFrame:
@@ -157,16 +157,8 @@ def make_df(resp, tag_cache=None) -> DataFrameType:
     dfs = {k: pd.concat(v, axis=0) for k, v in d.items()}
 
     # Post-processing
-    for (name, _), df in dfs.items():
+    for df in dfs.values():
         drop_zero_index(df)
-        if not tag_cache or name not in tag_cache:
-            continue
-        for col, tags in tag_cache[name].items():
-            if col not in df.columns:
-                continue
-            # Change tag columns dtype from object to categorical
-            dtype = pd.api.types.CategoricalDtype(categories=tags)
-            df[col] = df[col].astype(dtype=dtype)
 
     # Return
     if len(dfs) == 1:
