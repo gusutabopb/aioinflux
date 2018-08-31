@@ -20,11 +20,11 @@ This sums most of what you can do with ``aioinflux``:
     }
 
     async def main():
-        client = InfluxDBClient(db='testdb')
-        await client.create_database(db='testdb')
-        await client.write(point)
-        resp = await client.query('SELECT value FROM cpu_load_short')
-        print(resp)
+        async with InfluxDBClient(db='testdb') as client:
+           await client.create_database(db='testdb')
+           await client.write(point)
+           resp = await client.query('SELECT value FROM cpu_load_short')
+           print(resp)
 
 
     asyncio.get_event_loop().run_until_complete(main())
