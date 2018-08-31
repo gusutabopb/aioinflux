@@ -1,11 +1,11 @@
 aioinflux
 =========
-.. image:: https://img.shields.io/circleci/project/github/plugaai/aioinflux.svg
-   :target: https://circleci.com/gh/plugaai/aioinflux
+.. image:: https://img.shields.io/circleci/project/github/gusutabopb/aioinflux.svg
+   :target: https://circleci.com/gh/gusutabopb/aioinflux
    :alt: CI status
 
-.. image:: https://img.shields.io/codecov/c/github/plugaai/aioinflux.svg
-   :target: https://codecov.io/gh/plugaai/aioinflux
+.. image:: https://img.shields.io/codecov/c/github/gusutabopb/aioinflux.svg
+   :target: https://codecov.io/gh/gusutabopb/aioinflux
    :alt: Coverage
 
 .. image:: https://img.shields.io/pypi/v/aioinflux.svg
