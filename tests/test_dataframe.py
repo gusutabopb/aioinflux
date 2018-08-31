@@ -54,15 +54,6 @@ def test_read_dataframe_groupby(df_client):
 
 
 @utils.requires_pandas
-def test_read_dataframe_with_tag_info(df_client):
-    df_client.get_tag_info()
-    logger.info(df_client.tag_cache)
-    df = df_client.select_all(measurement='m1')
-    assert pd.api.types.CategoricalDtype in {type(d) for d in df.dtypes}
-    assert df.shape == (50, 8)
-
-
-@utils.requires_pandas
 def test_read_dataframe_show_databases(df_client):
     df = df_client.show_databases()
     assert isinstance(df.index, pd.RangeIndex)

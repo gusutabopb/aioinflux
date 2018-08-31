@@ -3,9 +3,7 @@ import json
 import logging
 import re
 import warnings
-from collections import defaultdict
 from functools import wraps, partialmethod as pm
-from itertools import chain
 from typing import (Union, AnyStr, Mapping, Iterable,
                     Optional, Callable, AsyncGenerator)
 from urllib.parse import urlencode
@@ -49,6 +47,7 @@ class InfluxDBWriteError(InfluxDBError):
                          f'{self.headers.get("X-Influxdb-Error", "")}')
 
 
+# noinspection PyAttributeOutsideInit
 class InfluxDBClient:
     def __init__(
         self,
@@ -110,10 +109,6 @@ class InfluxDBClient:
         self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
         self.host = host
         self.port = port
-        self._mode = None
-        self._output = None
-        self._db = None
-        self.tag_cache = defaultdict(lambda: defaultdict(dict))
         self.mode = mode
         self.output = output
         self.db = database or db
@@ -150,11 +145,6 @@ class InfluxDBClient:
         if not db:
             warnings.warn(f'No default databases is set. '
                           f'Database must be specified when querying/writing.')
-        elif self.output == 'dataframe' and db not in self.tag_cache:
-            if self.mode == 'async':
-                asyncio.ensure_future(self.get_tag_info(), loop=self._loop)
-            else:
-                self.get_tag_info()
 
     def __enter__(self):
         return self
@@ -265,6 +255,7 @@ class InfluxDBClient:
             a dictionary containing the parsed JSON response.
         """
 
+        # noinspection PyShadowingNames
         async def _chunked_generator(url, data):
             async with self._session.post(url, data=data) as resp:
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
@@ -310,7 +301,7 @@ class InfluxDBClient:
             elif self.output == 'iterable':
                 return InfluxDBResult(output, parser=parser, query=query)
             elif self.output == 'dataframe':
-                return make_df(output, self.tag_cache[self.db])
+                return make_df(output)
 
     @staticmethod
     def _check_error(response):
@@ -323,61 +314,20 @@ class InfluxDBClient:
                     msg = '{d[error]} (statement {d[statement_id]})'
                     raise InfluxDBError(msg.format(d=statement))
 
-    # noinspection PyCallingNonCallable
-    @runner
-    async def get_tag_info(self) -> Optional[dict]:
-        """Gathers tag key/value information for measurements in current database
-
-        This method sends a series of ``SHOW TAG KEYS`` and ``SHOW TAG VALUES`` queries
-        to InfluxDB and gathers key/value information for all measurements of the active
-        database in a dictionary.
-        This is used internally automatically when using ``dataframe`` mode in order to
-        correctly parse dataframes.
-        """
-
-        # noinspection PyCallingNonCallable
-        async def get_tags(measurement, cache):
-            keys = (await self.show_tag_keys_from(measurement))['results'][0]
-            if 'series' not in keys:
-                return
-            for series in keys['series']:
-                cache[series['name']] = defaultdict(list)
-                for tag in chain(*series['values']):
-                    tag_values = await self.show_tag_values_from(series['name'], tag)
-                    for _, v in tag_values['results'][0]['series'][0]['values']:
-                        cache[series['name']][tag].append(v)
-
-        logger.info(f"Caching tags from all measurements from '{self.db}'")
-        cache = {}
-        state = self.mode, self.output
-        self.mode = 'async'
-        self.output = 'raw'
-        ms = (await self.show_measurements())['results'][0]
-        if 'series' not in ms:
-            self.mode, self.output = state
-            return
-        await asyncio.gather(*[get_tags(m[0], cache) for m in ms['series'][0]['values']])
-        for m in cache:
-            cache[m] = {k: v for k, v in cache[m].items()}
-        if cache:
-            self.tag_cache[self._db] = cache
-        self.mode, self.output = state
-        return cache
-
     # Built-in query patterns
     _user_query_patterns = set()
-    create_database = pm(query, "CREATE DATABASE {db}")
-    drop_database = pm(query, "DROP DATABASE {db}")
-    drop_measurement = pm(query, "DROP MEASUREMENT {measurement}")
+    create_database = pm(query, 'CREATE DATABASE "{db}"')
+    drop_database = pm(query, 'DROP DATABASE "{db}"')
+    drop_measurement = pm(query, 'DROP MEASUREMENT "{measurement}"')
     show_databases = pm(query, "SHOW DATABASES")
     show_measurements = pm(query, "SHOW MEASUREMENTS")
     show_retention_policies = pm(query, "SHOW RETENTION POLICIES")
     show_users = pm(query, "SHOW USERS")
-    select_all = pm(query, "SELECT * FROM {measurement}")
+    select_all = pm(query, 'SELECT * FROM "{measurement}"')
     show_tag_keys = pm(query, "SHOW TAG KEYS")
     show_tag_values = pm(query, 'SHOW TAG VALUES WITH key = "{key}"')
-    show_tag_keys_from = pm(query, "SHOW TAG KEYS FROM {measurement}")
-    show_tag_values_from = pm(query, 'SHOW TAG VALUES FROM {measurement} WITH key = "{key}"')
+    show_tag_keys_from = pm(query, 'SHOW TAG KEYS FROM "{measurement}"')
+    show_tag_values_from = pm(query, 'SHOW TAG VALUES FROM "{measurement}" WITH key = "{key}"')
 
     @classmethod
     def set_query_pattern(cls, queries: Optional[Mapping] = None, **kwargs) -> None:
