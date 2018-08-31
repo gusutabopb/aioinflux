@@ -47,6 +47,7 @@ class InfluxDBWriteError(InfluxDBError):
                          f'{self.headers.get("X-Influxdb-Error", "")}')
 
 
+# noinspection PyAttributeOutsideInit
 class InfluxDBClient:
     def __init__(
         self,
@@ -108,9 +109,6 @@ class InfluxDBClient:
         self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
         self.host = host
         self.port = port
-        self._mode = None
-        self._output = None
-        self._db = None
         self.mode = mode
         self.output = output
         self.db = database or db
@@ -257,6 +255,7 @@ class InfluxDBClient:
             a dictionary containing the parsed JSON response.
         """
 
+        # noinspection PyShadowingNames
         async def _chunked_generator(url, data):
             async with self._session.post(url, data=data) as resp:
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
