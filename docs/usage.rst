@@ -1,51 +1,8 @@
 User Guide
 ==========
 
-
-Installation
-------------
-
-To install the latest release:
-
-.. code:: bash
-
-    $ pip install aioinflux
-    $ pip install aioinflux[pandas]  # For DataFrame parsing support
-
-The library is still in beta, so you may also want to install the latest version from
-the development branch:
-
-.. code:: bash
-
-    $ pip install git+https://github.com/plugaai/aioinflux@dev
-
-Dependencies
-~~~~~~~~~~~~
-
-Aioinflux supports Python 3.6+ **ONLY**. For older Python versions
-please use the `official Python client`_.
-However, there is `some discussion <https://github.com/plugaai/aioinflux/issues/10>`_
-regarding Pypy/Python 3.5 support.
-
-The main third-party library dependency is |aiohttp|_, for all HTTP
-request handling. and |pandas|_ for ``DataFrame`` reading/writing support.
-
-There are currently no plans to support other HTTP libraries besides ``aiohttp``.
-If ``aiohttp`` + ``asyncio`` is not your soup, see `Alternatives <#alternatives>`__.
-
-.. |asyncio| replace:: ``asyncio``
-.. _asyncio: https://docs.python.org/3/library/asyncio.html
-.. |aiohttp| replace:: ``aiohttp``
-.. _aiohttp: https://github.com/aio-libs/aiohttp
-.. |pandas| replace:: ``pandas``
-.. _pandas: https://github.com/pandas-dev/pandas
-.. _`official Python Client`: https://github.com/influxdata/influxdb-python
-
-Usage
+TL;DR
 -----
-
-TL;DR:
-~~~~~~
 
 This sums most of what you can do with ``aioinflux``:
 
@@ -73,7 +30,7 @@ This sums most of what you can do with ``aioinflux``:
     asyncio.get_event_loop().run_until_complete(main())
 
 Client modes
-~~~~~~~~~~~~
+------------
 
 Despite the library's name, :class:`~aioinflux.client.InfluxDBClient` can also run in non-async
 mode (a.k.a ``blocking``) mode. It can be useful for debugging and exploratory
@@ -100,7 +57,7 @@ being able to run from outside of a coroutine function:
 
 
 Writing data
-~~~~~~~~~~~~
+------------
 
 Input data can be:
 
@@ -229,7 +186,7 @@ See `API reference <api.html#aioinflux.client.InfluxDBClient.write>`__ for detai
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
 
 Querying data
-~~~~~~~~~~~~~
+-------------
 
 Querying data is as simple as passing an InfluxDB query string to
 :meth:`~aioinflux.client.InfluxDBClient.query`:
@@ -467,7 +424,7 @@ Please refer to InfluxDB documentation_ for further query-related information.
 .. _set_qp: aioinflux/client.py#L345
 
 Other functionality
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Authentication
 ^^^^^^^^^^^^^^
@@ -546,41 +503,3 @@ Below is a simple way to setup logging from your application:
 
 For further information about logging, please refer to the
 `official documentation <https://docs.python.org/3/library/logging.html>`__.
-
-
-Implementation
---------------
-
-Since InfluxDB exposes all its functionality through an `HTTP
-API <https://docs.influxdata.com/influxdb/latest/tools/api/>`__,
-``InfluxDBClient`` tries to be nothing more than a thin and simple
-wrapper around that API.
-
-The InfluxDB HTTP API exposes exactly three endpoints/functions:
-``ping``, ``write`` and ``query``.
-
-``InfluxDBClient`` merely wraps these three functions and provides
-some parsing functionality for generating line protocol data (when
-writing) and parsing JSON responses (when querying).
-
-Additionally,
-`partials <https://en.wikipedia.org/wiki/Partial_application>`__ are
-used in order to provide convenient access to commonly used query
-patterns. See the `Query patterns <#query-patterns>`__
-section for details.
-
-Contributing
-------------
-
-| To contribute, fork the repository on GitHub, make your changes and
-  submit a pull request.
-| Aioinflux is not a mature project yet, so just simply raising issues
-  is also greatly appreciated :)
-
-Alternatives
-------------
-
-- `InfluxDB-Python <https://github.com/influxdata/influxdb-python>`__: The official
-  blocking-only client. Based on Requests.
-- `influx-sansio <https://github.com/miracle2k/influx-sansio>`__: Fork of aioinflux
-  using curio/trio and asks as a backend.
