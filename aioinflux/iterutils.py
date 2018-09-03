@@ -1,4 +1,4 @@
-from typing import Optional, Generator, Callable
+from typing import Optional, Iterator, Callable
 
 
 class InfluxDBResult:
@@ -69,7 +69,7 @@ class InfluxDBChunkedResult:
                 yield chunk
 
 
-def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Generator:
+def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Iterator:
     """Iterates a response JSON yielding data point by point.
 
     Can be used with both regular and chunked responses.
@@ -100,4 +100,4 @@ def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Generator:
                 return (x for x in series['values'])
             else:
                 return (parser(x, meta) for x in series['values'])
-    return (x for x in [])
+    return iter([])
