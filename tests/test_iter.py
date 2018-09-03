@@ -18,7 +18,7 @@ async def test_iterpoints_with_parser(iter_client):
 @pytest.mark.asyncio
 async def test_aiter_point(iter_client):
     resp = await iter_client.select_all(measurement='cpu_load',
-                                        chunked=True, chunk_size=10, wrap=True)
+                                        chunked=True, chunk_size=10)
     points = []
     async for point in resp:
         points.append(point)
@@ -28,7 +28,7 @@ async def test_aiter_point(iter_client):
 @pytest.mark.asyncio
 async def test_aiter_chunk(iter_client):
     resp = await iter_client.select_all(measurement='cpu_load',
-                                        chunked=True, chunk_size=10, wrap=True)
+                                        chunked=True, chunk_size=10)
     assert inspect.isasyncgen(resp.gen)
 
     chunks = []
@@ -42,7 +42,7 @@ async def test_aiter_chunk(iter_client):
 @pytest.mark.asyncio
 async def test_aiter_chunk_wrap(iter_client):
     resp = await iter_client.select_all(measurement='cpu_load',
-                                        chunked=True, chunk_size=10, wrap=True)
+                                        chunked=True, chunk_size=10)
     points = []
     async for chunk in resp.iterchunks(wrap=True):
         assert 'results' in chunk.data
@@ -55,7 +55,7 @@ async def test_aiter_chunk_wrap(iter_client):
 
 @pytest.mark.asyncio
 async def test_iter_wrap(iter_client):
-    resp = await iter_client.select_all(measurement='cpu_load', wrap=True)
+    resp = await iter_client.select_all(measurement='cpu_load')
     assert 'results' in resp.data
     logger.info(resp)
     assert len(resp.show()) == len(resp)
