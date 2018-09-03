@@ -274,6 +274,10 @@ class InfluxDBClient:
         except KeyError as e:
             raise ValueError(f'Missing argument "{e.args[0]}" in {repr(q)}')
 
+        # InfluxDB documentation is wrong regarding `/query` parameters
+        # See https://github.com/influxdata/docs.influxdata.com/issues/1807
+        if not isinstance(chunked, bool):
+            raise ValueError("'chunked' must be a boolean")
         data = dict(q=query, db=db, chunked=str(chunked).lower(), epoch=epoch)
         if chunked and chunk_size:
             data['chunk_size'] = chunk_size
