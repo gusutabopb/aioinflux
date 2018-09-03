@@ -36,9 +36,20 @@ among other handy functionality.
 
 Please refer to the `documentation`_ for more details.
 
-
-Sample usage
+Installation
 ------------
+
+Python 3.6+ is required.
+You also need to have access to a running instance of InfluxDB.
+
+.. code:: bash
+
+   pip install aioinflux
+
+
+
+Quick start
+-----------
 
 This sums most of what you can do with ``aioinflux``:
 
@@ -66,6 +77,6 @@ This sums most of what you can do with ``aioinflux``:
     asyncio.get_event_loop().run_until_complete(main())
 
 
-For installation and detailed usage instructions, see the `documentation`_.
+See the `documentation`_ for more detailed usage.
 
 .. _documentation: http://aioinflux.readthedocs.io/en/latest/
