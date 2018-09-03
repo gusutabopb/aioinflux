@@ -124,10 +124,10 @@ DataFrameType = None if pd is None else Union[bool, pd.DataFrame, Dict[str, pd.D
 
 
 def make_df(resp) -> DataFrameType:
-    """Makes list of DataFrames from a response object"""
+    """Makes a dictionary of DataFrames from a response object"""
 
     def maker(series) -> pd.DataFrame:
-        df = pd.DataFrame(series['values'], columns=series['columns'])
+        df = pd.DataFrame(series.get('values', []), columns=series['columns'])
         if 'time' not in df.columns:
             return df
         df: pd.DataFrame = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)
@@ -146,7 +146,7 @@ def make_df(resp) -> DataFrameType:
                 df.reset_index(drop=True, inplace=True)
 
     # Parsing
-    df_list = [((series['name'], tuple(series.get('tags', {}).items())), maker(series))
+    df_list = [((series.get('name'), tuple(series.get('tags', {}).items())), maker(series))
                for statement in resp['results'] if 'series' in statement
                for series in statement['series']]
 

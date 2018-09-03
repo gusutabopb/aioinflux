@@ -324,6 +324,8 @@ class InfluxDBClient:
     show_retention_policies = pm(query, "SHOW RETENTION POLICIES")
     show_users = pm(query, "SHOW USERS")
     select_all = pm(query, 'SELECT * FROM "{measurement}"')
+    show_series = pm(query, 'SHOW SERIES')
+    show_series_from = pm(query, 'SHOW SERIES FROM "{measurement}"')
     show_tag_keys = pm(query, "SHOW TAG KEYS")
     show_tag_values = pm(query, 'SHOW TAG VALUES WITH key = "{key}"')
     show_tag_keys_from = pm(query, 'SHOW TAG KEYS FROM "{measurement}"')

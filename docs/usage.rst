@@ -119,7 +119,7 @@ A typical dictionary-like point would look something like the following:
     'tags': {'host': 'server01', 'region': 'us-west'},
     'fields': {'value1': 0.64, 'value2': True, 'value3': 10}}
 
-.. note:: Note on timestamps and timezones
+.. note:: **Timestamps and timezones**
 
    Working with timezones in computing tends to be quite messy.
    To avoid such problems, the `broadly agreed`_ upon idea is to store

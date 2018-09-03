@@ -27,7 +27,7 @@ The main third-party library dependency is |aiohttp|_, for all HTTP
 request handling. and |pandas|_ for ``DataFrame`` reading/writing support.
 
 There are currently no plans to support other HTTP libraries besides ``aiohttp``.
-If ``aiohttp`` + ``asyncio`` is not your soup, see `Alternatives <#alternatives>`__.
+If ``aiohttp`` + ``asyncio`` is not your soup, see `alternatives <index.html#alternatives>`__.
 
 .. |asyncio| replace:: ``asyncio``
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
