@@ -80,7 +80,7 @@ class InfluxDBClient:
         :param host: Hostname to connect to InfluxDB.
         :param port: Port to connect to InfluxDB.
         :param mode: Mode in which client should run.
-            Available options are: 'async', 'blocking' and 'dataframe'.
+            Available options are: 'async' and 'blocking'.
             - 'async': Default mode. Each query/request to the backend will
             - 'blocking': Behaves in sync/blocking fashion,
                           similar to the official InfluxDB-Python client.
