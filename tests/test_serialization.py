@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytz
 import pytest
-from aioinflux.serialization import _parse_timestamp
+from aioinflux.serialization.mapping import _parse_timestamp
 from aioinflux import pd, logger
 
 

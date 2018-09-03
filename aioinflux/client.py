@@ -10,9 +10,8 @@ from urllib.parse import urlencode
 
 import aiohttp
 
-from . import pd, no_pandas_warning
+from . import pd, no_pandas_warning, serialization
 from .iterutils import InfluxDBResult, InfluxDBChunkedResult
-from .serialization import parse_data, make_df
 
 PointType = Union[AnyStr, Mapping] if pd is None else Union[AnyStr, Mapping, pd.DataFrame]
 ResultType = Union[AsyncGenerator, dict, InfluxDBResult, InfluxDBChunkedResult]
@@ -214,7 +213,7 @@ class InfluxDBClient:
         :param extra_tags: Additional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
-        data = parse_data(data, measurement, tag_columns, **extra_tags)
+        data = serialization.parse_data(data, measurement, tag_columns, **extra_tags)
         logger.debug(data)
         url = self._url.format(endpoint='write') + '?' + urlencode(dict(db=db or self.db))
         async with self._session.post(url, data=data) as resp:
@@ -301,7 +300,7 @@ class InfluxDBClient:
             elif self.output == 'iterable':
                 return InfluxDBResult(output, parser=parser, query=query)
             elif self.output == 'dataframe':
-                return make_df(output)
+                return serialization.dataframe.make(output)
 
     @staticmethod
     def _check_error(response):
