@@ -2,11 +2,11 @@ import enum
 import ciso8601
 import time
 # noinspection PyUnresolvedReferences
-import re
+import re  # noqa
 from collections import Counter
 
 # noinspection PyUnresolvedReferences
-from .common import *
+from .common import *  # noqa
 from .. import pd
 
 
