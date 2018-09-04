@@ -188,6 +188,7 @@ class InfluxDBClient:
         data: Union[PointType, Iterable[PointType]],
         measurement: Optional[str] = None,
         db: Optional[str] = None,
+        rp: Optional[str] = None,
         tag_columns: Optional[Iterable] = None,
         **extra_tags,
     ) -> bool:
@@ -209,13 +210,18 @@ class InfluxDBClient:
             When writing dictionary-like data, this field is treated as the default value
             for points that do not contain a `measurement` field.
         :param db: Database to be written to. Defaults to `self.db`.
+        :param rp: Sets the target retention policy for the write. If unspecified,
+            data is written to the default retention policy.
         :param tag_columns: Columns to be treated as tags (used when writing DataFrames only)
         :param extra_tags: Additional tags to be added to all points passed.
         :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
         """
         data = serialization.parse_data(data, measurement, tag_columns, **extra_tags)
         logger.debug(data)
-        url = self._url.format(endpoint='write') + '?' + urlencode(dict(db=db or self.db))
+        params = {'db': db or self.db}
+        if rp:
+            params['rp'] = rp
+        url = self._url.format(endpoint='write') + '?' + urlencode(params)
         async with self._session.post(url, data=data) as resp:
             if resp.status == 204:
                 return True

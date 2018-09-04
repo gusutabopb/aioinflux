@@ -110,6 +110,16 @@ def test_write_to_non_default_db(sync_client):
     sync_client.drop_database(db='temp_db')
 
 
+def test_write_to_non_default_rp(sync_client):
+    db = sync_client.db
+    sync_client.query(f"CREATE RETENTION POLICY myrp ON {db} DURATION 1h REPLICATION 1")
+    points = [p for p in utils.random_points(5)]
+    assert sync_client.write(points, rp='myrp')
+    resp = sync_client.query(f"SELECT * from {db}.myrp.test_measurement")
+    logger.info(resp)
+    assert len(resp['results'][0]['series'][0]['values']) == 5
+
+
 def test_repr(sync_client):
     logger.info(sync_client)
 
