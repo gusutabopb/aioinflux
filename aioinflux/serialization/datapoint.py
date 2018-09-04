@@ -11,7 +11,14 @@ from .. import pd
 
 
 class DataPoint:
-    pass
+    def items(self):
+        """Returns an iterator over pair of keys and values"""
+
+    def to_dict(self) -> dict:
+        """Converts datapoint to a regular dictionary"""
+
+    def to_lineprotocol(self) -> bytes:
+        """Returns InfluxDB line protocol representation of datapoint"""
 
 
 class InfluxType(enum.Enum):
@@ -87,18 +94,20 @@ def _gen_parser(schema, cls_name, rm_none=False, extra_tags=None):
                 fields.append(f"{k}={{td_to_int(i['{k}'])}}i")
         elif t is InfluxType.STR:
             fields.append(f"{k}=\\\"{{(str(i['{k}']) or '').translate(str_escape)}}\\\"")
+        elif t is InfluxType.ENUM:
+            fields.append(f"{k}=\\\"{{i['{k}'].name}}\\\"")
         else:
-            raise NotImplementedError(f"Unknown type: {t!r}")
+            raise TypeError(f"Unknown type: {t!r}")
     extra_tags = extra_tags or {}
-    for k in extra_tags:
-        tags.append(f"{k}={{extra_tags['{k}']}}")
+    for k, v in extra_tags.items():
+        tags.append(f"{k}={v}")
 
     sep = ',' if tags else ''
     fmt = f"{meas}{sep}{','.join(tags)} {','.join(fields)} {ts}"
     print(fmt)
     if rm_none:
-        # Have 1-2us runtime impact. First field CAN'T be removed.
-        pat = ',\w+="?None"?i?'
+        # Has 1-2us runtime impact. Best avoid if performance is critical.
+        pat = '[, ]\w+="?None"?i?'
         f = eval('lambda i: re.sub(\'{}\', "", f"{}").encode()'.format(pat, fmt))
     else:
         f = eval('lambda i: f"{}".encode()'.format(fmt))
@@ -129,8 +138,8 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, extra_tags=None):
             # Require measurement field if schema is passed as a dictionary
             assert c[InfluxType.MEASUREMENT] == 1
 
-        assert sum([c[e] for e in InfluxType if 0 < e.value < 20]) == 1  # ONE timestamp
-        assert sum([c[e] for e in InfluxType if e.value >= 30]) > 0      # ONE+ fields
+        assert sum([c[e] for e in InfluxType if 0 < e.value < 20]) <= 1  # 0 or 1 timestamp
+        assert sum([c[e] for e in InfluxType if e.value >= 30]) > 0      # 1 or more fields
 
         # Generate __init__
         exec(
