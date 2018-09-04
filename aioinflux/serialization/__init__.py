@@ -4,6 +4,7 @@ from .. import pd
 if pd:
     from . import dataframe
 from . import mapping
+from .datapoint import DataPoint
 
 
 def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
@@ -12,6 +13,8 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
         return data
     elif isinstance(data, str):
         return data.encode('utf-8')
+    elif isinstance(data, DataPoint):
+        return data.to_lineprotocol()
     elif pd is not None and isinstance(data, pd.DataFrame):
         if measurement is None:
             raise ValueError("Missing 'measurement'")
