@@ -11,6 +11,8 @@ from .. import pd
 
 
 class DataPoint:
+    """Dynamically generated datapoint class"""
+
     def items(self):
         """Returns an iterator over pair of keys and values"""
 
@@ -111,24 +113,36 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
         f = eval('lambda i: re.sub(\'{}\', "", f"{}").encode()'.format(pat, fmt))
     else:
         f = eval('lambda i: f"{}".encode()'.format(fmt))
+    f.__doc__ = DataPoint.to_lineprotocol.__doc__
     return f
 
 
 def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, extra_tags=None):
-    def _datapoint(schema):
-        """Dynamic datapoint class factory
-        Can be used as a decorator (similar to Python 3.7 Dataclasses)
-        or as a function (similar to namedtuple).
+    """Dynamic datapoint class factory
+    Can be used as a decorator (similar to Python 3.7 Dataclasses)
+    or as a function (similar to namedtuple, but mutable).
 
-        Datapoints have the following characteristics:
-        - Similar to a dataclass/attrs, but more specialized
-        - Highly efficient thanks to the usage of __slots__
-            (similar or faster object generation than namedtuple, ctypes, protobuf, etc)
-        - Supports accessing field values by attribute or subscription
-        - Support dict-like iteration via ``items`` method
-        - Built-in serialization to InfluxDB line protocol through the ``to_lineprotocol`` method.
-        """
+    Main characteristics:
+    - Supports accessing field values by attribute or subscription
+    - Support dict-like iteration via ``items`` method
+    - Built-in serialization to InfluxDB line protocol through the ``to_lineprotocol`` method.
+    - About 2-3x faster serialization than the ``serialization.mapping` module
+        - Difference gets smaller (1x-1.5x) when ``rm_none=True`` or
+          the number of fields/tags is very large (20+).
+
+    :param schema: Dictionary-based (functional namedtuple style)
+        or @dataclass decorator-based (dataclass style) measurement schema
+    :param name: Class name (used when passing schema dictionaries only)
+    :param rm_none: Whether apply a regex to remove ``None`` values from.
+        If ``False``, passing ``None`` values to boolean, integer or float or time fields
+        will result in write errors. Setting to ``True`` is "safer" but impacts performance.
+    :param fill_none: Whether or not to set missing fields to ``None``.
+        Likely best used together with ``rm_none=True``.
+    :param extra_tags: Hard coded tags to be added to every point generated.
+    """
+    def _datapoint(schema):
         cls_name = getattr(schema, "__name__", name)
+        docstring = getattr(schema, '__doc__', DataPoint.__doc__)
         schema = getattr(schema, "__annotations__", schema)
         schema = {k: schema[k] for k in sorted(schema, key=lambda x: schema[x].value)}
 
@@ -167,7 +181,7 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, 
             '__len__': lambda self: len(self._schema),
             '__iter__': lambda self: iter(self._schema),
             '__eq__': lambda self, other: all(self[k] == other[k] for k in self),
-            '__doc__': getattr(schema, '__doc__', ''),
+            '__doc__': docstring,
             'items': locals()['items'],
             'to_dict': lambda self: dict(self.items()),
             'to_lineprotocol': _gen_parser(schema, cls_name, rm_none, extra_tags)
