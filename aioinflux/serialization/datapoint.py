@@ -114,7 +114,7 @@ def _gen_parser(schema, cls_name, rm_none=False, extra_tags=None):
     return f
 
 
-def datapoint(schema=None, name="DataPoint", *, rm_none=False, extra_tags=None):
+def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, extra_tags=None):
     def _datapoint(schema):
         """Dynamic datapoint class factory
         Can be used as a decorator (similar to Python 3.7 Dataclasses)
@@ -142,8 +142,12 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, extra_tags=None):
         assert sum([c[e] for e in InfluxType if e.value >= 30]) > 0      # 1 or more fields
 
         # Generate __init__
+        if fill_none:
+            args = ', '.join([f"{k}=None" for k in schema])
+        else:
+            args = ', '.join(schema)
         exec(
-            f"def __init__(self, {', '.join(schema)}):\n"
+            f"def __init__(self, {args}):\n"
             + "\n".join([f'    self.{k} = {k}' for k in schema])
         )
 

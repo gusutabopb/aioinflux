@@ -124,6 +124,18 @@ def test_rm_none():
     assert b'running' not in p.to_lineprotocol()
 
 
+def test_fill_none():
+    MyPoint = datapoint(dict(
+        measurement=InfluxType.MEASUREMENT,
+        time=InfluxType.TIMEINT,
+        host=InfluxType.TAG,
+        running=InfluxType.BOOL,
+        users=InfluxType.INT,
+    ), name='MyPoint', rm_none=True, fill_none=True)
+    p = MyPoint("a", 2, "b", users=2)
+    assert b'running' not in p.to_lineprotocol()
+
+
 def test_invalid_type():
     with pytest.raises(AttributeError):
         MyPoint = datapoint(dict(
