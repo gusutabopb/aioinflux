@@ -55,12 +55,12 @@ def td_to_int(td):
     return int(td.total_seconds()) * 10 ** 9 + td.microseconds * 1000
 
 
-def _gen_parser(schema, cls_name, rm_none=False, extra_tags=None):
+def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
     """Factory of datapoint -> line protocol parsers"""
     tags = []
     fields = []
     ts = None
-    meas = cls_name
+    meas = meas
     for k, t in schema.items():
         if t is InfluxType.MEASUREMENT:
             meas = f"{{i['{k}']}}"
@@ -93,7 +93,7 @@ def _gen_parser(schema, cls_name, rm_none=False, extra_tags=None):
             else:
                 fields.append(f"{k}={{td_to_int(i['{k}'])}}i")
         elif t is InfluxType.STR:
-            fields.append(f"{k}=\\\"{{(str(i['{k}']) or '').translate(str_escape)}}\\\"")
+            fields.append(f"{k}=\\\"{{str(i['{k}']).translate(str_escape)}}\\\"")
         elif t is InfluxType.ENUM:
             fields.append(f"{k}=\\\"{{i['{k}'].name}}\\\"")
         else:
@@ -103,10 +103,10 @@ def _gen_parser(schema, cls_name, rm_none=False, extra_tags=None):
         tags.append(f"{k}={v}")
 
     sep = ',' if tags else ''
-    fmt = f"{meas}{sep}{','.join(tags)} {','.join(fields)} {ts}"
-    print(fmt)
+    ts = f' {ts}' if ts else ''
+    fmt = f"{meas}{sep}{','.join(tags)} {','.join(fields)}{ts}"
     if rm_none:
-        # Has 1-2us runtime impact. Best avoid if performance is critical.
+        # Has substantial runtime impact. Best avoided if performance is critical.
         pat = '[, ]\w+="?None"?i?'
         f = eval('lambda i: re.sub(\'{}\', "", f"{}").encode()'.format(pat, fmt))
     else:
@@ -134,10 +134,7 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, 
 
         # Sanity check
         c = Counter(schema.values())
-        if not issubclass(type(schema), type):
-            # Require measurement field if schema is passed as a dictionary
-            assert c[InfluxType.MEASUREMENT] == 1
-
+        assert c[InfluxType.MEASUREMENT] <= 1
         assert sum([c[e] for e in InfluxType if 0 < e.value < 20]) <= 1  # 0 or 1 timestamp
         assert sum([c[e] for e in InfluxType if e.value >= 30]) > 0      # 1 or more fields
 
@@ -158,9 +155,11 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, 
         def items(self):
             for k in self._schema:
                 yield k, getattr(self, k)
+            yield from self._extra_tags.items()
 
         cls_attrs = {
             '_schema': schema,
+            '_extra_tags': extra_tags or {},
             '__slots__': tuple(schema),
             '__init__': locals()['__init__'],
             '__repr__': locals()['__repr__'],
