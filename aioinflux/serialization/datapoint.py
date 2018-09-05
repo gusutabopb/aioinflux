@@ -29,8 +29,10 @@ class InfluxType(enum.Enum):
     TIMESTR = 11
     TIMEDT = 12
     TAG = 20
+    TAGENUM = 21
     # Fields (>=30)
     BOOL = 30
+    PLACEHOLDER = 31
     INT = 40
     DATETIME = 41
     TIMEDELTA = 42
@@ -80,6 +82,8 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
                 ts = f"{{dt_to_int(i['{k}'])}}"
         elif t is InfluxType.TAG:
             tags.append(f"{k}={{str(i['{k}']).translate(tag_escape)}}")
+        elif t is InfluxType.TAGENUM:
+            tags.append(f"{k}={{getattr(i['{k}'], 'name', None)}}")
         elif t in (InfluxType.FLOAT, InfluxType.BOOL):
             fields.append(f"{k}={{i['{k}']}}")
         elif t is InfluxType.INT:
@@ -94,6 +98,8 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
                 fields.append(f"{k}={{pd.Timedelta(i['{k}']).value}}i")
             else:
                 fields.append(f"{k}={{td_to_int(i['{k}'])}}i")
+        elif t is InfluxType.PLACEHOLDER:
+            fields.append(f"{k}=true")
         elif t is InfluxType.STR:
             fields.append(f"{k}=\\\"{{str(i['{k}']).translate(str_escape)}}\\\"")
         elif t is InfluxType.ENUM:

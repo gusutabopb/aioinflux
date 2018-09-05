@@ -19,6 +19,7 @@ def test_decorator(sync_client):
         uptime: InfluxType.TIMEDELTA
         cpu_load: InfluxType.FLOAT
         cpu_load_level: InfluxType.ENUM
+        cpu_load_level_tag: InfluxType.TAGENUM
         uuid: InfluxType.STR
 
     last_boot = datetime.today() - timedelta(days=1)
@@ -33,6 +34,7 @@ def test_decorator(sync_client):
         uptime=timedelta(days=1),
         cpu_load=99.5,
         cpu_load_level=InfluxType.TAG,
+        cpu_load_level_tag=InfluxType.TAG,
         uuid=uuid.uuid4(),
     )
     assert p
@@ -75,6 +77,15 @@ def test_datestr():
     ), name='MyPoint')
     p = MyPoint("a", "2018-08-08 15:22:33", "b", False, 5)
     print(p.to_lineprotocol())
+
+
+def test_placeholder():
+    @datapoint(fill_none=True)
+    class MyPoint:
+        measurement: InfluxType.MEASUREMENT
+        _: InfluxType.PLACEHOLDER
+    lp = MyPoint().to_lineprotocol()
+    print(lp)
 
 
 def test_repr():
@@ -131,6 +142,8 @@ def test_fill_none():
         host=InfluxType.TAG,
         running=InfluxType.BOOL,
         users=InfluxType.INT,
+        userz=InfluxType.ENUM,
+        userx=InfluxType.TAGENUM,
     ), name='MyPoint', rm_none=True, fill_none=True)
     p = MyPoint("a", 2, "b", users=2)
     assert b'running' not in p.to_lineprotocol()
