@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Install
-          command: sudo pip install -e .
+          command: sudo pip install .
   test: &test
     docker:
       - image: circleci/python:3.7.0
@@ -17,13 +17,13 @@ jobs:
       - checkout
       - run:
           name: Install test extras
-          command: sudo pip install -e .[test]
+          command: sudo pip install .[test]
       - run:
           name: Run test
           command: make test
       - run:
           name: Install pandas extras
-          command: sudo pip install -e .[pandas]
+          command: sudo pip install .[pandas]
       - run:
           name: Run test again (w/ Pandas support)
           command: make test
