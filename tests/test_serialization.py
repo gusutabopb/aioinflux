@@ -3,7 +3,8 @@ from datetime import datetime
 import pytz
 import pytest
 from aioinflux.serialization.mapping import _parse_timestamp
-from aioinflux import pd, logger
+from aioinflux.client import logger
+from aioinflux.compat import pd
 
 
 def test_timestamp_timezone_parsing():

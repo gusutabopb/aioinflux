@@ -7,7 +7,7 @@ from collections import Counter
 
 # noinspection PyUnresolvedReferences
 from .common import *  # noqa
-from .. import pd
+from ..compat import pd
 
 
 class DataPoint:

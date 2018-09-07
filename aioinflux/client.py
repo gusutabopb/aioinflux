@@ -10,7 +10,8 @@ from urllib.parse import urlencode
 
 import aiohttp
 
-from . import pd, no_pandas_warning, serialization
+from . import serialization
+from .compat import pd, no_pandas_warning
 from .iterutils import InfluxDBResult, InfluxDBChunkedResult
 
 PointType = Union[AnyStr, Mapping] if pd is None else Union[AnyStr, Mapping, pd.DataFrame]

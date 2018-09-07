@@ -4,7 +4,7 @@ import string
 import uuid
 from itertools import combinations, cycle, islice
 
-from . import pd, np, no_pandas_warning
+from .compat import pd, np, no_pandas_warning
 
 import pytest
 

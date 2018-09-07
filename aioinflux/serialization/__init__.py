@@ -1,5 +1,5 @@
 # flake8: noqa
-from .. import pd
+from ..compat import pd
 
 if pd:
     from . import dataframe

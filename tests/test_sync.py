@@ -1,6 +1,7 @@
 import pytest
 from aioinflux import (InfluxDBClient, InfluxDBError, InfluxDBWriteError,
-                       pd, logger, testing_utils as utils)
+                       logger, testing_utils as utils)
+from aioinflux.compat import pd
 
 
 def test_ping(sync_client):

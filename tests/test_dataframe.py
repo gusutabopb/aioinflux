@@ -1,5 +1,6 @@
 import pytest
-from aioinflux import logger, pd, np, testing_utils as utils
+from aioinflux import logger, testing_utils as utils
+from aioinflux.compat import pd, np
 
 if pd is not None:
     pd.set_option('display.max_columns', 10)
