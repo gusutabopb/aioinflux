@@ -1,6 +1,6 @@
 test:
 	flake8 --max-line-length=100 --ignore=F841,F403,F405,W503
-	pytest --verbose --cov=aioinflux --cov-append --cov-report html tests/
+	pytest --verbose --cov=aioinflux --cov-append --cov-report html --cov-report term tests/
 
 cov: test
 	open htmlcov/index.html

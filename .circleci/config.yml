@@ -28,6 +28,9 @@ jobs:
           name: Run test again (w/ Pandas support)
           command: make test
       - run:
+          name: See coverage report
+          command: cat .coverage
+      - run:
           name: Upload coverage report to Codecov
           command: bash <(curl -s https://codecov.io/bash)
   build-3.6:
