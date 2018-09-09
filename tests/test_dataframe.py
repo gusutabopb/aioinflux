@@ -24,7 +24,9 @@ def test_write_dataframe_with_nan(df_client):
     df_client.write(df, f'fills00')
     for i in range(10):
         for _ in range(int(len(df) / 5)):
-            df.ix[np.random.randint(len(df)), np.random.choice(cols)] = np.nan
+            i = np.random.randint(len(df))
+            j = list(df.columns).index((np.random.choice(df.columns)))
+            df.iloc[i, j] = np.nan
         df_client.write(df, f'fills{i+1:02d}')
 
 
