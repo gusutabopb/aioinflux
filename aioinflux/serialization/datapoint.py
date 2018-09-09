@@ -70,12 +70,12 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
             ts = f"{{i['{k}']}}"
         elif t is InfluxType.TIMESTR:
             if pd:
-                ts = f"{{pd.Timestamp(i['{k}']).value}}"
+                ts = f"{{pd.Timestamp(i['{k}'] or 0).value}}"
             else:
                 ts = f"{{dt_to_int(str_to_dt(i['{k}']))}}"
         elif t is InfluxType.TIMEDT:
             if pd:
-                ts = f"{{pd.Timestamp(i['{k}']).value}}"
+                ts = f"{{pd.Timestamp(i['{k}'] or 0).value}}"
             else:
                 ts = f"{{dt_to_int(i['{k}'])}}"
         elif t is InfluxType.TAG:
