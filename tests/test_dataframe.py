@@ -20,12 +20,11 @@ def test_write_dataframe(df_client):
 @utils.requires_pandas
 def test_write_dataframe_with_nan(df_client):
     df = utils.trading_df()
-    cols = [k for k, v in df.dtypes.items() if v.type != np.int64]
     df_client.write(df, f'fills00')
     for i in range(10):
         for _ in range(int(len(df) / 5)):
-            i = np.random.randint(len(df))
-            j = list(df.columns).index((np.random.choice(df.columns)))
+            i = np.random.randint(df.shape[0])
+            j = np.random.randint(df.shape[1])
             df.iloc[i, j] = np.nan
         df_client.write(df, f'fills{i+1:02d}')
 
