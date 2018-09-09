@@ -30,9 +30,9 @@ class InfluxType(enum.Enum):
     TIMEDT = 12
     TAG = 20
     TAGENUM = 21
-    # Fields (>=30)
+    # Fields (>=25)
+    PLACEHOLDER = 25
     BOOL = 30
-    PLACEHOLDER = 31
     INT = 40
     DATETIME = 41
     TIMEDELTA = 42
@@ -156,7 +156,7 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, 
         c = Counter(schema.values())
         assert c[InfluxType.MEASUREMENT] <= 1
         assert sum([c[e] for e in InfluxType if 0 < e.value < 20]) <= 1  # 0 or 1 timestamp
-        assert sum([c[e] for e in InfluxType if e.value >= 30]) > 0      # 1 or more fields
+        assert sum([c[e] for e in InfluxType if e.value >= 25]) > 0      # 1 or more fields
 
         # Generate __init__
         if fill_none:
