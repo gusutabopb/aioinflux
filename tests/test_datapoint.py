@@ -1,6 +1,5 @@
 import uuid
 import enum
-from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -15,14 +14,10 @@ def test_decorator(sync_client):
         host: InfluxType.TAG
         running: InfluxType.BOOL
         users: InfluxType.INT
-        last_boot: InfluxType.DATETIME
-        uptime: InfluxType.TIMEDELTA
         cpu_load: InfluxType.FLOAT
         cpu_load_level: InfluxType.ENUM
         cpu_load_level_tag: InfluxType.TAGENUM
         uuid: InfluxType.STR
-
-    last_boot = datetime.today() - timedelta(days=1)
 
     p = MyPoint(
         measurement="dp",
@@ -30,8 +25,6 @@ def test_decorator(sync_client):
         host="us1",
         running=True,
         users=1000,
-        last_boot=last_boot,
-        uptime=timedelta(days=1),
         cpu_load=99.5,
         cpu_load_level=InfluxType.TAG,
         cpu_load_level_tag=InfluxType.TAG,
@@ -53,18 +46,6 @@ def test_functional():
         users=InfluxType.INT,
     ), name='MyPoint')
     assert MyPoint("a", 2, "b", False, 5)
-
-
-def test_datetime():
-    MyPoint = datapoint(dict(
-        measurement=InfluxType.MEASUREMENT,
-        time=InfluxType.TIMEDT,
-        host=InfluxType.TAG,
-        running=InfluxType.BOOL,
-        expiry=InfluxType.DATETIME,
-    ), name='MyPoint')
-    p = MyPoint("a", datetime.now(timezone.utc), "b", False, datetime.now())
-    print(p.to_lineprotocol())
 
 
 def test_datestr():

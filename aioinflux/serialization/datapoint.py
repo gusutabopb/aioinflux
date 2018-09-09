@@ -34,8 +34,6 @@ class InfluxType(enum.Enum):
     PLACEHOLDER = 25
     BOOL = 30
     INT = 40
-    DATETIME = 41
-    TIMEDELTA = 42
     FLOAT = 50
     STR = 60
     ENUM = 61
@@ -88,16 +86,6 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
             fields.append(f"{k}={{i['{k}']}}")
         elif t is InfluxType.INT:
             fields.append(f"{k}={{i['{k}']}}i")
-        elif t is InfluxType.DATETIME:
-            if pd:
-                fields.append(f"{k}={{pd.Timestamp(i['{k}']).value}}i")
-            else:
-                fields.append(f"{k}={{dt_to_int(i['{k}'])}}i")
-        elif t is InfluxType.TIMEDELTA:
-            if pd:
-                fields.append(f"{k}={{pd.Timedelta(i['{k}']).value}}i")
-            else:
-                fields.append(f"{k}={{td_to_int(i['{k}'])}}i")
         elif t is InfluxType.PLACEHOLDER:
             fields.append(f"{k}=true")
         elif t is InfluxType.STR:
