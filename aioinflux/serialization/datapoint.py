@@ -81,7 +81,7 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
         elif t is InfluxType.TAG:
             tags.append(f"{k}={{str(i['{k}']).translate(tag_escape)}}")
         elif t is InfluxType.TAGENUM:
-            tags.append(f"{k}={{getattr(i['{k}'], 'name', None)}}")
+            tags.append(f"{k}={{getattr(i['{k}'], 'name', i['{k}'] or None)}}")
         elif t in (InfluxType.FLOAT, InfluxType.BOOL):
             fields.append(f"{k}={{i['{k}']}}")
         elif t is InfluxType.INT:
@@ -91,7 +91,7 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
         elif t is InfluxType.STR:
             fields.append(f"{k}=\\\"{{str(i['{k}']).translate(str_escape)}}\\\"")
         elif t is InfluxType.ENUM:
-            fields.append(f"{k}=\\\"{{getattr(i['{k}'], 'name', None)}}\\\"")
+            fields.append(f"{k}=\\\"{{getattr(i['{k}'], 'name', i['{k}'] or None)}}\\\"")
         else:
             raise TypeError(f"Unknown type: {t!r}")
     extra_tags = extra_tags or {}
