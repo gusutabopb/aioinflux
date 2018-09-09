@@ -109,10 +109,11 @@ def test_rm_none():
         measurement=InfluxType.MEASUREMENT,
         time=InfluxType.TIMEINT,
         host=InfluxType.TAG,
+        _=InfluxType.PLACEHOLDER,
         running=InfluxType.BOOL,
         users=InfluxType.INT,
     ), name='MyPoint', rm_none=True)
-    p = MyPoint("a", 2, "b", None, 5)
+    p = MyPoint("a", 2, None, "b", None, 5)
     assert b'running' not in p.to_lineprotocol()
 
 
@@ -121,12 +122,13 @@ def test_fill_none():
         measurement=InfluxType.MEASUREMENT,
         time=InfluxType.TIMEINT,
         host=InfluxType.TAG,
+        _=InfluxType.PLACEHOLDER,
         running=InfluxType.BOOL,
         users=InfluxType.INT,
         userz=InfluxType.ENUM,
         userx=InfluxType.TAGENUM,
     ), name='MyPoint', rm_none=True, fill_none=True)
-    p = MyPoint("a", 2, "b", users=2)
+    p = MyPoint("a", 2, None, "b", users=2)
     assert b'running' not in p.to_lineprotocol()
 
 

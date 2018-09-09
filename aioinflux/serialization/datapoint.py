@@ -103,7 +103,8 @@ def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
     fmt = f"{meas}{sep}{','.join(tags)} {','.join(fields)}{ts}"
     if rm_none:
         # Has substantial runtime impact. Best avoided if performance is critical.
-        pat = '[, ]\w+="?None"?i?'
+        # First field can't be removed.
+        pat = ',\w+="?None"?i?'
         f = eval('lambda i: re.sub(\'{}\', "", f"{}").encode()'.format(pat, fmt))
     else:
         f = eval('lambda i: f"{}".encode()'.format(fmt))
