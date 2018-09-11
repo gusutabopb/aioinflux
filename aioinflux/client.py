@@ -6,7 +6,6 @@ import warnings
 from functools import wraps, partialmethod as pm
 from typing import (Union, AnyStr, Mapping, Iterable,
                     Optional, Callable, AsyncGenerator)
-from urllib.parse import urlencode
 
 import aiohttp
 
@@ -163,8 +162,7 @@ class InfluxDBClient:
             asyncio.ensure_future(self._session.close(), loop=self._loop)
 
     def __repr__(self):
-        items = [f'{k}={v}' for k, v in vars(self).items()
-                 if not k.startswith('_') and k != 'tag_cache']
+        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')]
         items.append(f'mode={self.mode}')
         return f'{type(self).__name__}({", ".join(items)})'
 
@@ -229,12 +227,11 @@ class InfluxDBClient:
         params = {'db': db or self.db}
         if rp:
             params['rp'] = rp
-        url = self._url.format(endpoint='write') + '?' + urlencode(params)
-        async with self._session.post(url, data=data) as resp:
+        url = self._url.format(endpoint='write')
+        async with self._session.post(url, params=params, data=data) as resp:
             if resp.status == 204:
                 return True
-            else:
-                raise InfluxDBWriteError(resp)
+            raise InfluxDBWriteError(resp)
 
     @runner
     async def query(
