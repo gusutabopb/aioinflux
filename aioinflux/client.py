@@ -329,7 +329,7 @@ class InfluxDBClient:
                     raise InfluxDBError(msg.format(d=statement))
 
     # Built-in query patterns
-    _user_query_patterns = set()
+    _user_qp = set()
     create_database = pm(query, 'CREATE DATABASE "{db}"')
     drop_database = pm(query, 'DROP DATABASE "{db}"')
     drop_measurement = pm(query, 'DROP MEASUREMENT "{measurement}"')
@@ -346,41 +346,23 @@ class InfluxDBClient:
     show_tag_values_from = pm(query, 'SHOW TAG VALUES FROM "{measurement}" WITH key = "{key}"')
 
     @classmethod
-    def set_query_pattern(cls, queries: Optional[Mapping] = None, **kwargs) -> None:
+    def set_query_pattern(cls, name: str, qp: str) -> None:
         """Defines custom methods to provide quick access to commonly used query patterns.
-
-        Query patterns are passed as mappings, with the key being name of the new method
-        and the value the actual query pattern.
         Query patterns are plain strings, with optional the named placed holders.
         Named placed holders are processed as keyword arguments in ``str.format``.
         Positional arguments are also supported.
 
-        Sample query pattern dictionary:
+        Sample query pattern:
+        ``"SELECT mean(load) FROM cpu_stats WHERE host = '{host}' AND time > now() - {days}d"``
 
-        .. code:: python
-
-           {"host_load": "SELECT mean(load) FROM cpu_stats "
-                         "WHERE host = '{host}' AND time > now() - {days}d",
-            "peak_load": "SELECT max(load) FROM cpu_stats "
-                         "WHERE host = '{host}' GROUP BY time(1d),host"}
-
-
-        :param queries: Mapping (e.g. dictionary) containing query patterns.
-            Can be used in conjunction with kwargs.
-        :param kwargs: Alternative way to pass query patterns.
+        :param name: Name of the query pattern class method. Must be a valid Python identifier.
+        :param qp: Query pattern string
         """
-        if queries is None:
-            queries = {}
-        if not isinstance(queries, Mapping):
-            raise ValueError('Query patterns must be passed in a dictionary '
-                             'or by using keyword arguments')
         restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'parser')
-        for name, query in {**queries, **kwargs}.items():
-            if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', query)):
-                warnings.warn(f'Ignoring invalid query pattern: {query}')
-                continue
-            if name in dir(cls) and name not in cls._user_query_patterns:
-                warnings.warn(f'Ignoring invalid query pattern name: {name}')
-                continue
-            cls._user_query_patterns.add(name)
-            setattr(cls, name, pm(cls.query, query))
+        if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', qp)):
+            warnings.warn(f'Ignoring invalid query pattern: {qp}')
+        elif not name.isidentifier() or (name in dir(cls) and name not in cls._user_qp):
+            warnings.warn(f'Ignoring invalid query pattern name: {name}')
+        else:
+            cls._user_qp.add(name)
+            setattr(cls, name, pm(cls.query, qp))

@@ -182,19 +182,13 @@ def test_invalid_query(sync_client):
 
 def test_invalid_query_pattern(sync_client):
     with pytest.warns(UserWarning) as e:
-        sync_client.set_query_pattern(my_query='SELECT {q} from {epoch}')
+        sync_client.set_query_pattern('my_query', 'SELECT {q} from {epoch}')
     logger.warning(e)
 
 
 def test_invalid_query_pattern_name(sync_client):
     with pytest.warns(UserWarning) as e:
-        sync_client.set_query_pattern(write='SELECT {foo} from {bar}')
-    logger.warning(e)
-
-
-def test_invalid_query_pattern_without_name(sync_client):
-    with pytest.raises(ValueError) as e:
-        sync_client.set_query_pattern('SELECT {foo} from {bar}')
+        sync_client.set_query_pattern('wr\ite', 'SELECT {foo} from {bar}')
     logger.warning(e)
 
 
