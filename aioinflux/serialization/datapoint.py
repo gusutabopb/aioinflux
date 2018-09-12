@@ -12,6 +12,7 @@ from ..compat import pd
 
 class DataPoint:
     """Dynamically generated datapoint class"""
+    __slots__ = ()
 
     def items(self):
         """Returns an iterator over pair of keys and values"""
