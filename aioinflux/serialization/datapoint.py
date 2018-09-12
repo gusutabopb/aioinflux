@@ -169,6 +169,7 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, 
 
         cls_attrs = {
             '_schema': schema,
+            '_opts': (rm_none, fill_none),
             '_extra_tags': extra_tags or {},
             '__slots__': tuple(schema),
             '__init__': locals()['__init__'],
