@@ -49,8 +49,8 @@ def test_read_dataframe_groupby(df_client):
     df_dict = df_client.query('SELECT max(*) from /m[1-2]$/ GROUP BY "tag"')
     s = ['\n{}:\n{}'.format(k, v) for k, v in df_dict.items()]
     logger.info('\n'.join(s))
-    m1 = pd.concat([df for k, df in df_dict.items() if k[0] == 'm1'])
-    m2 = pd.concat([df for k, df in df_dict.items() if k[0] == 'm2'])
+    m1 = pd.concat([df for k, df in df_dict.items() if k.split(',')[0] == 'm1'])
+    m2 = pd.concat([df for k, df in df_dict.items() if k.split(',')[0] == 'm2'])
     assert m1.shape == (5, 6)
     assert m2.shape == (5, 6)
 

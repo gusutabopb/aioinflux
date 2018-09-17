@@ -30,29 +30,27 @@ def make(resp) -> DataFrameType:
             df.name = series['name']
         return df
 
+    def get_name(series):
+        tags = [f'{k}={v}' for k, v in series.get('tags', {}).items()]
+        return ','.join(filter(None, [series.get('name'), *tags])) or None
+
     def drop_zero_index(df):
         if isinstance(df.index, pd.DatetimeIndex):
             if all(i.value == 0 for i in df.index):
                 df.reset_index(drop=True, inplace=True)
 
-    # Parsing
-    df_list = [((series.get('name'), tuple(series.get('tags', {}).items())), maker(series))
-               for statement in resp['results'] if 'series' in statement
-               for series in statement['series']]
-
-    # Concatenation
-    d = defaultdict(list)
-    for k, df in sorted(df_list, key=lambda x: x[0]):
-        d[k].append(df)
-    dfs = {k: pd.concat(v, axis=0) for k, v in d.items()}
+    dfs = defaultdict(list)
+    for statement in resp['results']:
+        for series in statement.get('series', []):
+            dfs[get_name(series)].append(maker(series))
+    dfs = {k: pd.concat(v, axis=0) for k, v in dfs.items()}
 
     # Post-processing
     for df in dfs.values():
         drop_zero_index(df)
 
-    # Return
     if len(dfs) == 1:
-        return dfs[list(dfs.keys())[0]]
+        return list(dfs.values())[0]
     return dfs
 
 
