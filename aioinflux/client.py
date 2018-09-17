@@ -334,6 +334,7 @@ class InfluxDBClient:
     drop_database = pm(query, 'DROP DATABASE "{db}"')
     drop_measurement = pm(query, 'DROP MEASUREMENT "{measurement}"')
     show_databases = pm(query, "SHOW DATABASES")
+    show_continuous_queries = pm(query, "SHOW CONTINUOUS QUERIES")
     show_measurements = pm(query, "SHOW MEASUREMENTS")
     show_retention_policies = pm(query, "SHOW RETENTION POLICIES")
     show_users = pm(query, "SHOW USERS")
