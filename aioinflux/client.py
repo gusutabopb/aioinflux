@@ -222,7 +222,7 @@ class InfluxDBClient:
         if precision is not None:
             # FIXME: Implement. Related issue: aioinflux/pull/13
             raise NotImplementedError("'precision' parameter is not supported yet")
-        data = serialization.parse_data(data, measurement, tag_columns, **extra_tags)
+        data = serialization.serialize(data, measurement, tag_columns, **extra_tags)
         logger.debug(data)
         params = {'db': db or self.db}
         if rp:
@@ -315,7 +315,7 @@ class InfluxDBClient:
             elif self.output == 'iterable':
                 return InfluxDBResult(output, parser=parser, query=query)
             elif self.output == 'dataframe':
-                return serialization.dataframe.make(output)
+                return serialization.dataframe.serialize(output)
 
     @staticmethod
     def _check_error(response):

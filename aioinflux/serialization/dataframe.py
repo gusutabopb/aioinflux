@@ -9,73 +9,81 @@ import numpy as np
 
 from .common import *
 
-
 DataFrameType = Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]
 
 
-def make(resp) -> DataFrameType:
-    """Makes a dictionary of DataFrames from a response object"""
+# Serialization helper functions
+# -------------------------------
 
-    def maker(series) -> pd.DataFrame:
-        df = pd.DataFrame(series.get('values', []), columns=series['columns'])
-        if 'time' not in df.columns:
-            return df
-        df: pd.DataFrame = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)
-        df.index = df.index.tz_localize('UTC')
-        df.index.name = None
-        if 'tags' in series:
-            for k, v in series['tags'].items():
-                df[k] = v
-        if 'name' in series:
-            df.name = series['name']
+def _serializer(series) -> pd.DataFrame:
+    df = pd.DataFrame(series.get('values', []), columns=series['columns'])
+    if 'time' not in df.columns:
         return df
+    df: pd.DataFrame = df.set_index(pd.to_datetime(df['time'])).drop('time', axis=1)
+    df.index = df.index.tz_localize('UTC')
+    df.index.name = None
+    if 'tags' in series:
+        for k, v in series['tags'].items():
+            df[k] = v
+    if 'name' in series:
+        df.name = series['name']
+    return df
 
-    def get_name(series):
-        tags = [f'{k}={v}' for k, v in series.get('tags', {}).items()]
-        return ','.join(filter(None, [series.get('name'), *tags])) or None
 
-    def drop_zero_index(df):
-        if isinstance(df.index, pd.DatetimeIndex):
-            if all(i.value == 0 for i in df.index):
-                df.reset_index(drop=True, inplace=True)
+def _get_name(series):
+    tags = [f'{k}={v}' for k, v in series.get('tags', {}).items()]
+    return ','.join(filter(None, [series.get('name'), *tags])) or None
 
+
+def _drop_zero_index(df):
+    if isinstance(df.index, pd.DatetimeIndex):
+        if all(i.value == 0 for i in df.index):
+            df.reset_index(drop=True, inplace=True)
+
+
+def serialize(resp) -> DataFrameType:
+    """Makes a dictionary of DataFrames from a response object"""
     dfs = defaultdict(list)
     for statement in resp['results']:
         for series in statement.get('series', []):
-            dfs[get_name(series)].append(maker(series))
+            dfs[_get_name(series)].append(_serializer(series))
     dfs = {k: pd.concat(v, axis=0) for k, v in dfs.items()}
 
     # Post-processing
     for df in dfs.values():
-        drop_zero_index(df)
+        _drop_zero_index(df)
 
     if len(dfs) == 1:
         return list(dfs.values())[0]
     return dfs
 
 
+# Parsing helper functions
+# -------------------------
+
+def _itertuples(df):
+    """Custom implementation of ``DataFrame.itertuples`` that
+    returns plain tuples instead of namedtuples. About 50% faster.
+    """
+    cols = [df.iloc[:, k] for k in range(len(df.columns))]
+    return zip(df.index, *cols)
+
+
+def _replace(df):
+    obj_cols = {k for k, v in dict(df.dtypes).items() if v is np.dtype('O')}
+    other_cols = set(df.columns) - obj_cols
+    obj_nans = (f'{k}="nan"' for k in obj_cols)
+    other_nans = (f'{k}=nan' for k in other_cols)
+    replacements = [
+        ('|'.join(chain(obj_nans, other_nans)), ''),
+        (',{2,}', ','),
+        ('|'.join([', ,', ', ', ' ,']), ' '),
+    ]
+    return replacements
+
+
 def parse(df, measurement, tag_columns=None, **extra_tags):
     """Converts a Pandas DataFrame into line protocol format"""
-
-    def _itertuples(df):
-        """Custom implementation of ``DataFrame.itertuples`` that
-        returns plain tuples instead of namedtuples. About 50% faster.
-        """
-        cols = [df.iloc[:, k] for k in range(len(df.columns))]
-        return zip(df.index, *cols)
-
-    def _replace(df):
-        obj_cols = {k for k, v in dict(df.dtypes).items() if v is np.dtype('O')}
-        other_cols = set(df.columns) - obj_cols
-        obj_nans = (f'{k}="nan"' for k in obj_cols)
-        other_nans = (f'{k}=nan' for k in other_cols)
-        replacements = [
-            ('|'.join(chain(obj_nans, other_nans)), ''),
-            (',{2,}', ','),
-            ('|'.join([', ,', ', ', ' ,']), ' '),
-        ]
-        return replacements
-
     # Pre-processing
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError('DataFrame index is not DatetimeIndex')

@@ -7,7 +7,7 @@ from . import mapping
 from .datapoint import DataPoint
 
 
-def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
+def serialize(data, measurement=None, tag_columns=None, **extra_tags):
     """Converts input data into line protocol format"""
     if isinstance(data, bytes):
         return data
@@ -20,8 +20,8 @@ def parse_data(data, measurement=None, tag_columns=None, **extra_tags):
             raise ValueError("Missing 'measurement'")
         return dataframe.parse(data, measurement, tag_columns, **extra_tags)
     elif isinstance(data, dict):
-        return mapping.parse(data, measurement, **extra_tags).encode('utf-8')
+        return mapping.serialize(data, measurement, **extra_tags).encode('utf-8')
     elif hasattr(data, '__iter__'):
-        return b'\n'.join([parse_data(i, measurement, tag_columns, **extra_tags) for i in data])
+        return b'\n'.join([serialize(i, measurement, tag_columns, **extra_tags) for i in data])
     else:
         raise ValueError('Invalid input', data)

@@ -6,18 +6,18 @@ import ciso8601
 from .common import *
 
 
-def parse(point: Mapping, measurement=None, **extra_tags) -> str:
+def serialize(point: Mapping, measurement=None, **extra_tags) -> str:
     """Converts dictionary-like data into a single line protocol line (point)"""
-    tags = _parse_tags(point, extra_tags)
+    tags = _serialize_tags(point, extra_tags)
     return (
-        f'{_parse_measurement(point, measurement)}'
+        f'{_serialize_measurement(point, measurement)}'
         f'{"," if tags else ""}{tags} '
-        f'{_parse_fields(point)} '
-        f'{_parse_timestamp(point)}'
+        f'{_serialize_fields(point)} '
+        f'{_serialize_timestamp(point)}'
     )
 
 
-def _parse_measurement(point, measurement):
+def _serialize_measurement(point, measurement):
     try:
         return escape(point['measurement'], measurement_escape)
     except KeyError:
@@ -26,7 +26,7 @@ def _parse_measurement(point, measurement):
         return escape(measurement, measurement_escape)
 
 
-def _parse_tags(point, extra_tags):
+def _serialize_tags(point, extra_tags):
     output = []
     for k, v in {**point.get('tags', {}), **extra_tags}.items():
         k = escape(k, key_escape)
@@ -37,7 +37,7 @@ def _parse_tags(point, extra_tags):
     return ','.join(output)
 
 
-def _parse_timestamp(point):
+def _serialize_timestamp(point):
     dt = point.get('time')
     if not dt:
         return ''
@@ -54,7 +54,7 @@ def _parse_timestamp(point):
     return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
 
 
-def _parse_fields(point):
+def _serialize_fields(point):
     """Field values can be floats, integers, strings, or Booleans."""
     output = []
     for k, v in point['fields'].items():

@@ -58,7 +58,7 @@ def td_to_int(td):
     return int(td.total_seconds()) * 10 ** 9 + td.microseconds * 1000
 
 
-def _gen_parser(schema, meas, rm_none=False, extra_tags=None):
+def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
     """Factory of datapoint -> line protocol parsers"""
     tags = []
     fields = []
@@ -181,7 +181,7 @@ def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, 
             '__doc__': docstring,
             'items': locals()['items'],
             'to_dict': lambda self: dict(self.items()),
-            'to_lineprotocol': _gen_parser(schema, cls_name, rm_none, extra_tags)
+            'to_lineprotocol': _make_serializer(schema, cls_name, rm_none, extra_tags)
         }
         return type(cls_name, (DataPoint,), cls_attrs)
 
