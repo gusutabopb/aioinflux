@@ -11,7 +11,7 @@ from ..compat import pd
 
 
 class DataPoint:
-    """Dynamically generated datapoint class"""
+    """Base class for dynamically generated datapoint class"""
     __slots__ = ()
 
     def items(self):

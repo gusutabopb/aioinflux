@@ -22,6 +22,7 @@ Client Interface
 Serialization
 -------------
 
+.. automodule:: aioinflux.serialization
 .. autofunction:: aioinflux.serialization.common.escape
 .. autofunction:: aioinflux.serialization.dataframe.serialize
 .. autofunction:: aioinflux.serialization.dataframe.parse

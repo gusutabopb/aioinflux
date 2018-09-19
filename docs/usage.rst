@@ -61,16 +61,20 @@ Writing data
 
 Input data can be:
 
-1. A string properly formatted in InfluxDB's line protocol
-2. A mapping (e.g. dictionary) containing the following keys: ``measurement``, ``time``, ``tags``, ``fields``
+1. A string (``str`` or ``bytes``) properly formatted in InfluxDB's line protocol
+2. A mapping (e.g. ``dict``) containing the following keys: ``measurement``, ``time``, ``tags``, ``fields``
 3. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
-4. An iterable of one of the above
+4. A :func:`~aioinflux.serialization.datapoint.DataPoint` object (see `below <#writing-datapoint-objects>`__)
+5. An iterable of one of the above
 
-Input data in formats 2-4 are parsed into the `line protocol`_ before being written to InfluxDB.
-All parsing functionality is located in the |serialization|_ module.
-Beware that serialization is not highly optimized (cythonization PRs are welcome!) and may become
-a bottleneck depending on your application. It is however, `reasonably faster`_ than
-InfluxDB's official Python client.
+Input data in formats 2-4 are serialized into the `line protocol`_ before being written to InfluxDB.
+``str`` or ``bytes`` are assumed to already be in line protocol format and are inserted into InfluxDB as they are.
+All serialization from JSON (InfluxDB's only output format) and parsing to line protocol
+(InfluxDB's only input format) functionality is located in the :mod:`~aioinflux.serialization` subpackage.
+
+Beware that serialization is not highly optimized (C extensions / cythonization PRs are welcome!) and may become
+a bottleneck depending on your application's performance requirements.
+It is, however, `reasonably faster`_ than InfluxDB's official Python client.
 
 The ``write`` method returns ``True`` when successful and raises an
 ``InfluxDBError`` otherwise.
