@@ -66,33 +66,33 @@ def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
     meas = meas
     for k, t in schema.items():
         if t is InfluxType.MEASUREMENT:
-            meas = f"{{i['{k}']}}"
+            meas = f"{{i.{k}}}"
         elif t is InfluxType.TIMEINT:
-            ts = f"{{i['{k}']}}"
+            ts = f"{{i.{k}}}"
         elif t is InfluxType.TIMESTR:
             if pd:
-                ts = f"{{pd.Timestamp(i['{k}'] or 0).value}}"
+                ts = f"{{pd.Timestamp(i.{k} or 0).value}}"
             else:
-                ts = f"{{dt_to_int(str_to_dt(i['{k}']))}}"
+                ts = f"{{dt_to_int(str_to_dt(i.{k}))}}"
         elif t is InfluxType.TIMEDT:
             if pd:
-                ts = f"{{pd.Timestamp(i['{k}'] or 0).value}}"
+                ts = f"{{pd.Timestamp(i.{k} or 0).value}}"
             else:
-                ts = f"{{dt_to_int(i['{k}'])}}"
+                ts = f"{{dt_to_int(i.{k})}}"
         elif t is InfluxType.TAG:
-            tags.append(f"{k}={{str(i['{k}']).translate(tag_escape)}}")
+            tags.append(f"{k}={{str(i.{k}).translate(tag_escape)}}")
         elif t is InfluxType.TAGENUM:
-            tags.append(f"{k}={{getattr(i['{k}'], 'name', i['{k}'] or None)}}")
+            tags.append(f"{k}={{getattr(i.{k}, 'name', i.{k} or None)}}")
         elif t in (InfluxType.FLOAT, InfluxType.BOOL):
-            fields.append(f"{k}={{i['{k}']}}")
+            fields.append(f"{k}={{i.{k}}}")
         elif t is InfluxType.INT:
-            fields.append(f"{k}={{i['{k}']}}i")
+            fields.append(f"{k}={{i.{k}}}i")
         elif t is InfluxType.PLACEHOLDER:
             fields.append(f"{k}=true")
         elif t is InfluxType.STR:
-            fields.append(f"{k}=\\\"{{str(i['{k}']).translate(str_escape)}}\\\"")
+            fields.append(f"{k}=\\\"{{str(i.{k}).translate(str_escape)}}\\\"")
         elif t is InfluxType.ENUM:
-            fields.append(f"{k}=\\\"{{getattr(i['{k}'], 'name', i['{k}'] or None)}}\\\"")
+            fields.append(f"{k}=\\\"{{getattr(i.{k}, 'name', i.{k} or None)}}\\\"")
         else:
             raise TypeError(f"Unknown type: {t!r}")
     extra_tags = extra_tags or {}
