@@ -34,6 +34,7 @@ setup(name='aioinflux',
               'flake8',
           ],
           'docs': [
+              'docutils',
               'sphinx',
               'sphinx_rtd_theme',
               'sphinx-autodoc-typehints',
