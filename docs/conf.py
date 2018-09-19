@@ -49,6 +49,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
+    'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx_autodoc_typehints'
 ]
@@ -168,6 +169,7 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+todo_include_todos = True
 
 # -- Options for intersphinx extension ---------------------------------------
 

@@ -115,16 +115,19 @@ def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
 
 def datapoint(schema=None, name="DataPoint", *, rm_none=False, fill_none=False, extra_tags=None):
     """Dynamic datapoint class factory
-    Can be used as a decorator (similar to Python 3.7 Dataclasses)
-    or as a function (similar to namedtuple, but mutable).
+
+    Can be used as a decorator (similar to Python 3.7 :py:mod:`dataclasses`)
+    or as a function (similar to :py:func:`~collections.namedtuple`, but mutable).
 
     Main characteristics:
-    - Supports accessing field values by attribute or subscription
-    - Support dict-like iteration via ``items`` method
-    - Built-in serialization to InfluxDB line protocol through the ``to_lineprotocol`` method.
-    - About 2-3x faster serialization than the ``serialization.mapping` module
-        - Difference gets smaller (1x-1.5x) when ``rm_none=True`` or
-          the number of fields/tags is very large (20+).
+
+      - Supports accessing field values by attribute or subscription
+      - Support dict-like iteration via ``items`` method
+      - Built-in serialization to InfluxDB line protocol through the ``to_lineprotocol`` method.
+      - About 2-3x faster serialization than the ``serialization.mapping`` module.
+
+          - Difference gets smaller (1x-1.5x) when ``rm_none=True`` or when the number of
+            fields/tags is very large (20+).
 
     :param schema: Dictionary-based (functional namedtuple style)
         or @dataclass decorator-based (dataclass style) measurement schema

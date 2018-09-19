@@ -154,9 +154,7 @@ A typical dataframe input should look something like the following:
 
 The measurement name must be specified with the ``measurement`` argument
 when calling :meth:`~aioinflux.client.InfluxDBClient.write`.
-Columns of dtype :class:`~pandas.api.types.CategoricalDtype` will be automatically treated as tags.
-Columns with other dtypes which should be treated as tags
-must be specified by passing a sequence as the ``tag_columns`` argument.
+Columns that should be treated as tags must be specified by passing a sequence as the ``tag_columns`` argument.
 Additional tags (not present in the actual dataframe) can also be passed using arbitrary keyword arguments.
 
 **Example:**
@@ -184,6 +182,14 @@ See `API reference <api.html#aioinflux.client.InfluxDBClient.write>`__ for detai
 
 .. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/latest/query_language/spec/#identifiers
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
+
+
+Writing DataPoint objects
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. todo:: 🚧 Work in progress 🚧
+
+
 
 Querying data
 -------------
@@ -274,8 +280,6 @@ When generating dataframes, InfluxDB types are mapped to the following Numpy/Pan
      - ``int64``
    * - String
      - ``object``
-   * - String (tag values)
-     - ``CategoricalDtype``
    * - Boolean
      - ``bool``
    * - Timestamp
@@ -375,13 +379,6 @@ by ``InfluxDBResult`` and ``InfluxDBChunkedResult`` when using ``iterable`` mode
     async for chunk in r.iterchunks():
         # do something with JSON chunk
 
-
-Getting tag key/value info
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-In order to properly parse dataframes, ``InfluxDBClient`` internally uses the ``get_tag_info``,
-which basically sends a series of ``SHOW TAG KEYS`` and ``SHOW TAG VALUES`` queries and gathers
-key/value information for all measurements of the active database in a dictionary.
-
 Query patterns
 ^^^^^^^^^^^^^^
 
@@ -459,8 +456,10 @@ See |unix_connector|_ for details.
 
 HTTPS/SSL
 ^^^^^^^^^
-Aioinflux/InfluxDB use HTTP by default, but HTTPS can be used by passing ``ssl=True``
-when instantiating ``InfluxDBClient``:
+Aioinflux/InfluxDB uses HTTP by default, but HTTPS can be used by passing ``ssl=True``
+when instantiating ``InfluxDBClient``. If you are acessing your your InfluxDB instance
+over the public internet, setting up HTTPS is
+`strongly recommended <https://docs.influxdata.com/influxdb/v1.6/administration/https_setup/>`__.
 
 
 .. code:: python

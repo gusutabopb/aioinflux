@@ -22,6 +22,10 @@ Client Interface
 Serialization
 -------------
 
-.. autofunction:: aioinflux.serialization.make_df
-.. autofunction:: aioinflux.serialization.parse_df
+.. autofunction:: aioinflux.serialization.common.escape
+.. autofunction:: aioinflux.serialization.dataframe.serialize
+.. autofunction:: aioinflux.serialization.dataframe.parse
+.. autoclass:: aioinflux.serialization.datapoint.DataPoint
+.. autoclass:: aioinflux.serialization.datapoint.InfluxType
+.. autofunction:: aioinflux.serialization.datapoint.datapoint
 
