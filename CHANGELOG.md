@@ -1,5 +1,23 @@
 # Changelog
  
+## [0.4.0] - ???
+
+### Added
+- Added ability to write `datapoint` objects. See the 
+  [docs](https://aioinflux.readthedocs.io/en/latest/usage.html#writing-datapoint-objects) for details.
+- Added `bytes` output format. This is to facilitate the addition of a caching layer on top of InfluxDB. (cb4e3d1)
+
+### Changed
+- Renamed `raw` output format to `json`. Most users should be unaffected by this. (cb4e3d1)
+
+### Fixed
+- Improved docs
+
+### Internal
+- Refactored serialization/parsing functionality into a subpackage
+- Fix test warnings (2e42d50)
+
+ 
 
 ## [0.3.4] - 2018-09-03
 - Fixed `output='dataframe'` parsing bug (#15)
