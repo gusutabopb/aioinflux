@@ -77,7 +77,7 @@ def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Iterator:
     without column names, or other metadata.
 
     In case a specific format is needed, an optional ``parser`` argument can be passed.
-    ``parser`` is a function that takes raw value list for each data point and a
+    ``parser`` is a function that takes a list of values for each data point and a
     metadata dictionary containing all or a subset of the following:
     ``{'columns', 'name', 'tags', 'statement_id'}``.
 

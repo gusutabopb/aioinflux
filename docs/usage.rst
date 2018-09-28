@@ -232,12 +232,14 @@ Output formats
 
 When querying data, ``InfluxDBClient`` can return data in one of the following formats:
 
-1) ``raw``: Default. Returns the a dictionary containing the JSON response received from InfluxDB.
-2) ``iterable``: Wraps the JSON response in a ``InfluxDBResult`` or ``InfluxDBChunkedResult``
-   object. This object main purpose is to facilitate iteration of data.
-   See `Iterating responses <#iterating-responses>`__ for details.
+1) ``json``: Default. Returns the a dictionary containing the JSON response received from InfluxDB.
+2) ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
+   The contents of the returns JSON blob are not checked at all. Useful for response caching.
 3) ``dataframe``: Parses the result into a Pandas dataframe or a dictionary of dataframes.
    See `Retrieving DataFrames <#retrieving-dataframes>`__ for details.
+4) ``iterable``: Wraps the JSON response in a ``InfluxDBResult`` or ``InfluxDBChunkedResult``
+   object. This object main purpose is to facilitate iteration of data.
+   See `Iterating responses <#iterating-responses>`__ for details.
 
 
 The output format for can be switched on-the-fly by changing the ``output`` attribute:
@@ -245,7 +247,7 @@ The output format for can be switched on-the-fly by changing the ``output`` attr
 .. code:: python
 
     client = InfluxDBClient(output='dataframe')
-    client.mode = 'raw'
+    client.mode = 'json'
 
 
 Retrieving DataFrames
