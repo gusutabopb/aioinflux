@@ -14,7 +14,7 @@ from .compat import pd, no_pandas_warning
 from .iterutils import InfluxDBResult, InfluxDBChunkedResult
 
 PointType = Union[AnyStr, Mapping] if pd is None else Union[AnyStr, Mapping, pd.DataFrame]
-ResultType = Union[AsyncGenerator, dict, InfluxDBResult, InfluxDBChunkedResult]
+ResultType = Union[AsyncGenerator, dict, bytes, InfluxDBResult, InfluxDBChunkedResult]
 
 # Aioinflux uses logging mainly for debugging purposes.
 # Please attach your own handlers if you need logging.
@@ -53,7 +53,7 @@ class InfluxDBClient:
         host: str = 'localhost',
         port: int = 8086,
         mode: str = 'async',
-        output: str = 'raw',
+        output: str = 'json',
         db: Optional[str] = None,
         *,
         ssl: bool = False,
@@ -66,7 +66,7 @@ class InfluxDBClient:
         """
         The InfluxDBClient object holds information necessary to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client.
-        When querying, responses are returned as raw JSON by default,
+        When querying, responses are returned as parsed JSON by default,
         but can also be wrapped in easily iterable
         wrapper object or be parsed to Pandas DataFrames.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
@@ -84,8 +84,10 @@ class InfluxDBClient:
             - 'blocking': Behaves in sync/blocking fashion,
                           similar to the official InfluxDB-Python client.
         :param output: Output format of the response received from InfluxDB.
-            - 'raw': Default format. Returns JSON as received from InfluxDB.
-            - 'iterable': Wraps the raw response in a `InfluxDBResult` or `InfluxDBChunkedResult`,
+            - 'json': Default format. Returns parsed JSON as received from InfluxDB.
+            - 'bytes': Returns raw, non-parsed JSON binary blob as received from InfluxDB.
+                       No error checking is performed. Useful for response caching.
+            - 'iterable': Wraps the JSON response in a `InfluxDBResult` or `InfluxDBChunkedResult`,
                           which can be used for easier iteration over retrieved data points.
             - 'dataframe': Parses results into Pandas DataFrames.
                            Not compatible with chunked responses.
@@ -134,7 +136,7 @@ class InfluxDBClient:
     def output(self, output):
         if pd is None and output == 'dataframe':
             raise ValueError(no_pandas_warning)
-        if output not in ('raw', 'iterable', 'dataframe'):
+        if output not in ('json', 'bytes', 'iterable', 'dataframe'):
             raise ValueError('Invalid output format')
         self._output = output
 
@@ -272,6 +274,9 @@ class InfluxDBClient:
                 # The number 16 is arbitrary (may be too large/small).
                 resp.content._high_water *= 16
                 async for chunk in resp.content:
+                    if self.output == 'bytes':
+                        yield chunk
+                        continue
                     chunk = json.loads(chunk)
                     self._check_error(chunk)
                     yield chunk
@@ -298,7 +303,7 @@ class InfluxDBClient:
             if self.mode != 'async':
                 raise ValueError("Can't use 'chunked' with non-async mode")
             g = _chunked_generator(url, data)
-            if self.output == 'raw':
+            if self.output in ('bytes', 'json'):
                 return g
             elif self.output == 'iterable':
                 return InfluxDBChunkedResult(g, parser=parser, query=query)
@@ -307,10 +312,15 @@ class InfluxDBClient:
 
         async with self._session.post(url, data=data) as resp:
             logger.debug(resp)
-            output = await resp.json()
+            output = await resp.read()
             logger.debug(output)
+
+            if self.output == 'bytes':
+                return output
+
+            output = json.loads(output.decode())
             self._check_error(output)
-            if self.output == 'raw':
+            if self.output == 'json':
                 return output
             elif self.output == 'iterable':
                 return InfluxDBResult(output, parser=parser, query=query)
