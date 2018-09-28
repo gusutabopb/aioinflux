@@ -106,7 +106,7 @@ def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
         # Has substantial runtime impact. Best avoided if performance is critical.
         # First field can't be removed.
         pat = ',\w+="?None"?i?'
-        f = eval('lambda i: re.sub(\'{}\', "", f"{}").encode()'.format(pat, fmt))
+        f = eval('lambda i: re.sub(r\'{}\', "", f"{}").encode()'.format(pat, fmt))
     else:
         f = eval('lambda i: f"{}".encode()'.format(fmt))
     f.__doc__ = DataPoint.to_lineprotocol.__doc__

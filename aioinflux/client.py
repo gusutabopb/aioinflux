@@ -283,7 +283,7 @@ class InfluxDBClient:
 
         try:
             if args:
-                fields = [i for i in re.findall('{(\w+)}', q) if i not in kwargs]
+                fields = [i for i in re.findall(r'{(\w+)}', q) if i not in kwargs]
                 kwargs.update(dict(zip(fields, args)))
             db = self.db if db is None else db
             query = q.format(db=db, **kwargs)
@@ -370,7 +370,7 @@ class InfluxDBClient:
         :param qp: Query pattern string
         """
         restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'parser')
-        if any(kw in restricted_kwargs for kw in re.findall('{(\w+)}', qp)):
+        if any(kw in restricted_kwargs for kw in re.findall(r'{(\w+)}', qp)):
             warnings.warn(f'Ignoring invalid query pattern: {qp}')
         elif not name.isidentifier() or (name in dir(cls) and name not in cls._user_qp):
             warnings.warn(f'Ignoring invalid query pattern name: {name}')
