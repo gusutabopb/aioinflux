@@ -8,6 +8,9 @@
 - Added `bytes` output format. This is to facilitate the addition of a caching layer on top of InfluxDB. (cb4e3d1)
 
 ### Changed
+- Change `write` method signature to match the `/write` endpoint docs 
+    - Allow writing to non-default retention policy (#14)
+    - (`precision` is not fully implemented yet)
 - Renamed `raw` output format to `json`. Most users should be unaffected by this. (cb4e3d1)
 
 ### Fixed
