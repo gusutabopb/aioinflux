@@ -25,6 +25,11 @@ meta = {}
 with open(Path(__file__).parent.parent / 'aioinflux' / '__init__.py') as f:
     exec('\n'.join(l for l in f if l.startswith('__')), meta)
 
+
+def setup(app):
+    app.add_stylesheet('custom.css')
+
+
 project = 'aioinflux'
 copyright = '2018, Gustavo Bezerra'
 author = 'Gustavo Bezerra'
@@ -33,7 +38,6 @@ author = 'Gustavo Bezerra'
 version = meta['__version__']
 # The full version, including alpha/beta/rc tags
 release = meta['__version__']
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -81,7 +85,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -116,7 +119,6 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'aioinfluxdoc'
 
-
 # -- Options for LaTeX output ------------------------------------------------
 
 latex_elements = {
@@ -145,7 +147,6 @@ latex_documents = [
      'Gustavo Bezerra', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -154,7 +155,6 @@ man_pages = [
     (master_doc, 'aioinflux', 'aioinflux Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -166,7 +166,6 @@ texinfo_documents = [
      author, 'aioinflux', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Extension configuration -------------------------------------------------
 todo_include_todos = True

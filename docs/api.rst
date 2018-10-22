@@ -27,6 +27,7 @@ Serialization
 .. autofunction:: aioinflux.serialization.dataframe.serialize
 .. autofunction:: aioinflux.serialization.dataframe.parse
 .. autoclass:: aioinflux.serialization.datapoint.DataPoint
+   :members:
 .. autoclass:: aioinflux.serialization.datapoint.InfluxType
 .. autofunction:: aioinflux.serialization.datapoint.datapoint
 
