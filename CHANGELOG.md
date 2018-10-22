@@ -1,6 +1,6 @@
 # Changelog
  
-## [0.4.0] - ???
+## [0.4.0] - 2018-10-22
 
 ### Added
 - Added ability to write `datapoint` objects. See the 
