@@ -56,6 +56,17 @@ def test_read_dataframe_groupby(df_client):
 
 
 @utils.requires_pandas
+def test_read_dataframe_multistatement(df_client):
+    df_list = df_client.query('SELECT max(*) from m1;SELECT min(*) from m2')
+    logger.info(df_list)
+    assert type(df_list) is list
+    assert 'm1' in df_list[0]
+    assert 'm2' in df_list[1]
+    assert df_list[0]['m1'].shape == (1, 5)
+    assert df_list[1]['m2'].shape == (1, 5)
+
+
+@utils.requires_pandas
 def test_read_dataframe_show_databases(df_client):
     df = df_client.show_databases()
     assert isinstance(df.index, pd.RangeIndex)
