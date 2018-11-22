@@ -1,15 +1,14 @@
 import re
-from collections import defaultdict
 from functools import reduce
 from itertools import chain
-from typing import Union, Dict
+from typing import Union, Dict, List
 
 import pandas as pd
 import numpy as np
 
 from .common import *
 
-DataFrameType = Union[bool, pd.DataFrame, Dict[str, pd.DataFrame]]
+DataFrameType = Union[pd.DataFrame, Dict[str, pd.DataFrame], List[Dict[str, pd.DataFrame]]]
 
 
 # Serialization helper functions
@@ -38,24 +37,26 @@ def _get_name(series):
 def _drop_zero_index(df):
     if isinstance(df.index, pd.DatetimeIndex):
         if all(i.value == 0 for i in df.index):
-            df.reset_index(drop=True, inplace=True)
+            return df.reset_index(drop=True)
+    return df
 
 
 def serialize(resp) -> DataFrameType:
     """Makes a dictionary of DataFrames from a response object"""
-    dfs = defaultdict(list)
+    statements = []
     for statement in resp['results']:
-        for series in statement.get('series', []):
-            dfs[_get_name(series)].append(_serializer(series))
-    dfs = {k: pd.concat(v, axis=0) for k, v in dfs.items()}
+        series = {}
+        for s in statement.get('series', []):
+            series[_get_name(s)] = _drop_zero_index(_serializer(s))
+        statements.append(series)
 
-    # Post-processing
-    for df in dfs.values():
-        _drop_zero_index(df)
-
-    if len(dfs) == 1:
-        return list(dfs.values())[0]
-    return dfs
+    if len(statements) == 1:
+        series: dict = statements[0]
+        if len(series) == 1:
+            return list(series.values())[0]  # DataFrame
+        else:
+            return series  # dict
+    return statements  # list
 
 
 # Parsing helper functions
