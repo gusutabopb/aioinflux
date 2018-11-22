@@ -441,7 +441,7 @@ will return a :class:`pandas.DataFrame`:
 .. note::
 
    On multi-statement queries and/or statements that return multiple InfluxDB series
-   (such as a `GROUP by "tag"` query), a dictionary of dataframes or a list of
+   (such as a ``GROUP by "tag"`` query), a dictionary of dataframes or a list of
    dictionaries of dataframes may be returned. 
    Aioinflux generates a dataframe for each series contained in the JSON returned by InfluxDB.
    See this `Github issue <https://github.com/gusutabopb/aioinflux/issues/19>`__ for further discussion.
