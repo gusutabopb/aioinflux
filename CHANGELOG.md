@@ -1,5 +1,14 @@
 # Changelog
  
+## [0.4.1] - 2018-11-22
+
+### Fixed
+- Fixed bug when doing multi-statement queries when using `dataframe` mode
+
+### Docs
+- Added note regarding handling of multi-statement/multi-series queries when using `dataframe` mode
+
+ 
 ## [0.4.0] - 2018-10-22
 
 ### Added
