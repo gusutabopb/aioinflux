@@ -438,6 +438,15 @@ will return a :class:`pandas.DataFrame`:
     2017-04-12 02:17:22.274658+00:00   5781    3200
     2017-04-12 02:17:22.314710+00:00   5782     100
 
+.. note::
+
+   On multi-statement queries and/or statements that return multiple InfluxDB series
+   (such as a `GROUP by "tag"` query), a dictionary of dataframes or a list of
+   dictionaries of dataframes may be returned. 
+   Aioinflux generates a dataframe for each series contained in the JSON returned by InfluxDB.
+   See this `Github issue <https://github.com/gusutabopb/aioinflux/issues/19>`__ for further discussion.
+
+
 
 When generating dataframes, InfluxDB types are mapped to the following Numpy/Pandas dtypes:
 
