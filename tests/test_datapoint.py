@@ -1,5 +1,6 @@
 import uuid
 import enum
+from datetime import datetime
 from typing import NamedTuple
 from collections import namedtuple
 from dataclasses import dataclass
@@ -70,6 +71,20 @@ def test_datestr():
     )
     MyPoint = datapoint(namedtuple('MyPoint', schema.keys()), schema=schema)
     p = MyPoint("a", "2018-08-08 15:22:33", "b", False, 5)
+    print(p.to_lineprotocol())
+    assert isinstance(p.to_lineprotocol(), bytes)
+
+
+def test_datetime():
+    schema = dict(
+        measurement=aioinflux.MEASUREMENT,
+        time=aioinflux.TIMEDT,
+        host=aioinflux.TAG,
+        running=aioinflux.BOOL,
+        users=aioinflux.INT,
+    )
+    MyPoint = datapoint(namedtuple('MyPoint', schema.keys()), schema=schema)
+    p = MyPoint("a", datetime.utcnow(), "b", False, 5)
     print(p.to_lineprotocol())
     assert isinstance(p.to_lineprotocol(), bytes)
 
