@@ -55,10 +55,6 @@ def dt_to_int(dt):
     return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
 
 
-def td_to_int(td):
-    return int(td.total_seconds()) * 10 ** 9 + td.microseconds * 1000
-
-
 def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
     """Factory of datapoint -> line protocol parsers"""
     tags = []
