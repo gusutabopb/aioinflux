@@ -157,9 +157,7 @@ def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None):
             raise SchemaError("Class must have one or more field-type attributes "
                               "('PLACEHOLDER', 'BOOL', 'INT', 'FLOAT', 'ENUM').")
 
-        cls._schema = _schema
-        cls._opts = (rm_none,),
-        cls._extra_tags = extra_tags or {},
+        cls._lineprotocol = (_schema, rm_none, extra_tags or {})
         cls.to_lineprotocol = _make_serializer(_schema, cls.__name__, rm_none, extra_tags)
 
         return cls
