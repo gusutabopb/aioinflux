@@ -11,7 +11,7 @@ jobs:
           command: sudo pip install -e .
   test: &test
     docker:
-      - image: circleci/python:3.7.0
+      - image: circleci/python:3.7.2
       - image: influxdb:latest
     steps:
       - checkout

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 from setuptools import setup
 from pathlib import Path
 
@@ -9,6 +10,17 @@ meta = {}
 with open(Path(__file__).parent / 'aioinflux' / '__init__.py') as f:
     exec('\n'.join(l for l in f if l.startswith('__')), meta)
 
+test_requirements = [
+    'pytest',
+    'pytest-asyncio',
+    'pytest-cov',
+    'pyyaml',
+    'pytz',
+    'flake8',
+]
+
+if sys.version_info[:2] == (3, 6):
+    test_requirements.append('dataclasses')
 
 setup(name='aioinflux',
       version=meta['__version__'],
@@ -25,14 +37,7 @@ setup(name='aioinflux',
       python_requires='>=3.6',
       install_requires=['aiohttp>=3.0', 'ciso8601'],
       extras_require={
-          'test': [
-              'pytest',
-              'pytest-asyncio',
-              'pytest-cov',
-              'pyyaml',
-              'pytz',
-              'flake8',
-          ],
+          'test': test_requirements,
           'docs': [
               'docutils',
               'sphinx',
