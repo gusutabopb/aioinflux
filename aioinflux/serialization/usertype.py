@@ -10,6 +10,13 @@ from typing import TypeVar
 from .common import *  # noqa
 from ..compat import pd
 
+__all__ = [
+    'lineprotocol', 'SchemaError',
+    'MEASUREMENT', 'TIMEINT', 'TIMESTR', 'TIMEDT',
+    'TAG', 'TAGENUM',
+    'BOOL', 'INT', 'FLOAT', 'STR', 'ENUM',
+]
+
 MEASUREMENT = TypeVar('MEASUREMENT')
 TIMEINT = TypeVar('TIMEINT')
 TIMESTR = TypeVar('TIMESTR')
@@ -160,6 +167,3 @@ def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None, place
         return cls
 
     return _lineprotocol(cls) if cls else _lineprotocol
-
-
-__all__ = [t.__name__ for t in influx_types] + ['lineprotocol', 'SchemaError']
