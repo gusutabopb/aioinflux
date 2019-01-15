@@ -4,7 +4,6 @@ from ..compat import pd
 if pd:
     from . import dataframe
 from . import mapping
-from .datapoint import DataPoint
 
 
 def serialize(data, measurement=None, tag_columns=None, **extra_tags):
@@ -13,7 +12,7 @@ def serialize(data, measurement=None, tag_columns=None, **extra_tags):
         return data
     elif isinstance(data, str):
         return data.encode('utf-8')
-    elif isinstance(data, DataPoint):
+    elif hasattr(data, 'to_lineprotocol'):
         return data.to_lineprotocol()
     elif pd is not None and isinstance(data, pd.DataFrame):
         if measurement is None:
