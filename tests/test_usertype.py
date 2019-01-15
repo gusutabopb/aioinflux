@@ -90,11 +90,10 @@ def test_datetime():
 
 
 def test_placeholder():
-    @lineprotocol
+    @lineprotocol(placeholder=True)
     @dataclass
     class MyPoint:
         timestamp: aioinflux.TIMEINT
-        _: aioinflux.PLACEHOLDER = True
 
     lp = MyPoint(0).to_lineprotocol()
     print(lp)

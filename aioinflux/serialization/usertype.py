@@ -16,7 +16,6 @@ TIMESTR = TypeVar('TIMESTR')
 TIMEDT = TypeVar('TIMEDT')
 TAG = TypeVar('TAG')
 TAGENUM = TypeVar('TAGENUM', enum.Enum, str)
-PLACEHOLDER = TypeVar('PLACEHOLDER')
 BOOL = TypeVar('BOOL')
 INT = TypeVar('INT')
 FLOAT = TypeVar('FLOAT')
@@ -31,7 +30,6 @@ influx_types = {
     TAG: 20,
     TAGENUM: 21,
     # Fields (>25)
-    PLACEHOLDER: 25,
     BOOL: 30,
     INT: 40,
     FLOAT: 50,
@@ -58,7 +56,7 @@ def dt_to_int(dt):
     return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
 
 
-def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
+def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
     """Factory of line protocol parsers"""
     tags = []
     fields = []
@@ -87,8 +85,6 @@ def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
             fields.append(f"{k}={{i.{k}}}")
         elif t is INT:
             fields.append(f"{k}={{i.{k}}}i")
-        elif t is PLACEHOLDER:
-            fields.append(f"{k}=true")
         elif t is STR:
             fields.append(f"{k}=\\\"{{str(i.{k}).translate(str_escape)}}\\\"")
         elif t is ENUM:
@@ -98,6 +94,8 @@ def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
     extra_tags = extra_tags or {}
     for k, v in extra_tags.items():
         tags.append(f"{k}={v}")
+    if placeholder:
+        fields.insert(0, f"_=true")
 
     sep = ',' if tags else ''
     ts = f' {ts}' if ts else ''
@@ -113,7 +111,7 @@ def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
     return f
 
 
-def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None):
+def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None, placeholder=False):
     """Adds to_lineprotocol method to arbitrary user-defined classes
 
     Can be used as a decorator or as a regular function
@@ -153,13 +151,12 @@ def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None):
         if sum([c[e] for e, v in influx_types.items() if 0 < v < 20]) > 1:
             raise SchemaError("Class can't have more than one timestamp-type attribute "
                               "('TIMEINT', 'TIMEDT', 'TIMESTR')")
-        if sum([c[e] for e, v in influx_types.items() if v >= 25]) < 1:  # 1 or more fields
+        if sum([c[e] for e, v in influx_types.items() if v >= 25]) < 1 and not placeholder:
             raise SchemaError("Class must have one or more field-type attributes "
-                              "('PLACEHOLDER', 'BOOL', 'INT', 'FLOAT', 'ENUM').")
+                              "('BOOL', 'INT', 'FLOAT', 'ENUM').")
 
-        cls._lineprotocol = (_schema, rm_none, extra_tags or {})
-        cls.to_lineprotocol = _make_serializer(_schema, cls.__name__, rm_none, extra_tags)
-
+        cls._lineprotocol = args = (_schema, rm_none, extra_tags or {}, placeholder)
+        cls.to_lineprotocol = _make_serializer(cls.__name__, *args)
         return cls
 
     return _lineprotocol(cls) if cls else _lineprotocol
