@@ -56,7 +56,7 @@ def dt_to_int(dt):
 
 
 def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
-    """Factory of datapoint -> line protocol parsers"""
+    """Factory of line protocol parsers"""
     tags = []
     fields = []
     ts = None
@@ -106,12 +106,12 @@ def _make_serializer(schema, meas, rm_none=False, extra_tags=None):
         f = eval('lambda i: re.sub(r\'{}\', "", f"{}").encode()'.format(pat, fmt))
     else:
         f = eval('lambda i: f"{}".encode()'.format(fmt))
-    f.__doc__ = "Returns InfluxDB line protocol representation of datapoint"
+    f.__doc__ = "Returns InfluxDB line protocol representation of user-defined class"
     return f
 
 
-def datapoint(cls=None, *, schema=None, rm_none=False, extra_tags=None):
-    """Adds to_lineprotocol method to namedtuples or dataclasses
+def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None):
+    """Adds to_lineprotocol method to arbitrary user-defined classes
 
     Can be used as a decorator or as a regular function
     (for namedtuples generated functionally).
@@ -132,9 +132,9 @@ def datapoint(cls=None, *, schema=None, rm_none=False, extra_tags=None):
     :param extra_tags: Hard coded tags to be added to every point generated.
     """
 
-    def _datapoint(cls):
+    def _lineprotocol(cls):
         cls_name = getattr(cls, "__name__")
-        _schema = getattr(cls, "__annotations__", schema)
+        _schema = schema or getattr(cls, "__annotations__")
         _schema = {k: _schema[k] for k in sorted(_schema, key=lambda x: influx_types[_schema[x]])}
 
         # Sanity check
@@ -150,7 +150,7 @@ def datapoint(cls=None, *, schema=None, rm_none=False, extra_tags=None):
 
         return cls
 
-    return _datapoint(cls) if cls else _datapoint
+    return _lineprotocol(cls) if cls else _lineprotocol
 
 
-__all__ = [t.__name__ for t in influx_types] + ['datapoint']
+__all__ = [t.__name__ for t in influx_types] + ['lineprotocol']

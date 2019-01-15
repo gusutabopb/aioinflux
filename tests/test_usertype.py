@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import pytest
 
 import aioinflux
-from aioinflux import datapoint
+from aioinflux import lineprotocol
 
 
 class CpuLoad(enum.Enum):
@@ -17,7 +17,7 @@ class CpuLoad(enum.Enum):
 
 
 def test_decorator(sync_client):
-    @datapoint
+    @lineprotocol
     class MyPoint(NamedTuple):
         measurement: aioinflux.MEASUREMENT
         time: aioinflux.TIMEINT
@@ -55,7 +55,7 @@ def test_functional():
         running=aioinflux.BOOL,
         users=aioinflux.INT,
     )
-    MyPoint = datapoint(namedtuple('MyPoint', schema.keys()), schema=schema)
+    MyPoint = lineprotocol(namedtuple('MyPoint', schema.keys()), schema=schema)
     p = MyPoint("a", 2, "b", False, 5)
     print(p.to_lineprotocol())
     assert isinstance(p.to_lineprotocol(), bytes)
@@ -69,7 +69,7 @@ def test_datestr():
         running=aioinflux.BOOL,
         users=aioinflux.INT,
     )
-    MyPoint = datapoint(namedtuple('MyPoint', schema.keys()), schema=schema)
+    MyPoint = lineprotocol(namedtuple('MyPoint', schema.keys()), schema=schema)
     p = MyPoint("a", "2018-08-08 15:22:33", "b", False, 5)
     print(p.to_lineprotocol())
     assert isinstance(p.to_lineprotocol(), bytes)
@@ -83,14 +83,14 @@ def test_datetime():
         running=aioinflux.BOOL,
         users=aioinflux.INT,
     )
-    MyPoint = datapoint(namedtuple('MyPoint', schema.keys()), schema=schema)
+    MyPoint = lineprotocol(namedtuple('MyPoint', schema.keys()), schema=schema)
     p = MyPoint("a", datetime.utcnow(), "b", False, 5)
     print(p.to_lineprotocol())
     assert isinstance(p.to_lineprotocol(), bytes)
 
 
 def test_placeholder():
-    @datapoint
+    @lineprotocol
     @dataclass
     class MyPoint:
         timestamp: aioinflux.TIMEINT
@@ -101,7 +101,7 @@ def test_placeholder():
 
 
 def test_extra_tags():
-    @datapoint(extra_tags={'host': 'ap1'})
+    @lineprotocol(extra_tags={'host': 'ap1'})
     class MyPoint(NamedTuple):
         measurement: aioinflux.MEASUREMENT
         time: aioinflux.TIMEINT
@@ -113,7 +113,7 @@ def test_extra_tags():
 
 
 def test_rm_none():
-    @datapoint(rm_none=True)
+    @lineprotocol(rm_none=True)
     class MyPoint(NamedTuple):
         measurement: aioinflux.MEASUREMENT
         time: aioinflux.TIMEINT
@@ -128,7 +128,7 @@ def test_rm_none():
 
 def test_invalid_type():
     with pytest.raises(KeyError):
-        @datapoint
+        @lineprotocol
         class MyPoint(NamedTuple):
             measurement: aioinflux.MEASUREMENT
             time: aioinflux.TIMEINT
@@ -141,7 +141,7 @@ def test_invalid_type():
     # noinspection PyArgumentList
     MyEnum = enum.Enum('MyEnum', names=list('ABC'))
     with pytest.raises(TypeError):
-        @datapoint
+        @lineprotocol
         class MyPoint(NamedTuple):
             measurement: aioinflux.MEASUREMENT
             time: aioinflux.TIMEINT
