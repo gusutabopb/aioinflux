@@ -10,7 +10,6 @@ from typing import TypeVar
 from .common import *  # noqa
 from ..compat import pd
 
-
 MEASUREMENT = TypeVar('MEASUREMENT')
 TIMEINT = TypeVar('TIMEINT')
 TIMESTR = TypeVar('TIMESTR')
@@ -39,6 +38,10 @@ influx_types = {
     STR: 60,
     ENUM: 61,
 }
+
+
+class SchemaError(TypeError):
+    """Raised when invalid schema is passed to :func:`lineprotocol`"""
 
 
 def str_to_dt(s):
@@ -133,24 +136,35 @@ def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None):
     """
 
     def _lineprotocol(cls):
-        cls_name = getattr(cls, "__name__")
-        _schema = schema or getattr(cls, "__annotations__")
-        _schema = {k: _schema[k] for k in sorted(_schema, key=lambda x: influx_types[_schema[x]])}
+        # Schema validation
+        try:
+            _schema = schema or cls.__annotations__
+        except AttributeError:
+            raise SchemaError("Schema/type annotations missing")
+        try:
+            _schema = {k: _schema[k] for k in
+                       sorted(_schema, key=lambda x: influx_types[_schema[x]])}
+        except KeyError as e:
+            raise SchemaError(f"Invalid type annotation: {e.args[0]}")
 
-        # Sanity check
         c = Counter(_schema.values())
-        assert c[MEASUREMENT] <= 1
-        assert sum([c[e] for e, v in influx_types.items() if 0 < v < 20]) <= 1  # 0 or 1 timestamp
-        assert sum([c[e] for e, v in influx_types.items() if v >= 25]) > 0  # 1 or more fields
+        if not c[MEASUREMENT] <= 1:
+            raise SchemaError("Class can't have more than one 'MEASUREMENT' attribute")
+        if sum([c[e] for e, v in influx_types.items() if 0 < v < 20]) > 1:
+            raise SchemaError("Class can't have more than one timestamp-type attribute "
+                              "('TIMEINT', 'TIMEDT', 'TIMESTR')")
+        if sum([c[e] for e, v in influx_types.items() if v >= 25]) < 1:  # 1 or more fields
+            raise SchemaError("Class must have one or more field-type attributes "
+                              "('PLACEHOLDER', 'BOOL', 'INT', 'FLOAT', 'ENUM').")
 
         cls._schema = _schema
         cls._opts = (rm_none,),
         cls._extra_tags = extra_tags or {},
-        cls.to_lineprotocol = _make_serializer(_schema, cls_name, rm_none, extra_tags)
+        cls.to_lineprotocol = _make_serializer(_schema, cls.__name__, rm_none, extra_tags)
 
         return cls
 
     return _lineprotocol(cls) if cls else _lineprotocol
 
 
-__all__ = [t.__name__ for t in influx_types] + ['lineprotocol']
+__all__ = [t.__name__ for t in influx_types] + ['lineprotocol', 'SchemaError']

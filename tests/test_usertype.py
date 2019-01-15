@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import pytest
 
 import aioinflux
-from aioinflux import lineprotocol
+from aioinflux import lineprotocol, SchemaError
 
 
 class CpuLoad(enum.Enum):
@@ -126,9 +126,15 @@ def test_rm_none():
     assert b'users' not in p.to_lineprotocol()
 
 
-def test_invalid_type():
-    with pytest.raises(KeyError):
+# noinspection PyUnusedLocal
+def test_schema_error():
+    with pytest.raises(SchemaError):
         @lineprotocol
+        class MyPoint:
+            pass
+
+    with pytest.raises(SchemaError):
+        @lineprotocol  # noqa: F811
         class MyPoint(NamedTuple):
             measurement: aioinflux.MEASUREMENT
             time: aioinflux.TIMEINT
@@ -136,17 +142,29 @@ def test_invalid_type():
             running: bool
             users: aioinflux.INT
 
-        assert MyPoint("a", 2, "b", None, 5)
+    with pytest.raises(SchemaError):
+        @lineprotocol  # noqa: F811
+        class MyPoint(NamedTuple):
+            measurement: aioinflux.MEASUREMENT
+            measurement2: aioinflux.MEASUREMENT
+            time: aioinflux.TIMEINT
+            host: aioinflux.TAG
+            running: aioinflux.BOOL
+            users: aioinflux.INT
 
-    # noinspection PyArgumentList
-    MyEnum = enum.Enum('MyEnum', names=list('ABC'))
-    with pytest.raises(TypeError):
-        @lineprotocol
+    with pytest.raises(SchemaError):
+        @lineprotocol  # noqa: F811
+        class MyPoint(NamedTuple):
+            measurement: aioinflux.MEASUREMENT
+            time: aioinflux.TIMEINT
+            time2: aioinflux.TIMEDT
+            host: aioinflux.TAG
+            running: aioinflux.BOOL
+            users: aioinflux.INT
+
+    with pytest.raises(SchemaError):
+        @lineprotocol  # noqa: F811
         class MyPoint(NamedTuple):
             measurement: aioinflux.MEASUREMENT
             time: aioinflux.TIMEINT
             host: aioinflux.TAG
-            running: MyEnum.A
-            users: aioinflux.INT
-
-        assert MyPoint("a", 2, "b", None, 5)
