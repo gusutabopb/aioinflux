@@ -5,6 +5,7 @@ import time
 import re  # noqa
 from collections import Counter
 from typing import TypeVar
+from datetime import datetime
 
 # noinspection PyUnresolvedReferences
 from .common import *  # noqa
@@ -17,16 +18,16 @@ __all__ = [
     'BOOL', 'INT', 'FLOAT', 'STR', 'ENUM',
 ]
 
-MEASUREMENT = TypeVar('MEASUREMENT')
-TIMEINT = TypeVar('TIMEINT')
-TIMESTR = TypeVar('TIMESTR')
-TIMEDT = TypeVar('TIMEDT')
-TAG = TypeVar('TAG')
+MEASUREMENT = TypeVar('MEASUREMENT', bound=str)
+TIMEINT = TypeVar('TIMEINT', bound=int)
+TIMESTR = TypeVar('TIMESTR', bound=str)
+TIMEDT = TypeVar('TIMEDT', bound=datetime)
+TAG = TypeVar('TAG', bound=str)
 TAGENUM = TypeVar('TAGENUM', enum.Enum, str)
-BOOL = TypeVar('BOOL')
-INT = TypeVar('INT')
-FLOAT = TypeVar('FLOAT')
-STR = TypeVar('STR')
+BOOL = TypeVar('BOOL', bound=bool)
+INT = TypeVar('INT', bound=int)
+FLOAT = TypeVar('FLOAT', bound=float)
+STR = TypeVar('STR', bound=str)
 ENUM = TypeVar('ENUM', enum.Enum, str)
 
 influx_types = {
