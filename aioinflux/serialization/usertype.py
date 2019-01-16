@@ -117,6 +117,8 @@ def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
     else:
         f = eval('lambda i: f"{}".encode()'.format(fmt))
     f.__doc__ = "Returns InfluxDB line protocol representation of user-defined class"
+    f._args = dict(meas=meas, schema=schema, rm_none=rm_none,
+                   extra_tags=extra_tags, placeholder=placeholder)
     return f
 
 
@@ -132,9 +134,8 @@ def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None, place
 
     def _lineprotocol(cls):
         _schema = schema or getattr(cls, '__annotations__', {})
-        args = (_schema, rm_none, extra_tags or {}, placeholder)
-        cls.to_lineprotocol = _make_serializer(cls.__name__, *args)
-        cls._lineprotocol = args
+        f = _make_serializer(cls.__name__, _schema, rm_none, extra_tags, placeholder)
+        cls.to_lineprotocol = f
         return cls
 
     return _lineprotocol(cls) if cls else _lineprotocol
