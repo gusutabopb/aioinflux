@@ -97,7 +97,7 @@ def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
         elif t is ENUM:
             fields.append(f"{k}=\\\"{{getattr(i.{k}, 'name', i.{k} or None)}}\\\"")
         else:
-            raise TypeError(f"Unknown type: {t!r}")
+            raise SchemaError(f"Invalid attribute type {k!r}: {t!r}")
     extra_tags = extra_tags or {}
     for k, v in extra_tags.items():
         tags.append(f"{k}={v}")
@@ -146,11 +146,6 @@ def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None, place
             _schema = schema or cls.__annotations__
         except AttributeError:
             raise SchemaError("Schema/type annotations missing")
-        try:
-            _schema = {k: _schema[k] for k in
-                       sorted(_schema, key=lambda x: influx_types[_schema[x]])}
-        except KeyError as e:
-            raise SchemaError(f"Invalid type annotation: {e.args[0]}")
 
         c = Counter(_schema.values())
         if not c[MEASUREMENT] <= 1:
