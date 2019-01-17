@@ -197,13 +197,14 @@ class InfluxDBClient:
         """Writes data to InfluxDB.
         Input can be:
 
-        1) a string properly formatted in InfluxDB's line protocol
-        2) a dictionary-like object containing four keys:
-           ``measurement``, ``time``, ``tags``, ``fields``
-        3) a Pandas DataFrame with a DatetimeIndex
-        4) an iterable of one of above
+        1. A mapping (e.g. ``dict``) containing the keys:
+            ``measurement``, ``time``, ``tags``, ``fields``
+        2. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
+        3. A user defined class decorated w/ :func:`~aioinflux.serialization.usertype.lineprotocol`
+        4. A string (``str`` or ``bytes``) properly formatted in InfluxDB's line protocol
+        5. An iterable of one of the above
 
-        Input data in formats 2-4 are parsed to the line protocol before being written to InfluxDB.
+        Input data in formats 1-3 are parsed to the line protocol before being written to InfluxDB.
         See the `InfluxDB docs <https://docs.influxdata.com/influxdb/latest/
         write_protocols/line_protocol_reference/>`_ for more details.
 

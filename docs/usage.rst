@@ -55,39 +55,56 @@ being able to run from outside of a coroutine function:
     client.write(point)
     client.query('SELECT value FROM cpu_load_short')
 
+.. note::
+
+    The need for the ``blocking`` mode has been somewhat supplanted
+    by the new async REPL available with the release of IPython 7.0.
+    See `this blog post <https://blog.jupyter.org/ipython-7-0-async-repl-a35ce050f7f7>`__ for details.
+
+    If you are having issues running ``blocking`` mode with recent Python/IPython versions,
+    see `this issue <https://github.com/gusutabopb/aioinflux/issues/17>`__ for other possible workarounds.
 
 Writing data
 ------------
 
-Input data can be:
+To write data to InfluxDB, use :class:`~aioinflux.client.InfluxDBClient`'s
+:meth:`~aioinflux.client.InfluxDBClient.write` method.
+Sucessful writes will return ``True``. In case some error occurs :class:`~aioinflux.client.InfluxDBWriteError`
+exception will be raised.
 
-1. A string (``str`` or ``bytes``) properly formatted in InfluxDB's line protocol
-2. A mapping (e.g. ``dict``) containing the following keys: ``measurement``, ``time``, ``tags``, ``fields``
-3. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
-4. A :func:`~aioinflux.serialization.datapoint.DataPoint` object (see `below <#writing-datapoint-objects>`__)
+Input data to :meth:`~aioinflux.client.InfluxDBClient.write` can be:
+
+1. A mapping (e.g. ``dict``) containing the keys: ``measurement``, ``time``, ``tags``, ``fields``
+2. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
+3. A user defined class decorated w/ :func:`~aioinflux.serialization.usertype.lineprotocol` (**recommended**, see `below <#writing-user-defined-class-objects>`__)
+4. A string (``str`` or ``bytes``) properly formatted in InfluxDB's line protocol
 5. An iterable of one of the above
 
-Input data in formats 2-4 are serialized into the `line protocol`_ before being written to InfluxDB.
+Input data in formats 1-3 are serialized into the `line protocol`_ before being written to InfluxDB.
 ``str`` or ``bytes`` are assumed to already be in line protocol format and are inserted into InfluxDB as they are.
-All serialization from JSON (InfluxDB's only output format) and parsing to line protocol
-(InfluxDB's only input format) functionality is located in the :mod:`~aioinflux.serialization` subpackage.
+All functionality regarding JSON parsing (InfluxDB's only output format) and serialization to line protocol
+(InfluxDB's only input format) is located in the :mod:`~aioinflux.serialization` subpackage.
 
 Beware that serialization is not highly optimized (C extensions / cythonization PRs are welcome!) and may become
 a bottleneck depending on your application's performance requirements.
-It is, however, `reasonably faster`_ than InfluxDB's official Python client.
+It is, however, reasonably (3-10x) `faster`_ than InfluxDB's `official Python client`_.
 
-The ``write`` method returns ``True`` when successful and raises an
-``InfluxDBError`` otherwise.
-
+.. _`official Python client`: https://github.com/influxdata/influxdb-python
 .. _`line protocol`: https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_reference/
-.. _`reasonably faster`: https://gist.github.com/gusutabopb/42550f0f07628ba61b0ed6322f02855b
+.. _`faster`: https://gist.github.com/gusutabopb/42550f0f07628ba61b0ed6322f02855b
 
 Writing dictionary-like objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. warning::
+
+    This is the same format as the one used by InfluxDB's `official Python client`_ and is implemented
+    in Aioinflux for compatibility purposes only.
+    Using dictionaries to write data to InfluxDB is slower and more error-prone than the other methods
+    provided by Aioinflux and therefore **discouraged**.
+
 Aioinflux accepts any dictionary-like object (mapping) as input.
-However, that dictionary must be properly formatted and contain the
-following keys:
+The dictionary must contain the following keys:
 
 1) **measurement**: Optional. Must be a string-like object. If
    omitted, must be specified when calling :meth:`~aioinflux.client.InfluxDBClient.write`
@@ -95,7 +112,7 @@ following keys:
 2) **time**: Optional. The value can be :class:`datetime.datetime`,
    date-like string (e.g., ``2017-01-01``, ``2009-11-10T23:00:00Z``) or
    anything else that can be parsed by :class:`pandas.Timestamp`.
-   See the :ref:`Pandas documentation <pandas:timeseries>` for details.
+   See :ref:`Pandas documentation <pandas:timeseries>` for details.
    If Pandas is not available, |ciso8601|_ is used instead for string parsing.
 3) **tags**: Optional. This must contain another mapping of field
    names and values. Both tag keys and values should be strings.
@@ -103,13 +120,13 @@ following keys:
    names and values. Field keys should be strings. Field values can be
    ``float``, ``int``, ``str``, ``bool`` or ``None`` or any its subclasses.
    Attempting to use Numpy types will cause errors as ``np.int64``, ``np.float64``, etc are not
-   subclasses of Python's builti-in numeric types.
+   subclasses of Python's built-in numeric types.
    Use dataframes for writing data using Numpy types.
 
 .. |ciso8601| replace:: ``ciso8601``
 .. _ciso8601: https://github.com/closeio/ciso8601/
 
-Any fields other then the above will be ignored when writing data to
+Any keys other then the above will be ignored when writing data to
 InfluxDB.
 
 A typical dictionary-like point would look something like the following:
@@ -186,55 +203,103 @@ See `API reference <api.html#aioinflux.client.InfluxDBClient.write>`__ for detai
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
 
 
-Writing DataPoint objects
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Writing user-defined class objects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 0.4.0
+.. versionchanged:: 0.5.0
 
-:class:`~aioinflux.serialization.datapoint.DataPoint` are namedtuple-like objects that
-provide fast line protocol serialization by defining a schema.
+Aioinflux can add write any arbitrary user-defined class to InfluxDB through the use of the
+:func:`~aioinflux.serialization.usertype.lineprotocol` decorator. This decorator monkey-patches an
+existing class and adds a ``to_lineprotocol`` method, which is used internally by InfluxDB to serialize
+the class data into a InfluxDB-compatible format. In order to generate ``to_lineprotocol``, a typed schema
+must be defined using `type hints`_ in the form of type annotations or a schema dictionary.
 
-A :class:`~aioinflux.serialization.datapoint.DataPoint` class can be defined using the
-:class:`~aioinflux.serialization.datapoint.datapoint` class factory function with some special types annotations:
+This is the fastest and least error-prone method of writing data into InfluxDB provided by Aioinflux.
+
+.. _`type hints`: https://docs.python.org/3/library/typing.html
+
+We recommend using :func:`~aioinflux.serialization.usertype.lineprotocol` with :py:class:`~typing.NamedTuple`:
+
 
 .. code:: python
 
-   from aioinflux.serialization import datapoint, InfluxType
+   from aioinflux import *
+   from typing import NamedTuple
 
-   @datapoint
+   @lineprotocol
+   class Trade(NamedTuple):
+       timestamp: TIMEINT
+       instrument: TAGENUM
+       source: TAG
+       side: TAG
+       price: FLOAT
+       size: INT
+       trade_id: STR
+
+
+Alternatively, the functional form of :py:func:`~collections.namedtuple` can also be used:
+
+.. code:: python
+
+    from collections import namedtuple
+
+    schema = dict(
+       timestamp=TIMEINT,
+       instrument=TAG,
+       source=TAG,
+       side=TAG,
+       price=FLOAT,
+       size=INT,
+       trade_id=STR,
+    )
+
+    # Create class
+    Trade = namedtuple('Trade', schema.keys())
+
+    # Monkey-patch existing class and add ``to_lineprotocol``
+    Trade = lineprotocol(Trade, schema=schema)
+
+
+Dataclasses (or any other user-defined class) can be used as well:
+
+.. code:: python
+
+   from dataclasses import dataclass
+
+   @lineprotocol
+   @dataclass
    class Trade:
-       timestamp: InfluxType.TIMEINT
-       instrument: InfluxType.TAGENUM
-       source: InfluxType.TAG
-       side: InfluxType.TAG
-       price: InfluxType.FLOAT
-       size: InfluxType.INT
-       trade_id: InfluxType.STR
+       timestamp: TIMEINT
+       instrument: TAGENUM
+       source: TAG
+       side: TAG
+       price: FLOAT
+       size: INT
+       trade_id: STR
 
-Alternatively, it can also be defined functionally:
-
-.. code:: python
-
-    Trade = datapoint(dict(
-       timestamp=InfluxType.TIMEINT,
-       instrument=InfluxType.TAG,
-       source=InfluxType.TAG,
-       side=InfluxType.TAG,
-       price=InfluxType.FLOAT,
-       size=InfluxType.INT,
-       trade_id=InfluxType.STR,
-    ), name='Trade')
-
-
-The class can then be be instantiated by positional or keyword arguments:
+If you want to preserve type annotations for another use,
+you can pass your serialization schema as a dictionary as well:
 
 .. code:: python
 
-   # Positional
-   trade = Trade(1540184368785116000, 'APPL', 'NASDAQ', 'BUY',
-                 219.23, 100, '34a1e085-3122-429c-9662-7ce82039d287')
+   @lineprotocol(schema=dict(timestamp=TIMEINT, value=FLOAT))
+   @dataclass
+   class MyTypedClass:
+       timestamp: int
+       value: float
 
-   # Keyword
+    print(MyTypedClass.__annotations__)
+    # {'timestamp': <class 'int'>, 'value': <class 'float'>}
+
+    MyTypedClass(1547710904202826000, 2.1).to_lineprotocol()
+    # b'MyTypedClass value=2.1 1547710904202826000'
+
+
+The modified class will have a dynamically generated ``to_lineprotocol`` method which
+generates a line protocol representation of the data contained by the object:
+
+.. code:: python
+
    trade = Trade(
       timestamp=1540184368785116000,
       instrument='AAPL',
@@ -245,52 +310,26 @@ The class can then be be instantiated by positional or keyword arguments:
       trade_id='34a1e085-3122-429c-9662-7ce82039d287'
    )
 
-Attributes can be accessed by dot notation (``__getattr__``) or dictionary-like notation (``__getitem__``).
-Iteration is also supported:
-
-.. code:: python
-
-   trade.price  # 219.23
-   trade['price']  # 219.23
-   list(trade)  # ['timestamp', 'source', 'instrument', 'size', 'price', 'trade_id', 'side']
-   list(trade.items()  # [('timestamp', 1540184368785116000), ('source', 'APPL'), ('instrument', 'NASDAQ'), ('size', 'BUY'), ('price', 219.23), ('trade_id', 100), ('side', '34a1e085-3122-429c-9662-7ce82039d287')]
-
-
-Every DataPoint object has a :meth:`~aioinflux.serialization.datapoint.DataPoint.to_lineprotocol` method which
-generates a line protocol representation of the datapoint:
-
-.. code:: python
-
    trade.to_lineprotocol()
    # b'Trade,source=APPL,instrument=NASDAQ size=BUYi,price=219.23,trade_id="100",side="34a1e085-3122-429c-9662-7ce82039d287" 1540184368785116000'
 
-:meth:`~aioinflux.client.InfluxDBClient.write` can write DataPoint objects (or iterables of DataPoint objects) to InfluxDB
-(by using :meth:`~aioinflux.serialization.datapoint.DataPoint.to_lineprotocol` internally):
+Calling ``to_lineprotocol`` by the end-user is not necessary but may be useful for debugging.
+
+:meth:`~aioinflux.client.InfluxDBClient.write` will automatically used ``to_lineprotocol``
+if an object has it.
 
 .. code:: python
 
    client = InfluxDBClient()
-   await client.write(trade)
-
-Every class generated by :class:`~aioinflux.serialization.datapoint.datapoint` has
-:class:`~aioinflux.serialization.datapoint.DataPoint` as its base class:
-
-.. code:: python
-
-   isintance(trade, DataPoint)  # True
+   await client.write(trade)  # True
 
 
+User-defined class schema/type annotations
+""""""""""""""""""""""""""""""""""""""""""
 
-DataPoint Types
-"""""""""""""""
-
-.. note::
-
-   In this section, the word "types" refers to members of
-   the :class:`~aioinflux.serialization.datapoint.InfluxType` enum
-
-DataPoint types are defined using the :class:`~aioinflux.serialization.datapoint.InfluxType` enum.
-All type annotations MUST be a :class:`~aioinflux.serialization.datapoint.InfluxType` member.
+In Aioinflux, InfluxDB types (and derived types) are represented by :py:class:`~typing.TypeVar`
+defined in :mod:`aioinflux.serialization.usertype`.
+All schema values (type annotations) MUST be one of those types.
 The types available are based on the native types of InfluxDB
 (see the `InfluxDB docs <https://docs.influxdata.com/influxdb/v1.6/write_protocols/line_protocol_reference/#data-types>`__ for
 details), with some extra types to help the serialization to line protocol and/or allow more flexible usage
@@ -302,7 +341,7 @@ details), with some extra types to help the serialization to line protocol and/o
    :widths: 10 30
    :align: center
 
-   * - Datapoint type
+   * - Type
      - Description
    * - ``MEASUREMENT``
      - Optional. If missing, the measurement becomes the class name
@@ -316,9 +355,6 @@ details), with some extra types to help the serialization to line protocol and/o
      - Treats field as an InfluxDB tag
    * - ``TAGENUM``
      - Same as ``TAG`` but allows the use of :py:class:`~enum.Enum`
-   * - ``PLACEHOLDER``
-     - | Boolean field which is always true and NOT present in the class constructor.
-       | Workaround for creating field-less points (which is not supported natively by InfluxDB)
    * - ``BOOL``
      - Boolean field
    * - ``INT``
@@ -333,33 +369,23 @@ details), with some extra types to help the serialization to line protocol and/o
 ``TAG*`` types are optional. One and only one ``TIME*`` type must present. At least ONE field type be present.
 
 
-DataPoint options
-"""""""""""""""""
+``@lineprotocol`` options
+"""""""""""""""""""""""""
 
-The :func:`~aioinflux.serialization.datapoint.datapoint` function/decorator provides some options to
-customize object instantiation/serialization.
+The :func:`~aioinflux.serialization.lineprotocol` function/decorator provides some options to
+customize how object serialization is performed.
 See the `API reference <api.html#aioinflux.serialization.datapoint.datapoint>`__ for details.
-
-
-Advantages compared to dictionary-like objects
-""""""""""""""""""""""""""""""""""""""""""""""
-
-- Faster (see below)
-- Explicit field names: better IDE support
-- Explicit types: avoids types errors when writing to InfluxDB (e.g.: ``float`` field getting parsed as a ``float``)
-- Optional ``None`` support
-- No need to use nested data structures
-
 
 Performance
 """""""""""
 
-Serialization using :class:`~aioinflux.serialization.datapoint.DataPoint` is about 3x faster
-than dictionary-like objects.
-See this `notebook <https://github.com/gusutabopb/aioinflux/tree/master/notebooks/datapoint_benchmark.ipynb>`__  and
-the `API reference <api.html#aioinflux.serialization.datapoint.datapoint>`__ for details.
-Regarding object instantiation performance, dictionaries are slightly faster,
-but the time difference is negligible and 1-2 orders of magnitude smaller than time required for serialization.
+Serialization using :class:`~aioinflux.serialization.lineprotocol` is about 3x faster
+than dictionary-like objects (or about 10x faster than the `official Python client`_).
+See this `notebook <https://github.com/gusutabopb/aioinflux/tree/master/notebooks/datapoint_benchmark.ipynb>`__
+for a simple benchmark.
+
+Beware that setting ``rm_none=True`` can have substantial performance impact especially when
+the number of fields/tags is very large (20+).
 
 
 Querying data

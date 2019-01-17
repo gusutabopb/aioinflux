@@ -123,13 +123,16 @@ def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
 
 
 def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None, placeholder=False):
-    """Adds to_lineprotocol method to arbitrary user-defined classes
+    """Adds ``to_lineprotocol`` method to arbitrary user-defined classes
 
     :param schema: Schema dictionary (attr/type pairs).
     :param rm_none: Whether apply a regex to remove ``None`` values.
         If ``False``, passing ``None`` values to boolean, integer or float or time fields
         will result in write errors. Setting to ``True`` is "safer" but impacts performance.
     :param extra_tags: Hard coded tags to be added to every point generated.
+    :param placeholder: If no field attributes are present, add a placeholder attribute (``_``)
+        which is always equal to ``True``. This is a workaround for creating field-less points
+        (which is not supported natively by InfluxDB)
     """
 
     def _lineprotocol(cls):
