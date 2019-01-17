@@ -1,4 +1,15 @@
 # Changelog
+
+## [0.5.0] - 2019-01-17
+
+### Changed
+- [BREAKING] Removed `DataPoint` functionality in favor of simpler and more
+ flexible `@lineprotocol` decorator. See the 
+  [docs](https://aioinflux.readthedocs.io/en/latest/usage.html#writing-user-defined-class-objects) for details.
+
+### Docs
+- Added detailed `@lineprotocol` usage 
+ 
  
 ## [0.4.1] - 2018-11-22
 
