@@ -112,7 +112,7 @@ def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
     if rm_none:
         # Has substantial runtime impact. Best avoided if performance is critical.
         # First field can't be removed.
-        pat = ',\w+="?None"?i?'
+        pat = r',\w+="?None"?i?'
         f = eval('lambda i: re.sub(r\'{}\', "", f"{}").encode()'.format(pat, fmt))
     else:
         f = eval('lambda i: f"{}".encode()'.format(fmt))

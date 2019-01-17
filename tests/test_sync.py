@@ -188,7 +188,7 @@ def test_invalid_query_pattern(sync_client):
 
 def test_invalid_query_pattern_name(sync_client):
     with pytest.warns(UserWarning) as e:
-        sync_client.set_query_pattern('wr\ite', 'SELECT {foo} from {bar}')
+        sync_client.set_query_pattern(r'wr\ite', 'SELECT {foo} from {bar}')
     logger.warning(e)
 
 

@@ -14,7 +14,7 @@ requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
 def random_point():
     now = datetime.datetime.now()
     point = {
-        'measurement': 'test_measurement',
+        'measurement': 'test_measurement',  # noqa
         'tags': {'tag key with sp🚀ces': 'tag,value,with"commas"'},
         'time': random.choice([now, str(now)]),
         'fields': {
