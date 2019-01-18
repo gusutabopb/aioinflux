@@ -34,10 +34,12 @@ def runner(coro):
 
 
 class InfluxDBError(Exception):
+    """Raised when an server-side error occurs"""
     pass
 
 
 class InfluxDBWriteError(InfluxDBError):
+    """Raised when a server-side writing error occurs"""
     def __init__(self, resp):
         self.status = resp.status
         self.headers = resp.headers
@@ -61,7 +63,7 @@ class InfluxDBClient:
         username: Optional[str] = None,
         password: Optional[str] = None,
         database: Optional[str] = None,
-        loop: Optional[asyncio.BaseEventLoop] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
         """
         The InfluxDBClient object holds information necessary to interact with InfluxDB.
@@ -198,7 +200,7 @@ class InfluxDBClient:
         Input can be:
 
         1. A mapping (e.g. ``dict``) containing the keys:
-            ``measurement``, ``time``, ``tags``, ``fields``
+           ``measurement``, ``time``, ``tags``, ``fields``
         2. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
         3. A user defined class decorated w/ :func:`~aioinflux.serialization.usertype.lineprotocol`
         4. A string (``str`` or ``bytes``) properly formatted in InfluxDB's line protocol
@@ -264,8 +266,8 @@ class InfluxDBClient:
             responses by series or by every 10,000 points, whichever occurs first.
         :param kwargs: Keyword arguments for query patterns
         :param parser: Optional parser function for 'iterable' mode
-        :return: Returns an async generator if chunked is ``True``, otherwise returns
-            a dictionary containing the parsed JSON response.
+        :return: Response in the format specified by the combination of
+           ``InfluxDBClient.output`` and ``chunked``
         """
 
         # noinspection PyShadowingNames
@@ -326,7 +328,7 @@ class InfluxDBClient:
             elif self.output == 'iterable':
                 return InfluxDBResult(output, parser=parser, query=query)
             elif self.output == 'dataframe':
-                return serialization.dataframe.serialize(output)
+                return serialization.dataframe.parse(output)
 
     @staticmethod
     def _check_error(response):

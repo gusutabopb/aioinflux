@@ -315,8 +315,7 @@ generates a line protocol representation of the data contained by the object:
 
 Calling ``to_lineprotocol`` by the end-user is not necessary but may be useful for debugging.
 
-:meth:`~aioinflux.client.InfluxDBClient.write` will automatically used ``to_lineprotocol``
-if an object has it.
+``to_lineprotocol`` is automatically used by :meth:`~aioinflux.client.InfluxDBClient.write` when present.
 
 .. code:: python
 
@@ -328,7 +327,7 @@ User-defined class schema/type annotations
 """"""""""""""""""""""""""""""""""""""""""
 
 In Aioinflux, InfluxDB types (and derived types) are represented by :py:class:`~typing.TypeVar`
-defined in :mod:`aioinflux.serialization.usertype`.
+defined in :mod:`~aioinflux.serialization.usertype`.
 All schema values (type annotations) MUST be one of those types.
 The types available are based on the native types of InfluxDB
 (see the `InfluxDB docs <https://docs.influxdata.com/influxdb/v1.6/write_protocols/line_protocol_reference/#data-types>`__ for

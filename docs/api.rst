@@ -16,15 +16,30 @@ Client Interface
 .. autoclass:: aioinflux.client.InfluxDBClient
    :inherited-members:
 
+.. autoexception:: aioinflux.client.InfluxDBError
 .. autoexception:: aioinflux.client.InfluxDBWriteError
+
+Result iteration
+""""""""""""""""
+.. automodule:: aioinflux.iterutils
+   :members:
 
 
 Serialization
 -------------
 
-.. automodule:: aioinflux.serialization
-.. autofunction:: aioinflux.serialization.common.escape
-.. autofunction:: aioinflux.serialization.dataframe.serialize
-.. autofunction:: aioinflux.serialization.dataframe.parse
-.. autofunction:: aioinflux.serialization.usertype.lineprotocol
+Mapping
+"""""""
+.. automodule:: aioinflux.serialization.mapping
+   :members:
 
+Dataframe
+"""""""""
+.. automodule:: aioinflux.serialization.dataframe
+   :members:
+
+User-defined classes
+""""""""""""""""""""
+.. automodule:: aioinflux.serialization.usertype
+   :members:
+   :undoc-members:

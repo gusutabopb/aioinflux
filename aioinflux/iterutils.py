@@ -2,6 +2,7 @@ from typing import Optional, Iterator, Callable
 
 
 class InfluxDBResult:
+    """Wrapper around an InfluxDB response"""
     __slots__ = ('_data', 'parser', 'query')
 
     def __init__(self, data, parser=None, query=None):
@@ -38,6 +39,7 @@ class InfluxDBResult:
 
 
 class InfluxDBChunkedResult:
+    """Wrapper around an InfluxDB chunked response"""
     __slots__ = ('_gen', 'parser', 'query')
 
     def __init__(self, gen, parser=None, query=None):
@@ -82,9 +84,11 @@ def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Iterator:
     ``{'columns', 'name', 'tags', 'statement_id'}``.
 
     Sample parser function:
+
     .. code:: python
-        def parser(x, meta):
-            return dict(zip(meta['columns'], x))
+
+       def parser(x, meta):
+           return dict(zip(meta['columns'], x))
 
     :param resp: Dictionary containing parsed JSON (output from InfluxDBClient.query)
     :param parser: Optional parser function

@@ -6,7 +6,7 @@ import ciso8601
 from .common import *
 
 
-def serialize(point: Mapping, measurement=None, **extra_tags) -> str:
+def serialize(point: Mapping, measurement=None, **extra_tags) -> bytes:
     """Converts dictionary-like data into a single line protocol line (point)"""
     tags = _serialize_tags(point, extra_tags)
     return (
@@ -14,7 +14,7 @@ def serialize(point: Mapping, measurement=None, **extra_tags) -> str:
         f'{"," if tags else ""}{tags} '
         f'{_serialize_fields(point)} '
         f'{_serialize_timestamp(point)}'
-    )
+    ).encode()
 
 
 def _serialize_measurement(point, measurement):

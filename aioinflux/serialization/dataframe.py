@@ -41,7 +41,7 @@ def _drop_zero_index(df):
     return df
 
 
-def serialize(resp) -> DataFrameType:
+def parse(resp) -> DataFrameType:
     """Makes a dictionary of DataFrames from a response object"""
     statements = []
     for statement in resp['results']:
@@ -83,7 +83,7 @@ def _replace(df):
     return replacements
 
 
-def parse(df, measurement, tag_columns=None, **extra_tags):
+def serialize(df, measurement, tag_columns=None, **extra_tags) -> bytes:
     """Converts a Pandas DataFrame into line protocol format"""
     # Pre-processing
     if not isinstance(df.index, pd.DatetimeIndex):
