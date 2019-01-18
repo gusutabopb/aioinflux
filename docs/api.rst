@@ -1,14 +1,8 @@
-.. _api:
-
 API Reference
 =============
 
-.. module:: aioinflux
-
-This part of the documentation covers all the interfaces of Aioinflux
-
-.. note:: 🚧 This section of the documentation is under writing and may be wrong/incomplete 🚧
-
+.. contents::
+   :local:
 
 Client Interface
 ----------------

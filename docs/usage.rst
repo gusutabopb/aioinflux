@@ -1,6 +1,9 @@
 User Guide
 ==========
 
+.. contents::
+   :local:
+
 TL;DR
 -----
 
@@ -197,7 +200,7 @@ to InfluxDB. Any string which is a valid `InfluxDB identifier`_ and
 valid `Python identifier`_ can be used as an extra tag key (with the
 exception of the strings ``data``, ``measurement`` and ``tag_columns``).
 
-See `API reference <api.html#aioinflux.client.InfluxDBClient.write>`__ for details.
+See :ref:`API reference <client interface>` for details.
 
 .. _`InfluxDB identifier`: https://docs.influxdata.com/influxdb/latest/query_language/spec/#identifiers
 .. _`Python identifier`: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
@@ -373,7 +376,7 @@ details), with some extra types to help the serialization to line protocol and/o
 
 The :func:`~aioinflux.serialization.lineprotocol` function/decorator provides some options to
 customize how object serialization is performed.
-See the `API reference <api.html#aioinflux.serialization.datapoint.datapoint>`__ for details.
+See the :ref:`API reference <user-defined classes>` for details.
 
 Performance
 """""""""""
@@ -395,12 +398,9 @@ Querying data is as simple as passing an InfluxDB query string to
 
 .. code:: python
 
-    client.query('SELECT myfield FROM mymeasurement')
+    await client.query('SELECT myfield FROM mymeasurement')
 
-The result (in ``blocking`` and ``async`` modes) is a dictionary
-containing the parsed JSON data returned by the InfluxDB `HTTP API`_:
-
-.. _`HTTP API`: https://docs.influxdata.com/influxdb/latest/guides/querying_data/#querying-data-using-the-http-api
+By default, this returns JSON data:
 
 .. code:: python
 
@@ -418,20 +418,22 @@ containing the parsed JSON data returned by the InfluxDB `HTTP API`_:
           [1491963442314710000, 5782, 100]]}],
        'statement_id': 0}]}
 
+See `InfluxDB official docs <https://docs.influxdata.com/influxdb/latest/guides/querying_data/#querying-data-using-the-http-api>`_
+for more on the InfluxDB's HTTP API specifics.
 
 Output formats
 ^^^^^^^^^^^^^^
 
-When querying data, ``InfluxDBClient`` can return data in one of the following formats:
+When using, :meth:`~aioinflux.client.InfluxDBClient.query` data can return data in one of the following formats:
 
 1) ``json``: Default. Returns the a dictionary containing the JSON response received from InfluxDB.
 2) ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
    The contents of the returns JSON blob are not checked at all. Useful for response caching.
 3) ``dataframe``: Parses the result into a Pandas dataframe or a dictionary of dataframes.
-   See `Retrieving DataFrames <#retrieving-dataframes>`__ for details.
+   See :ref:`Retrieving DataFrames` for details.
 4) ``iterable``: Wraps the JSON response in a ``InfluxDBResult`` or ``InfluxDBChunkedResult``
    object. This object main purpose is to facilitate iteration of data.
-   See `Iterating responses <#iterating-responses>`__ for details.
+   See :ref:`Iterating responses` for details.
 
 
 The output format for can be switched on-the-fly by changing the ``output`` attribute:
@@ -441,12 +443,15 @@ The output format for can be switched on-the-fly by changing the ``output`` attr
     client = InfluxDBClient(output='dataframe')
     client.mode = 'json'
 
+Beware that when passing ``chunked=True``, the result type will be an async generator.
+See :ref:`Chunked responses` for details.
+
 
 Retrieving DataFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
 When the client is in ``dataframe`` mode, :meth:`~aioinflux.client.InfluxDBClient.query`
-will return a :class:`pandas.DataFrame`:
+will usually return a :class:`pandas.DataFrame`:
 
 
 .. code:: text
@@ -466,8 +471,7 @@ will return a :class:`pandas.DataFrame`:
 .. note::
 
    On multi-statement queries and/or statements that return multiple InfluxDB series
-   (such as a ``GROUP by "tag"`` query), a dictionary of dataframes or a list of
-   dictionaries of dataframes may be returned. 
+   (such as a ``GROUP by "tag"`` query), a list of dictionaries of dataframes will be returned.
    Aioinflux generates a dataframe for each series contained in the JSON returned by InfluxDB.
    See this `Github issue <https://github.com/gusutabopb/aioinflux/issues/19>`__ for further discussion.
 
@@ -496,7 +500,7 @@ When generating dataframes, InfluxDB types are mapped to the following Numpy/Pan
 Chunked responses
 ^^^^^^^^^^^^^^^^^
 Aioinflux supports InfluxDB chunked queries. Passing ``chunked=True`` when calling
-:meth:`~aioinflux.client.InfluxDBClient.query`, returns an ``AsyncGenerator`` object,
+:meth:`~aioinflux.client.InfluxDBClient.query`, returns an :py:class:`~collections.abc.AsyncGenerator` object,
 which can asynchronously iterated.
 Using chunked requests allows response processing to be partially done before
 the full response is retrieved, reducing overall query time.
@@ -510,13 +514,16 @@ the full response is retrieved, reducing overall query time.
 
 Chunked responses are not supported when using the ``dataframe`` output format.
 
+See the `InfluxDB official docs <https://docs.influxdata.com/influxdb/v1.7/guides/querying_data/#chunking>`__
+for more on chunked responses.
+
 Iterating responses
 ^^^^^^^^^^^^^^^^^^^
 
 By default, :meth:`~aioinflux.client.InfluxDBClient.query`
 returns a parsed JSON response from InfluxDB.
 In order to easily iterate over that JSON response point by point, Aioinflux
-provides the ``iterpoints`` function, which returns a generator object:
+provides the :func:`~aioinflux.iterutils.iterpoints` function, which returns a generator object:
 
 .. code:: python
 
@@ -534,7 +541,7 @@ provides the ``iterpoints`` function, which returns a generator object:
     [1439856360000000000, 56, 'santa_monica', '2']
     [1439856720000000000, 65, 'santa_monica', '3']
 
-``iterpoints`` can also be used with chunked responses:
+:func:`~aioinflux.iterutils.iterpoints` can also be used with chunked responses:
 
 .. code:: python
 
@@ -543,8 +550,8 @@ provides the ``iterpoints`` function, which returns a generator object:
         for point in iterpoints(chunk):
             # do something
 
-By default, the generator returned by ``iterpoints`` yields a plain list of values without
-doing any expensive parsing.
+By default, the generator returned by :func:`~aioinflux.iterutils.iterpoints`
+yields a plain list of values without doing any expensive parsing.
 However, in case a specific format is needed, an optional ``parser`` argument can be passed.
 ``parser`` is a function that takes the raw value list for each data point and an additional
 metadata dictionary containing all or a subset of the following:
@@ -565,8 +572,9 @@ metadata dictionary containing all or a subset of the following:
     {'time': 1439856360000000000, 'index': 56, 'location': 'santa_monica', 'randtag': '2'}
     {'time': 1439856720000000000, 'index': 65, 'location': 'santa_monica', 'randtag': '3'}
 
-Besides being explicitly with a raw response, ``iterpoints`` is also be used "automatically"
-by ``InfluxDBResult`` and ``InfluxDBChunkedResult`` when using ``iterable`` mode:
+Besides explicitly parsing a with a raw JSON response, :class:`~aioinflux.iterutils.iterpoints`
+is also used by :class:`~aioinflux.iterutils.InfluxDBResult` and
+:class:`~aioinflux.iterutils.InfluxDBChunkedResult` when using ``iterable`` mode:
 
 .. code:: python
 
@@ -589,7 +597,7 @@ by ``InfluxDBResult`` and ``InfluxDBChunkedResult`` when using ``iterable`` mode
 Query patterns
 ^^^^^^^^^^^^^^
 
-Aioinflux provides a wrapping mechanism around ``InfluxDBClient.query`` in
+Aioinflux provides a wrapping mechanism around :meth:`~aioinflux.client.InfluxDBClient.query` in
 order to provide convenient access to commonly used query patterns.
 
 Query patterns are query strings containing optional named "replacement fields"
@@ -600,7 +608,7 @@ arguments are also supported and can be mixed with keyword arguments.
 
 Aioinflux built-in query patterns are defined here_.
 Users can also dynamically define additional query patterns by using
-the |set_qp|_ helper function.
+the :meth:`~aioinflux.client.InfluxDBClient.set_query_pattern` helper method.
 User-defined query patterns have the disadvantage of not being shown for
 auto-completion in IDEs such as Pycharm.
 However, they do show up in dynamic environments such as Jupyter.
@@ -620,12 +628,10 @@ Built-in query pattern examples:
 
 Please refer to InfluxDB documentation_ for further query-related information.
 
-.. _here: aioinflux/client.py#L330
+.. _here: https://github.com/gusutabopb/aioinflux/blob/master/aioinflux/client.py#L344
 .. _documentation: https://docs.influxdata.com/influxdb/latest/query_language/
 .. |str_format| replace:: ``str_format()``
 .. _str_format: https://docs.python.org/3/library/string.html#formatstrings
-.. |set_qp| replace:: ``InfluxDBClient.set_query_pattern``
-.. _set_qp: aioinflux/client.py#L345
 
 Other functionality
 -------------------
@@ -633,23 +639,19 @@ Other functionality
 Authentication
 ^^^^^^^^^^^^^^
 
-Aioinflux supports basic HTTP authentication provided by |basic_auth|_.
-Simply pass ``username`` and ``password`` when instantiating ``InfluxDBClient``:
+Aioinflux supports basic HTTP authentication provided by :py:class:`aiohttp.BasicAuth`.
+Simply pass ``username`` and ``password`` when instantiating :class:`~aioinflux.client.InfluxDBClient`:
 
 .. code:: python
 
     client = InfluxDBClient(username='user', password='pass)
 
 
-.. |basic_auth| replace:: ``aiohttp.BasicAuth``
-.. _basic_auth: https://docs.aiohttp.org/en/stable/client_reference.html#basicauth
-
-
 Unix domain sockets
 ^^^^^^^^^^^^^^^^^^^
 
 If your InfluxDB server uses UNIX domain sockets you can use ``unix_socket``
-when instantiating ``InfluxDBClient``:
+when instantiating :class:`~aioinflux.client.InfluxDBClient`:
 
 .. code:: python
 
@@ -664,8 +666,8 @@ See |unix_connector|_ for details.
 HTTPS/SSL
 ^^^^^^^^^
 Aioinflux/InfluxDB uses HTTP by default, but HTTPS can be used by passing ``ssl=True``
-when instantiating ``InfluxDBClient``. If you are acessing your your InfluxDB instance
-over the public internet, setting up HTTPS is
+when instantiating :class:`~aioinflux.client.InfluxDBClient`.
+If you are acessing your your InfluxDB instance over the public internet, setting up HTTPS is
 `strongly recommended <https://docs.influxdata.com/influxdb/v1.6/administration/https_setup/>`__.
 
 
@@ -677,7 +679,7 @@ over the public internet, setting up HTTPS is
 Database selection
 ^^^^^^^^^^^^^^^^^^
 
-After the instantiation of the ``InfluxDBClient`` object, database
+After the instantiation of the :class:`~aioinflux.client.InfluxDBClient` object, database
 can be switched by changing the ``db`` attribute:
 
 .. code:: python

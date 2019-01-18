@@ -177,4 +177,5 @@ todo_include_todos = True
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'aiohttp': ('https://docs.aiohttp.org/en/stable/', None),
 }
