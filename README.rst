@@ -16,8 +16,8 @@ aioinflux
    :target: https://pypi.python.org/pypi/aioinflux
    :alt: Supported Python versions
 
-.. image:: https://readthedocs.org/projects/aioinflux/badge/?version=latest
-   :target: https://aioinflux.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/aioinflux/badge/?version=stable
+   :target: https://aioinflux.readthedocs.io/en/latest/?badge=stable
    :alt: Documentation status
 
 
@@ -79,4 +79,4 @@ This sums most of what you can do with ``aioinflux``:
 
 See the `documentation`_ for more detailed usage.
 
-.. _documentation: http://aioinflux.readthedocs.io/en/latest/
+.. _documentation: http://aioinflux.readthedocs.io/en/stable/
