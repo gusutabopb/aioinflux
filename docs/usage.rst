@@ -311,7 +311,7 @@ generates a line protocol representation of the data contained by the object:
    )
 
    trade.to_lineprotocol()
-   # b'Trade,source=APPL,instrument=NASDAQ size=BUYi,price=219.23,trade_id="100",side="34a1e085-3122-429c-9662-7ce82039d287" 1540184368785116000'
+   # b'Trade,instrument=AAPL,source=NASDAQ,side=BUY price=219.23,size=100i,trade_id="34a1e085-3122-429c-9662-7ce82039d287" 1540184368785116000'
 
 Calling ``to_lineprotocol`` by the end-user is not necessary but may be useful for debugging.
 
