@@ -17,7 +17,7 @@ aioinflux
    :alt: Supported Python versions
 
 .. image:: https://readthedocs.org/projects/aioinflux/badge/?version=stable
-   :target: https://aioinflux.readthedocs.io/en/latest/?badge=stable
+   :target: https://aioinflux.readthedocs.io/en/stable/?badge=stable
    :alt: Documentation status
 
 
