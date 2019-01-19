@@ -7,7 +7,7 @@ User Guide
 TL;DR
 -----
 
-This sums most of what you can do with ``aioinflux``:
+This sums most of what you can do with :mod:`aioinflux`:
 
 .. code:: python
 
@@ -35,7 +35,7 @@ This sums most of what you can do with ``aioinflux``:
 Client modes
 ------------
 
-Despite the library's name, :class:`~aioinflux.client.InfluxDBClient` can also run in non-async
+Despite the library's name, |client| can also run in non-async
 mode (a.k.a ``blocking``) mode. It can be useful for debugging and exploratory
 data analysis.
 
@@ -70,16 +70,17 @@ being able to run from outside of a coroutine function:
 Writing data
 ------------
 
-To write data to InfluxDB, use :class:`~aioinflux.client.InfluxDBClient`'s
-:meth:`~aioinflux.client.InfluxDBClient.write` method.
-Sucessful writes will return ``True``. In case some error occurs :class:`~aioinflux.client.InfluxDBWriteError`
+To write data to InfluxDB, use |client|'s
+|write| method.
+Successful writes will return ``True``. In case some error occurs :class:`~aioinflux.client.InfluxDBWriteError`
 exception will be raised.
 
-Input data to :meth:`~aioinflux.client.InfluxDBClient.write` can be:
+Input data to |write| can be:
 
 1. A mapping (e.g. ``dict``) containing the keys: ``measurement``, ``time``, ``tags``, ``fields``
-2. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
-3. A user defined class decorated w/ :func:`~aioinflux.serialization.usertype.lineprotocol` (**recommended**, see `below <#writing-user-defined-class-objects>`__)
+2. A :class:`pandas.DataFrame` with a |datetimeindex|
+3. A user defined class decorated w/ |lineprotocol|
+   (**recommended**, see :ref:`below <Writing user-defined class objects>`)
 4. A string (``str`` or ``bytes``) properly formatted in InfluxDB's line protocol
 5. An iterable of one of the above
 
@@ -110,13 +111,13 @@ Aioinflux accepts any dictionary-like object (mapping) as input.
 The dictionary must contain the following keys:
 
 1) **measurement**: Optional. Must be a string-like object. If
-   omitted, must be specified when calling :meth:`~aioinflux.client.InfluxDBClient.write`
+   omitted, must be specified when calling |write|
    by passing a ``measurement`` argument.
-2) **time**: Optional. The value can be :class:`datetime.datetime`,
+2) **time**: Optional. The value can be |datetime|,
    date-like string (e.g., ``2017-01-01``, ``2009-11-10T23:00:00Z``) or
    anything else that can be parsed by :class:`pandas.Timestamp`.
    See :ref:`Pandas documentation <pandas:timeseries>` for details.
-   If Pandas is not available, |ciso8601|_ is used instead for string parsing.
+   If Pandas is not available, |ciso8601|_ is used instead for date-like string parsing.
 3) **tags**: Optional. This must contain another mapping of field
    names and values. Both tag keys and values should be strings.
 4) **fields**: Mandatory. This must contain another mapping of field
@@ -148,7 +149,7 @@ A typical dictionary-like point would look something like the following:
    timestamps in UTC. This is how both InfluxDB and Pandas treat timestamps internally.
 
    Pandas and many other libraries also assume all input timestamps are in UTC unless otherwise
-   explicitly noted. Aioinflux does the same and assumes any timezone-unaware ``datetime`` object
+   explicitly noted. Aioinflux does the same and assumes any timezone-unaware |datetime| object
    or datetime-like strings is in UTC.
    Aioinflux does not raise any warnings when timezone-unaware input is passed
    and silently assumes it to be in UTC.
@@ -160,7 +161,7 @@ Writing DataFrames
 
 Aioinflux also accepts Pandas dataframes as input. The only requirements
 for the dataframe is that the index **must** be of type
-:class:`~pandas.DatetimeIndex`. Also, any column whose ``dtype`` is ``object`` will
+|datetimeindex|. Also, any column whose ``dtype`` is ``object`` will
 be converted to a string representation.
 
 A typical dataframe input should look something like the following:
@@ -175,7 +176,7 @@ A typical dataframe input should look something like the following:
     2017-06-24 14:45:17.929097+00:00  0.390137 -0.016709 -0.667895   E
 
 The measurement name must be specified with the ``measurement`` argument
-when calling :meth:`~aioinflux.client.InfluxDBClient.write`.
+when calling |write|.
 Columns that should be treated as tags must be specified by passing a sequence as the ``tag_columns`` argument.
 Additional tags (not present in the actual dataframe) can also be passed using arbitrary keyword arguments.
 
@@ -192,9 +193,9 @@ InfluxDB and ``measurement`` is the measurement we are writing to.
 ``tag_columns`` is in an optional iterable telling which of the
 dataframe columns should be parsed as tag values. If ``tag_columns`` is
 not explicitly passed, all columns in the dataframe whose dtype is not
-:class:`~pandas.DatetimeIndex` will be treated as InfluxDB field values.
+|datetimeindex| will be treated as InfluxDB field values.
 
-Any other keyword arguments passed to :meth:`~aioinflux.client.InfluxDBClient.write` are
+Any other keyword arguments passed to |write| are
 treated as extra tags which will be attached to the data being written
 to InfluxDB. Any string which is a valid `InfluxDB identifier`_ and
 valid `Python identifier`_ can be used as an extra tag key (with the
@@ -212,7 +213,7 @@ Writing user-defined class objects
 .. versionchanged:: 0.5.0
 
 Aioinflux can add write any arbitrary user-defined class to InfluxDB through the use of the
-:func:`~aioinflux.serialization.usertype.lineprotocol` decorator. This decorator monkey-patches an
+|lineprotocol| decorator. This decorator monkey-patches an
 existing class and adds a ``to_lineprotocol`` method, which is used internally by InfluxDB to serialize
 the class data into a InfluxDB-compatible format. In order to generate ``to_lineprotocol``, a typed schema
 must be defined using `type hints`_ in the form of type annotations or a schema dictionary.
@@ -221,7 +222,7 @@ This is the fastest and least error-prone method of writing data into InfluxDB p
 
 .. _`type hints`: https://docs.python.org/3/library/typing.html
 
-We recommend using :func:`~aioinflux.serialization.usertype.lineprotocol` with :py:class:`~typing.NamedTuple`:
+We recommend using |lineprotocol| with :py:class:`~typing.NamedTuple`:
 
 
 .. code:: python
@@ -318,7 +319,7 @@ generates a line protocol representation of the data contained by the object:
 
 Calling ``to_lineprotocol`` by the end-user is not necessary but may be useful for debugging.
 
-``to_lineprotocol`` is automatically used by :meth:`~aioinflux.client.InfluxDBClient.write` when present.
+``to_lineprotocol`` is automatically used by |write| when present.
 
 .. code:: python
 
@@ -352,7 +353,7 @@ details), with some extra types to help the serialization to line protocol and/o
    * - ``TIMESTR``
      - Timestamp is a datetime string (somewhat compliant to ISO 8601)
    * - ``TIMEDT``
-     - Timestamp is a :py:class:`~datetime.datetime` (or subclasses such as :class:`pandas.Timestamp`)
+     - Timestamp is a |datetime| (or subclasses such as :class:`pandas.Timestamp`)
    * - ``TAG``
      - Treats field as an InfluxDB tag
    * - ``TAGENUM``
@@ -374,14 +375,14 @@ details), with some extra types to help the serialization to line protocol and/o
 ``@lineprotocol`` options
 """""""""""""""""""""""""
 
-The :func:`~aioinflux.serialization.lineprotocol` function/decorator provides some options to
+The |lineprotocol| function/decorator provides some options to
 customize how object serialization is performed.
 See the :ref:`API reference <user-defined classes>` for details.
 
 Performance
 """""""""""
 
-Serialization using :class:`~aioinflux.serialization.lineprotocol` is about 3x faster
+Serialization using |lineprotocol| is about 3x faster
 than dictionary-like objects (or about 10x faster than the `official Python client`_).
 See this `notebook <https://github.com/gusutabopb/aioinflux/tree/master/notebooks/datapoint_benchmark.ipynb>`__
 for a simple benchmark.
@@ -393,8 +394,7 @@ the number of fields/tags is very large (20+).
 Querying data
 -------------
 
-Querying data is as simple as passing an InfluxDB query string to
-:meth:`~aioinflux.client.InfluxDBClient.query`:
+Querying data is as simple as passing an InfluxDB query string to |query|:
 
 .. code:: python
 
@@ -424,15 +424,16 @@ for more on the InfluxDB's HTTP API specifics.
 Output formats
 ^^^^^^^^^^^^^^
 
-When using, :meth:`~aioinflux.client.InfluxDBClient.query` data can return data in one of the following formats:
+When using, |query| data can return data in one of the following formats:
 
 1) ``json``: Default. Returns the a dictionary containing the JSON response received from InfluxDB.
 2) ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
    The contents of the returns JSON blob are not checked at all. Useful for response caching.
 3) ``dataframe``: Parses the result into a Pandas dataframe or a dictionary of dataframes.
    See :ref:`Retrieving DataFrames` for details.
-4) ``iterable``: Wraps the JSON response in a ``InfluxDBResult`` or ``InfluxDBChunkedResult``
-   object. This object main purpose is to facilitate iteration of data.
+4) ``iterable``: Wraps the JSON response in a :class:`~aioinflux.iterutils.InfluxDBResult` or
+   :class:`~aioinflux.iterutils.InfluxDBChunkedResult` object.
+   This object main purpose is to facilitate iteration of data.
    See :ref:`Iterating responses` for details.
 
 
@@ -450,7 +451,7 @@ See :ref:`Chunked responses` for details.
 Retrieving DataFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
-When the client is in ``dataframe`` mode, :meth:`~aioinflux.client.InfluxDBClient.query`
+When the client is in ``dataframe`` mode, |query|
 will usually return a :class:`pandas.DataFrame`:
 
 
@@ -500,7 +501,7 @@ When generating dataframes, InfluxDB types are mapped to the following Numpy/Pan
 Chunked responses
 ^^^^^^^^^^^^^^^^^
 Aioinflux supports InfluxDB chunked queries. Passing ``chunked=True`` when calling
-:meth:`~aioinflux.client.InfluxDBClient.query`, returns an :py:class:`~collections.abc.AsyncGenerator` object,
+|query|, returns an :py:class:`~collections.abc.AsyncGenerator` object,
 which can asynchronously iterated.
 Using chunked requests allows response processing to be partially done before
 the full response is retrieved, reducing overall query time.
@@ -520,10 +521,9 @@ for more on chunked responses.
 Iterating responses
 ^^^^^^^^^^^^^^^^^^^
 
-By default, :meth:`~aioinflux.client.InfluxDBClient.query`
-returns a parsed JSON response from InfluxDB.
+By default, |query| returns a parsed JSON response from InfluxDB.
 In order to easily iterate over that JSON response point by point, Aioinflux
-provides the :func:`~aioinflux.iterutils.iterpoints` function, which returns a generator object:
+provides the |iterpoints| function, which returns a generator object:
 
 .. code:: python
 
@@ -541,7 +541,7 @@ provides the :func:`~aioinflux.iterutils.iterpoints` function, which returns a g
     [1439856360000000000, 56, 'santa_monica', '2']
     [1439856720000000000, 65, 'santa_monica', '3']
 
-:func:`~aioinflux.iterutils.iterpoints` can also be used with chunked responses:
+|iterpoints| can also be used with chunked responses:
 
 .. code:: python
 
@@ -550,7 +550,7 @@ provides the :func:`~aioinflux.iterutils.iterpoints` function, which returns a g
         for point in iterpoints(chunk):
             # do something
 
-By default, the generator returned by :func:`~aioinflux.iterutils.iterpoints`
+By default, the generator returned by |iterpoints|
 yields a plain list of values without doing any expensive parsing.
 However, in case a specific format is needed, an optional ``parser`` argument can be passed.
 ``parser`` is a function that takes the raw value list for each data point and an additional
@@ -572,7 +572,7 @@ metadata dictionary containing all or a subset of the following:
     {'time': 1439856360000000000, 'index': 56, 'location': 'santa_monica', 'randtag': '2'}
     {'time': 1439856720000000000, 'index': 65, 'location': 'santa_monica', 'randtag': '3'}
 
-Besides explicitly parsing a with a raw JSON response, :class:`~aioinflux.iterutils.iterpoints`
+Besides explicitly parsing a with a raw JSON response, |iterpoints|
 is also used by :class:`~aioinflux.iterutils.InfluxDBResult` and
 :class:`~aioinflux.iterutils.InfluxDBChunkedResult` when using ``iterable`` mode:
 
@@ -597,7 +597,7 @@ is also used by :class:`~aioinflux.iterutils.InfluxDBResult` and
 Query patterns
 ^^^^^^^^^^^^^^
 
-Aioinflux provides a wrapping mechanism around :meth:`~aioinflux.client.InfluxDBClient.query` in
+Aioinflux provides a wrapping mechanism around |query| in
 order to provide convenient access to commonly used query patterns.
 
 Query patterns are query strings containing optional named "replacement fields"
@@ -640,7 +640,7 @@ Authentication
 ^^^^^^^^^^^^^^
 
 Aioinflux supports basic HTTP authentication provided by :py:class:`aiohttp.BasicAuth`.
-Simply pass ``username`` and ``password`` when instantiating :class:`~aioinflux.client.InfluxDBClient`:
+Simply pass ``username`` and ``password`` when instantiating |client|:
 
 .. code:: python
 
@@ -651,7 +651,7 @@ Unix domain sockets
 ^^^^^^^^^^^^^^^^^^^
 
 If your InfluxDB server uses UNIX domain sockets you can use ``unix_socket``
-when instantiating :class:`~aioinflux.client.InfluxDBClient`:
+when instantiating |client|:
 
 .. code:: python
 
@@ -666,7 +666,7 @@ See |unix_connector|_ for details.
 HTTPS/SSL
 ^^^^^^^^^
 Aioinflux/InfluxDB uses HTTP by default, but HTTPS can be used by passing ``ssl=True``
-when instantiating :class:`~aioinflux.client.InfluxDBClient`.
+when instantiating |client|.
 If you are acessing your your InfluxDB instance over the public internet, setting up HTTPS is
 `strongly recommended <https://docs.influxdata.com/influxdb/v1.6/administration/https_setup/>`__.
 
@@ -679,7 +679,7 @@ If you are acessing your your InfluxDB instance over the public internet, settin
 Database selection
 ^^^^^^^^^^^^^^^^^^
 
-After the instantiation of the :class:`~aioinflux.client.InfluxDBClient` object, database
+After the instantiation of the |client| object, database
 can be switched by changing the ``db`` attribute:
 
 .. code:: python
@@ -711,3 +711,12 @@ Below is a simple way to setup logging from your application:
 
 For further information about logging, please refer to the
 `official documentation <https://docs.python.org/3/library/logging.html>`__.
+
+
+.. |lineprotocol| replace:: :func:`~aioinflux.serialization.usertype.lineprotocol`
+.. |client| replace:: :class:`~aioinflux.client.InfluxDBClient`
+.. |write| replace:: :meth:`~aioinflux.client.InfluxDBClient.write`
+.. |query| replace:: :meth:`~aioinflux.client.InfluxDBClient.query`
+.. |iterpoints| replace:: :func:`~aioinflux.iterutils.iterpoints`
+.. |datetimeindex| replace:: :class:`~pandas.DatetimeIndex`
+.. |datetime| replace:: :py:class:`datetime.datetime`

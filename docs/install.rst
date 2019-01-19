@@ -23,16 +23,13 @@ please use the `official Python client`_.
 However, there is `some discussion <https://github.com/plugaai/aioinflux/issues/10>`_
 regarding Pypy/Python 3.5 support.
 
-The main third-party library dependency is |aiohttp|_, for all HTTP
-request handling. and |pandas|_ for ``DataFrame`` reading/writing support.
+The main third-party library dependency is |aiohttp|, for all HTTP
+request handling. and |pandas| for :class:`~pandas.DataFrame` reading/writing support.
 
-There are currently no plans to support other HTTP libraries besides ``aiohttp``.
-If ``aiohttp`` + ``asyncio`` is not your soup, see `alternatives <index.html#alternatives>`__.
+There are currently no plans to support other HTTP libraries besides |aiohttp|.
+If |aiohttp| + |asyncio| is not your soup, see :ref:`Alternatives`.
 
-.. |asyncio| replace:: ``asyncio``
-.. _asyncio: https://docs.python.org/3/library/asyncio.html
-.. |aiohttp| replace:: ``aiohttp``
-.. _aiohttp: https://github.com/aio-libs/aiohttp
-.. |pandas| replace:: ``pandas``
-.. _pandas: https://github.com/pandas-dev/pandas
+.. |asyncio| replace:: :py:mod:`asyncio`
+.. |aiohttp| replace:: :py:mod:`aiohttp`
+.. |pandas| replace:: :py:mod:`pandas`
 .. _`official Python Client`: https://github.com/influxdata/influxdb-python
