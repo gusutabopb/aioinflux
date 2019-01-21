@@ -4,7 +4,7 @@ import time
 # noinspection PyUnresolvedReferences
 import re  # noqa
 from collections import Counter
-from typing import TypeVar
+from typing import TypeVar, Optional, Mapping
 from datetime import datetime
 
 # noinspection PyUnresolvedReferences
@@ -122,9 +122,17 @@ def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
     return f
 
 
-def lineprotocol(cls=None, *, schema=None, rm_none=False, extra_tags=None, placeholder=False):
+def lineprotocol(
+        cls=None,
+        *,
+        schema: Optional[Mapping[str, TypeVar]] = None,
+        rm_none: bool = False,
+        extra_tags: Optional[Mapping[str, str]] = None,
+        placeholder: bool = False
+):
     """Adds ``to_lineprotocol`` method to arbitrary user-defined classes
 
+    :param cls: Class to monkey-patch
     :param schema: Schema dictionary (attr/type pairs).
     :param rm_none: Whether apply a regex to remove ``None`` values.
         If ``False``, passing ``None`` values to boolean, integer or float or time fields

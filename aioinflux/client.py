@@ -189,7 +189,7 @@ class InfluxDBClient:
     @runner
     async def ping(self) -> dict:
         """Pings InfluxDB.
-         Returns a dictionary containing the headers of the response from `influxd`.
+         Returns a dictionary containing the headers of the response from ``influxd``.
          """
         async with self._session.get(self._url.format(endpoint='ping')) as resp:
             logger.debug(f'{resp.status}: {resp.reason}')
@@ -232,7 +232,7 @@ class InfluxDBClient:
             data is written to the default retention policy.
         :param tag_columns: Columns to be treated as tags (used when writing DataFrames only)
         :param extra_tags: Additional tags to be added to all points passed.
-        :return: Returns `True` if insert is successful. Raises `ValueError` exception otherwise.
+        :return: Returns ``True`` if insert is successful. Raises :py:class:`ValueError` otherwise.
         """
         if precision is not None:
             # FIXME: Implement. Related issue: aioinflux/pull/13
