@@ -8,7 +8,10 @@ Client Interface
 ----------------
 
 .. autoclass:: aioinflux.client.InfluxDBClient
-   :inherited-members:
+   :members:
+
+    .. automethod:: __init__
+
 
 .. autoexception:: aioinflux.client.InfluxDBError
 .. autoexception:: aioinflux.client.InfluxDBWriteError

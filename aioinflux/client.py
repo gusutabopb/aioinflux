@@ -66,33 +66,43 @@ class InfluxDBClient:
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
         """
-        The InfluxDBClient object holds information necessary to interact with InfluxDB.
+        :class:`~aioinflux.client.InfluxDBClient`  holds information necessary
+        to interact with InfluxDB.
         It is async by default, but can also be used as a sync/blocking client.
         When querying, responses are returned as parsed JSON by default,
         but can also be wrapped in easily iterable
         wrapper object or be parsed to Pandas DataFrames.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
-        1) InfluxDBClient.ping
-        2) InfluxDBClient.write
-        3) InfluxDBClient.query
+
+        1. :meth:`~aioinflux.client.InfluxDBClient.ping`
+        2. :meth:`~aioinflux.client.InfluxDBClient.write`
+        3. :meth:`~aioinflux.client.InfluxDBClient.query`
+
         See each of the above methods documentation for further usage details.
+
         See also: https://docs.influxdata.com/influxdb/latest/tools/api/
 
         :param host: Hostname to connect to InfluxDB.
         :param port: Port to connect to InfluxDB.
-        :param mode: Mode in which client should run.
-            Available options are: 'async' and 'blocking'.
-            - 'async': Default mode. Each query/request to the backend will
-            - 'blocking': Behaves in sync/blocking fashion,
-                          similar to the official InfluxDB-Python client.
+        :param mode: Mode in which client should run. Available options:
+
+           - ``async``: Default mode. Each query/request to the backend will
+           - ``blocking``: Behaves in sync/blocking fashion,
+             similar to the official InfluxDB-Python client.
+
         :param output: Output format of the response received from InfluxDB.
-            - 'json': Default format. Returns parsed JSON as received from InfluxDB.
-            - 'bytes': Returns raw, non-parsed JSON binary blob as received from InfluxDB.
-                       No error checking is performed. Useful for response caching.
-            - 'iterable': Wraps the JSON response in a `InfluxDBResult` or `InfluxDBChunkedResult`,
-                          which can be used for easier iteration over retrieved data points.
-            - 'dataframe': Parses results into Pandas DataFrames.
-                           Not compatible with chunked responses.
+
+           - ``json``: Default format.
+             Returns parsed JSON as received from InfluxDB.
+           - ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
+             No error checking is performed. Useful for response caching.
+           - ``iterable``: Wraps the JSON response in a
+             :class:`~aioinflux.iterutils.InfluxDBResult` or
+             :class:`~aioinflux.iterutils.InfluxDBChunkedResult`,
+             which can be used for easier iteration over retrieved data points.
+           - ``dataframe``: Parses results into :py:class`pandas.DataFrame`.
+             Not compatible with chunked responses.
+
         :param db: Default database to be used by the client.
         :param ssl: If https should be used.
         :param unix_socket: Path to the InfluxDB Unix domain socket.
