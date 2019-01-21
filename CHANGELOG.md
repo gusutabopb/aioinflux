@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1] - 2019-01-21
+
+This is version is backwards compatible with v0.5.0
+
+### Fixed
+- Fix type annotations
+- Fix internal API inconsistencies
+
+### Docs
+- Complete API section
+- Add proper Sphinx links
+- Update/fix various sections
+
+
 ## [0.5.0] - 2019-01-17
 
 ### Changed
