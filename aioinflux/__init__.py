@@ -4,4 +4,4 @@ from .client import InfluxDBClient, InfluxDBError, InfluxDBWriteError, logger
 from .iterutils import iterpoints, InfluxDBResult, InfluxDBChunkedResult
 from .serialization.usertype import *
 
-__version__ = '0.6.0.dev0'
+__version__ = '0.5.1'
