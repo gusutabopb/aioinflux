@@ -74,7 +74,7 @@ def _replace(df):
     obj_cols = {k for k, v in dict(df.dtypes).items() if v is np.dtype('O')}
     other_cols = set(df.columns) - obj_cols
     obj_nans = (f'{k}="nan"' for k in obj_cols)
-    other_nans = (f'{k}=nan' for k in other_cols)
+    other_nans = (f'{k}=nani?' for k in other_cols)
     replacements = [
         ('|'.join(chain(obj_nans, other_nans)), ''),
         (',{2,}', ','),
