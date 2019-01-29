@@ -426,9 +426,9 @@ Output formats
 
 When using, |query| data can return data in one of the following formats:
 
-1) ``json``: Default. Returns the a dictionary containing the JSON response received from InfluxDB.
+1) ``json``: Default. Returns a dictionary representation of the JSON response received from InfluxDB.
 2) ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
-   The contents of the returns JSON blob are not checked at all. Useful for response caching.
+   The contents of the returns JSON blob are not checked for errors.
 3) ``dataframe``: Parses the result into a Pandas dataframe or a dictionary of dataframes.
    See :ref:`Retrieving DataFrames` for details.
 4) ``iterable``: Wraps the JSON response in a :class:`~aioinflux.iterutils.InfluxDBResult` or
