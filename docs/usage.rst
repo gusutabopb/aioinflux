@@ -431,10 +431,6 @@ When using, |query| data can return data in one of the following formats:
    The contents of the returns JSON blob are not checked for errors.
 3) ``dataframe``: Parses the result into a Pandas dataframe or a dictionary of dataframes.
    See :ref:`Retrieving DataFrames` for details.
-4) ``iterable``: Wraps the JSON response in a :class:`~aioinflux.iterutils.InfluxDBResult` or
-   :class:`~aioinflux.iterutils.InfluxDBChunkedResult` object.
-   This object main purpose is to facilitate iteration of data.
-   See :ref:`Iterating responses` for details.
 
 
 The output format for can be switched on-the-fly by changing the ``output`` attribute:
@@ -572,27 +568,6 @@ metadata dictionary containing all or a subset of the following:
     {'time': 1439856360000000000, 'index': 56, 'location': 'santa_monica', 'randtag': '2'}
     {'time': 1439856720000000000, 'index': 65, 'location': 'santa_monica', 'randtag': '3'}
 
-Besides explicitly parsing a with a raw JSON response, |iterpoints|
-is also used by :class:`~aioinflux.iterutils.InfluxDBResult` and
-:class:`~aioinflux.iterutils.InfluxDBChunkedResult` when using ``iterable`` mode:
-
-.. code:: python
-
-    client.output = 'iterable'
-    # Returns InfluxDBResult object
-    r = client.query('SELECT * from h2o_quality LIMIT 10')
-    for i in r:
-        # do something
-
-    # Returns InfluxDBChunkedResult object
-    r = await client.query('SELECT * from h2o_quality', chunked=True)
-    async for i in r:
-        # do something
-
-    # Returns InfluxDBChunkedResult object
-    r = await client.query('SELECT * from h2o_quality', chunked=True)
-    async for chunk in r.iterchunks():
-        # do something with JSON chunk
 
 Query patterns
 ^^^^^^^^^^^^^^

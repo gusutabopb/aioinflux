@@ -46,7 +46,7 @@ def df_client():
 
 @pytest.fixture(scope='module')
 async def iter_client():
-    async with InfluxDBClient(db='iter_client_test', mode='async', output='iterable') as client:
+    async with InfluxDBClient(db='iter_client_test', mode='async') as client:
         await client.create_database()
         await client.write([p for p in utils.cpu_load_generator(100)])
         yield client

@@ -4,17 +4,18 @@ import logging
 import re
 import warnings
 from functools import wraps, partialmethod as pm
-from typing import (Union, AnyStr, Mapping, Iterable,
-                    Optional, Callable, AsyncGenerator)
+from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
 
 import aiohttp
 
 from . import serialization
 from .compat import pd, no_pandas_warning
-from .iterutils import InfluxDBResult, InfluxDBChunkedResult
 
-PointType = Union[AnyStr, Mapping] if pd is None else Union[AnyStr, Mapping, pd.DataFrame]
-ResultType = Union[AsyncGenerator, dict, bytes, InfluxDBResult, InfluxDBChunkedResult]
+if not pd:
+    PointType = Union[AnyStr, Mapping]
+else:
+    PointType = Union[AnyStr, Mapping, pd.DataFrame]
+ResultType = Union[AsyncGenerator, dict, bytes]
 
 # Aioinflux uses logging mainly for debugging purposes.
 # Please attach your own handlers if you need logging.
@@ -96,10 +97,6 @@ class InfluxDBClient:
              Returns parsed JSON as received from InfluxDB.
            - ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
              No error checking is performed. Useful for response caching.
-           - ``iterable``: Wraps the JSON response in a
-             :class:`~aioinflux.iterutils.InfluxDBResult` or
-             :class:`~aioinflux.iterutils.InfluxDBChunkedResult`,
-             which can be used for easier iteration over retrieved data points.
            - ``dataframe``: Parses results into :py:class`pandas.DataFrame`.
              Not compatible with chunked responses.
 
@@ -257,7 +254,6 @@ class InfluxDBClient:
         chunked: bool = False,
         chunk_size: Optional[int] = None,
         db: Optional[str] = None,
-        parser: Optional[Callable] = None,
         **kwargs,
     ) -> ResultType:
         """Sends a query to InfluxDB.
@@ -318,8 +314,6 @@ class InfluxDBClient:
             g = _chunked_generator(url, data)
             if self.output in ('bytes', 'json'):
                 return g
-            elif self.output == 'iterable':
-                return InfluxDBChunkedResult(g, parser=parser, query=query)
             elif self.output == 'dataframe':
                 raise ValueError("Chunked queries are not support with 'dataframe' output")
 
@@ -335,8 +329,6 @@ class InfluxDBClient:
             self._check_error(output)
             if self.output == 'json':
                 return output
-            elif self.output == 'iterable':
-                return InfluxDBResult(output, parser=parser, query=query)
             elif self.output == 'dataframe':
                 return serialization.dataframe.parse(output)
 
