@@ -125,7 +125,7 @@ def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
 def lineprotocol(
         cls=None,
         *,
-        schema: Optional[Mapping[str, TypeVar]] = None,
+        schema: Optional[Mapping[str, type]] = None,
         rm_none: bool = False,
         extra_tags: Optional[Mapping[str, str]] = None,
         placeholder: bool = False
