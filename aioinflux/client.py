@@ -110,12 +110,14 @@ class InfluxDBClient:
         :param loop: Asyncio event loop.
         """
         self._loop = asyncio.get_event_loop() if loop is None else loop
-        self._session = aiohttp.ClientSession(
-            loop=self._loop,
-            auth=aiohttp.BasicAuth(username, password) if username and password else None,
-            connector=aiohttp.UnixConnector(path=unix_socket,
-                                            loop=self._loop) if unix_socket else None,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            self._session = aiohttp.ClientSession(
+                loop=self._loop,
+                auth=aiohttp.BasicAuth(username, password) if username and password else None,
+                connector=aiohttp.UnixConnector(path=unix_socket,
+                                                loop=self._loop) if unix_socket else None,
+            )
         self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
         self.host = host
         self.port = port
