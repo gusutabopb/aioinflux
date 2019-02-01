@@ -214,7 +214,7 @@ Writing user-defined class objects
 
 Aioinflux can add write any arbitrary user-defined class to InfluxDB through the use of the
 |lineprotocol| decorator. This decorator monkey-patches an
-existing class and adds a ``to_lineprotocol`` method, which is used internally by InfluxDB to serialize
+existing class and adds a ``to_lineprotocol`` method, which is used internally by Aioinflux to serialize
 the class data into a InfluxDB-compatible format. In order to generate ``to_lineprotocol``, a typed schema
 must be defined using `type hints`_ in the form of type annotations or a schema dictionary.
 
@@ -429,7 +429,7 @@ When using, |query| data can return data in one of the following formats:
 1) ``json``: Default. Returns a dictionary representation of the JSON response received from InfluxDB.
 2) ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
    The contents of the returns JSON blob are not checked for errors.
-3) ``dataframe``: Parses the result into a Pandas dataframe or a dictionary of dataframes.
+3) ``dataframe``: Parses the result into a Pandas dataframe(s).
    See :ref:`Retrieving DataFrames` for details.
 
 
@@ -500,7 +500,8 @@ Aioinflux supports InfluxDB chunked queries. Passing ``chunked=True`` when calli
 |query|, returns an :py:class:`~collections.abc.AsyncGenerator` object,
 which can asynchronously iterated.
 Using chunked requests allows response processing to be partially done before
-the full response is retrieved, reducing overall query time.
+the full response is retrieved, reducing overall query time
+(at least in theory - your mileage may vary).
 
 .. code:: python
 
