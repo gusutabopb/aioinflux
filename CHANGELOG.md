@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.1] - 2019-02-01
+
+This is version is backwards compatible with v0.6.0
+
+### Fixed
+- Type annotation error in Python 3.6 (febfe47)
+- Suppress `The object should be created from async function` warning from aiohttp 3.5 (da950e9) 
+
+
 ## [0.6.0] - 2019-02-01
 
 ### Added
