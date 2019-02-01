@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.0] - 2019-02-01
+
+### Added
+- Support serializing NaN integers in pandas 0.24+ 
+  (See [blog post](https://pandas-dev.github.io/pandas-blog/pandas-extension-arrays.html)) (1c55217)
+- Support for using `namedtuple` with `iterpoints` (bd93c53)
+
+### Changed
+- **[BREAKING]** Changed signature of `parser` argument of `iterpoints`  
+  from `(x, meta)` to `(*x, meta)` (bd93c53)
+
+### Removed
+- **[BREAKING]** Removed iterable mode and `InfluxDBResult` / `InfluxDBChunkedResult`.
+  Use `iterpoints` instead. (592c5ed)
+- Deprecated `set_query_pattern` (1d36b07)
+
+### Docs
+- Various improvements (8c6cbd3, ce46596, b7db169, ba3edae)
+
+
 ## [0.5.1] - 2019-01-21
 
 This is version is backwards compatible with v0.5.0
