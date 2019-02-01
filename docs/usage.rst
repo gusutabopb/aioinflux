@@ -599,6 +599,9 @@ dictionary containing all or a subset of the following:
 Query patterns
 ^^^^^^^^^^^^^^
 
+.. deprecated:: 0.6.0
+   Define query patterns as functions in your own code instead
+
 Aioinflux provides a wrapping mechanism around |query| in
 order to provide convenient access to commonly used query patterns.
 

@@ -374,6 +374,10 @@ class InfluxDBClient:
         :param name: Name of the query pattern class method. Must be a valid Python identifier.
         :param qp: Query pattern string
         """
+        warnings.warn("'set_query_pattern' is deprecated and "
+                      "will be removed in a future version. "
+                      "Define query patterns as functions in your own code instead.",
+                      DeprecationWarning, stacklevel=2)
         restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'parser')
         if any(kw in restricted_kwargs for kw in re.findall(r'{(\w+)}', qp)):
             warnings.warn(f'Ignoring invalid query pattern: {qp}')
