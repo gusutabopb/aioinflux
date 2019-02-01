@@ -546,18 +546,24 @@ provides the |iterpoints| function, which returns a generator object:
         for point in iterpoints(chunk):
             # do something
 
+
+Using custom parsers
+""""""""""""""""""""
+
 By default, the generator returned by |iterpoints|
 yields a plain list of values without doing any expensive parsing.
 However, in case a specific format is needed, an optional ``parser`` argument can be passed.
-``parser`` is a function that takes the raw value list for each data point and an additional
-metadata dictionary containing all or a subset of the following:
+``parser`` is a function/callable that takes data point values
+and, optionally, a ``meta`` parameter containing which takes a
+dictionary containing all or a subset of the following:
 ``{'columns', 'name', 'tags', 'statement_id'}``.
 
+- Example using a regular function and ``meta``
 
 .. code:: python
 
     r = await client.query('SELECT * from h2o_quality LIMIT 5')
-    for i in iterpoints(r, lambda x, meta: dict(zip(meta['columns'], x))):
+    for i in iterpoints(r, lambda *x, meta: dict(zip(meta['columns'], x))):
         print(i)
 
 .. code:: text
@@ -567,6 +573,26 @@ metadata dictionary containing all or a subset of the following:
     {'time': 1439856360000000000, 'index': 11, 'location': 'coyote_creek', 'randtag': '3'}
     {'time': 1439856360000000000, 'index': 56, 'location': 'santa_monica', 'randtag': '2'}
     {'time': 1439856720000000000, 'index': 65, 'location': 'santa_monica', 'randtag': '3'}
+
+
+- Example using a :py:func:`~collections.namedtuple`
+
+.. code:: python
+
+    from collections import namedtuple
+    nt = namedtuple('MyPoint', ['time', 'index', 'location', 'randtag'])
+
+    r = await client.query('SELECT * from h2o_quality LIMIT 5')
+    for i in iterpoints(r, parser=nt):
+        print(i)
+
+.. code:: text
+
+    MyPoint(time=1439856000000000000, index=41, location='coyote_creek', randtag='1')
+    MyPoint(time=1439856000000000000, index=99, location='santa_monica', randtag='2')
+    MyPoint(time=1439856360000000000, index=11, location='coyote_creek', randtag='3')
+    MyPoint(time=1439856360000000000, index=56, location='santa_monica', randtag='2')
+    MyPoint(time=1439856720000000000, index=65, location='santa_monica', randtag='3')
 
 
 Query patterns
