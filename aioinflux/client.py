@@ -97,8 +97,6 @@ class InfluxDBClient:
 
            - ``json``: Default format.
              Returns parsed JSON as received from InfluxDB.
-           - ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
-             No error checking is performed. Useful for response caching.
            - ``dataframe``: Parses results into :py:class`pandas.DataFrame`.
              Not compatible with chunked responses.
 
@@ -169,7 +167,7 @@ class InfluxDBClient:
     def output(self, output):
         if pd is None and output == 'dataframe':
             raise ValueError(no_pandas_warning)
-        if output not in ('json', 'bytes', 'iterable', 'dataframe'):
+        if output not in ('json', 'dataframe'):
             raise ValueError('Invalid output format')
         self._output = output
 
@@ -311,9 +309,6 @@ class InfluxDBClient:
                 # The number 16 is arbitrary (may be too large/small).
                 resp.content._high_water *= 16
                 async for chunk in resp.content:
-                    if self.output == 'bytes':
-                        yield chunk
-                        continue
                     chunk = json.loads(chunk)
                     self._check_error(chunk)
                     yield chunk
@@ -343,7 +338,7 @@ class InfluxDBClient:
             if self.mode != 'async':
                 raise ValueError("Can't use 'chunked' with non-async mode")
             g = _chunked_generator(url, data)
-            if self.output in ('bytes', 'json'):
+            if self.output == 'json':
                 return g
             elif self.output == 'dataframe':
                 raise ValueError("Chunked queries are not support with 'dataframe' output")
@@ -352,10 +347,6 @@ class InfluxDBClient:
             logger.debug(resp)
             output = await resp.read()
             logger.debug(output)
-
-            if self.output == 'bytes':
-                return output
-
             output = json.loads(output.decode())
             self._check_error(output)
             if self.output == 'json':

@@ -427,9 +427,7 @@ Output formats
 When using, |query| data can return data in one of the following formats:
 
 1) ``json``: Default. Returns a dictionary representation of the JSON response received from InfluxDB.
-2) ``bytes``: Returns raw, non-parsed JSON binary blob as received from InfluxDB.
-   The contents of the returns JSON blob are not checked for errors.
-3) ``dataframe``: Parses the result into a Pandas dataframe(s).
+2) ``dataframe``: Parses the result into a Pandas dataframe(s).
    See :ref:`Retrieving DataFrames` for details.
 
 
