@@ -122,12 +122,16 @@ class InfluxDBClient:
                                                 loop=self._loop) if unix_socket else None,
                 timeout=timeout,
             )
-        self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
+        self.ssl = ssl
         self.host = host
         self.port = port
         self.mode = mode
         self.output = output
         self.db = database or db
+
+    @property
+    def url(self):
+        return f'{"https" if self.ssl else "http"}://{self.host}:{self.port}/{{endpoint}}'
 
     @property
     def mode(self):
@@ -194,7 +198,7 @@ class InfluxDBClient:
         """Pings InfluxDB.
          Returns a dictionary containing the headers of the response from ``influxd``.
          """
-        async with self._session.get(self._url.format(endpoint='ping')) as resp:
+        async with self._session.get(self.url.format(endpoint='ping')) as resp:
             logger.debug(f'{resp.status}: {resp.reason}')
             return dict(resp.headers.items())
 
@@ -245,7 +249,7 @@ class InfluxDBClient:
         params = {'db': db or self.db}
         if rp:
             params['rp'] = rp
-        url = self._url.format(endpoint='write')
+        url = self.url.format(endpoint='write')
         async with self._session.post(url, params=params, data=data) as resp:
             if resp.status == 204:
                 return True
@@ -313,7 +317,7 @@ class InfluxDBClient:
         if chunked and chunk_size:
             data['chunk_size'] = chunk_size
 
-        url = self._url.format(endpoint='query')
+        url = self.url.format(endpoint='query')
         if chunked:
             if self.mode != 'async':
                 raise ValueError("Can't use 'chunked' with non-async mode")
