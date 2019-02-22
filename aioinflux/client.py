@@ -7,7 +7,6 @@ from functools import wraps, partialmethod as pm
 from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
 
 import aiohttp
-from aiohttp.client import ClientTimeout, DEFAULT_TIMEOUT
 
 from . import serialization
 from .compat import pd, no_pandas_warning
@@ -59,14 +58,15 @@ class InfluxDBClient:
         mode: str = 'async',
         output: str = 'json',
         db: Optional[str] = None,
-        *,
+        database: Optional[str] = None,
         ssl: bool = False,
+        *,
         unix_socket: Optional[str] = None,
         username: Optional[str] = None,
         password: Optional[str] = None,
-        database: Optional[str] = None,
+        timeout: Optional[Union[aiohttp.ClientTimeout, float]] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
-        timeout: ClientTimeout = DEFAULT_TIMEOUT,
+        **kwargs
     ):
         """
         :class:`~aioinflux.client.InfluxDBClient`  holds information necessary
@@ -107,27 +107,41 @@ class InfluxDBClient:
         :param unix_socket: Path to the InfluxDB Unix domain socket.
         :param username: Username to use to connect to InfluxDB.
         :param password: User password.
+        :param timeout: Timeout in seconds or :class:`aiohttp.ClientTimeout` object
         :param database: Default database to be used by the client.
             This field is for argument consistency with the official InfluxDB Python client.
         :param loop: Asyncio event loop.
-        :param timeout: Aiohttp client timeout.
+        :param kwargs: Additional kwargs for :class:`aiohttp.ClientSession`
         """
-        self._loop = asyncio.get_event_loop() if loop is None else loop
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            self._session = aiohttp.ClientSession(
-                loop=self._loop,
-                auth=aiohttp.BasicAuth(username, password) if username and password else None,
-                connector=aiohttp.UnixConnector(path=unix_socket,
-                                                loop=self._loop) if unix_socket else None,
-                timeout=timeout,
-            )
+        self._loop = loop or asyncio.get_event_loop()
+        self._session = None
         self.ssl = ssl
         self.host = host
         self.port = port
         self.mode = mode
         self.output = output
         self.db = database or db
+
+        # ClientSession configuration
+        if username:
+            kwargs.update(auth=aiohttp.BasicAuth(username, password))
+        if unix_socket:
+            kwargs.update(connector=aiohttp.UnixConnector(unix_socket, loop=self._loop))
+        if timeout:
+            if isinstance(timeout, aiohttp.ClientTimeout):
+                kwargs.update(timeout=timeout)
+            else:
+                kwargs.update(timeout=aiohttp.ClientTimeout(total=timeout))
+        self.opts = kwargs
+
+    async def create_session(self, **kwargs):
+        """Creates an :class:`aiohttp.ClientSession`
+
+        Override this or call it with ``kwargs`` to used other aiohttp
+        functionality not covered by :class:`~.InfluxDBClient.__init__`
+        """
+        self.opts.update(kwargs)
+        self._session = aiohttp.ClientSession(**self.opts, loop=self._loop)
 
     @property
     def url(self):
@@ -198,6 +212,8 @@ class InfluxDBClient:
         """Pings InfluxDB.
          Returns a dictionary containing the headers of the response from ``influxd``.
          """
+        if not self._session:
+            await self.create_session()
         async with self._session.get(self.url.format(endpoint='ping')) as resp:
             logger.debug(f'{resp.status}: {resp.reason}')
             return dict(resp.headers.items())
@@ -241,6 +257,8 @@ class InfluxDBClient:
         :param extra_tags: Additional tags to be added to all points passed.
         :return: Returns ``True`` if insert is successful. Raises :py:class:`ValueError` otherwise.
         """
+        if not self._session:
+            await self.create_session()
         if precision is not None:
             # FIXME: Implement. Related issue: aioinflux/pull/13
             raise NotImplementedError("'precision' parameter is not supported yet")
@@ -299,6 +317,9 @@ class InfluxDBClient:
                     chunk = json.loads(chunk)
                     self._check_error(chunk)
                     yield chunk
+
+        if not self._session:
+            await self.create_session()
 
         try:
             if args:
