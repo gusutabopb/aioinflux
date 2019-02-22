@@ -43,7 +43,7 @@ def test_decorator(sync_client):
     assert p
     assert hasattr(p, 'to_lineprotocol')
     assert sync_client.write(p)
-    print(sync_client.select_all('dp'))
+    print(sync_client.query('SELECT * FROM dp'))
     print(sync_client.query("SHOW FIELD KEYS FROM dp"))
 
 

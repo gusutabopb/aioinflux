@@ -32,14 +32,14 @@ def test_write_dataframe_with_nan(df_client):
 @utils.requires_pandas
 def test_select_into(df_client):
     df_client.query("SELECT * INTO m2_copy from m2")
-    df = df_client.select_all(measurement='m2_copy')
+    df = df_client.query('SELECT * from m2_copy')
     assert df.shape == (50, 8)
     logger.info(f'\n{df.head()}')
 
 
 @utils.requires_pandas
 def test_read_dataframe(df_client):
-    df = df_client.select_all(measurement='m1')
+    df = df_client.query('SELECT * from m1')
     logger.info(f'\n{df.head()}')
     assert df.shape == (50, 8)
 
@@ -74,17 +74,6 @@ def test_read_dataframe_show_databases(df_client):
     logger.info(f'\n{df.head()}')
 
 
-# noinspection PyUnresolvedReferences
-@utils.requires_pandas
-def test_mixed_args_kwargs_query_pattern(df_client):
-    df1 = df_client.show_tag_values_from('m1', key='tag')
-    df2 = df_client.show_tag_values_from('m1', 'tag')
-    df3 = df_client.show_tag_values_from('tag', measurement='m1')
-    assert (df1 == df2).all().all()
-    assert (df1 == df3).all().all()
-    assert (df2 == df3).all().all()
-
-
 @utils.requires_pandas
 @pytest.mark.asyncio
 async def test_change_db(async_client):
@@ -117,7 +106,7 @@ def test_invalid_data_write_dataframe(sync_client):
 @utils.requires_pandas
 def test_chunked_dataframe(df_client):
     with pytest.raises(ValueError) as e:
-        _ = df_client.select_all('foo', chunked=True)
+        _ = df_client.query('SELECT * FROM foo', chunked=True)
     logger.error(e)
 
 
@@ -126,6 +115,6 @@ def test_chunked_dataframe(df_client):
 async def test_async_chunked_dataframe(df_client):
     df_client.mode = 'async'
     with pytest.raises(ValueError) as e:
-        _ = await df_client.select_all('foo', chunked=True)
+        _ = await df_client.query('SELECT * FROM foo', chunked=True)
     logger.error(e)
     df_client.mode = 'blocking'

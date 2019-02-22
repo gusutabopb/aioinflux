@@ -48,7 +48,7 @@ def test_special_values_write(sync_client):
 
 
 def test_simple_query(sync_client):
-    resp = sync_client.select_all(measurement='test_measurement')
+    resp = sync_client.query('SELECT * FROM test_measurement')
     assert len(resp['results'][0]['series'][0]['values']) == 10
 
 
@@ -64,7 +64,7 @@ def test_write_with_custom_measurement(sync_client):
     with pytest.raises(ValueError):
         assert sync_client.write(points)
     assert sync_client.write(points, measurement='another_measurement')
-    resp = sync_client.select_all(measurement='another_measurement')
+    resp = sync_client.query('SELECT * FROM another_measurement')
     assert len(resp['results'][0]['series'][0]['values']) == 5
 
 
@@ -74,7 +74,7 @@ def test_write_without_tags(sync_client):
         _ = p.pop('tags')
     logger.info(points)
     assert sync_client.write(points, mytag='foo')
-    resp = sync_client.select_all(measurement='test_measurement')
+    resp = sync_client.query('SELECT * FROM test_measurement')
     assert len(resp['results'][0]['series'][0]['values']) == 7
 
 
@@ -85,7 +85,7 @@ def test_write_without_timestamp(sync_client):
         _ = p.pop('measurement')
     logger.info(points)
     assert sync_client.write(points, measurement='yet_another_measurement')
-    resp = sync_client.select_all(measurement='yet_another_measurement')
+    resp = sync_client.query('SELECT * FROM yet_another_measurement')
     # Points with the same tag/timestamp set are overwritten
     assert len(resp['results'][0]['series'][0]['values']) == 1
 
@@ -95,7 +95,7 @@ def test_write_non_string_identifier_and_tags(sync_client):
                  fields={3: 4})
     with pytest.warns(UserWarning):
         assert sync_client.write(point, measurement='my_measurement')
-    resp = sync_client.select_all(measurement='my_measurement')
+    resp = sync_client.query('SELECT * FROM my_measurement')
     logger.info(resp)
     assert len(resp['results'][0]['series'][0]['values']) == 1
 
@@ -105,7 +105,7 @@ def test_write_to_non_default_db(sync_client):
     sync_client.create_database(db='temp_db')
     assert sync_client.db != 'temp_db'
     assert sync_client.write(points, db='temp_db')
-    resp = sync_client.select_all(db='temp_db', measurement='test_measurement')
+    resp = sync_client.query('SELECT * FROM temp_db..test_measurement')
     logger.info(resp)
     assert len(resp['results'][0]['series'][0]['values']) == 5
     sync_client.drop_database(db='temp_db')
@@ -123,10 +123,6 @@ def test_write_to_non_default_rp(sync_client):
 
 def test_repr(sync_client):
     logger.info(sync_client)
-
-
-def test_query_pattern_keyword(sync_client):
-    assert sync_client.select_all("order")
 
 
 ###############
@@ -177,24 +173,6 @@ def test_invalid_output_format(sync_client):
 def test_invalid_query(sync_client):
     with pytest.raises(InfluxDBError) as e:
         sync_client.query('NOT A VALID QUERY')
-    logger.error(e)
-
-
-def test_invalid_query_pattern(sync_client):
-    with pytest.warns(UserWarning) as e:
-        sync_client.set_query_pattern('my_query', 'SELECT {q} from {epoch}')
-    logger.warning(e)
-
-
-def test_invalid_query_pattern_name(sync_client):
-    with pytest.warns(UserWarning) as e:
-        sync_client.set_query_pattern(r'wr\ite', 'SELECT {foo} from {bar}')
-    logger.warning(e)
-
-
-def test_missing_kwargs(sync_client):
-    with pytest.raises(ValueError) as e:
-        sync_client.select_all()
     logger.error(e)
 
 

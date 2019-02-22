@@ -3,8 +3,8 @@ import json
 import logging
 import re
 import warnings
-from functools import wraps, partialmethod as pm
 from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
+from functools import wraps
 
 import aiohttp
 
@@ -374,46 +374,57 @@ class InfluxDBClient:
                     msg = '{d[error]} (statement {d[statement_id]})'
                     raise InfluxDBError(msg.format(d=statement))
 
-    # Built-in query patterns
-    _user_qp = set()
-    create_database = pm(query, 'CREATE DATABASE "{db}"')
-    drop_database = pm(query, 'DROP DATABASE "{db}"')
-    drop_measurement = pm(query, 'DROP MEASUREMENT "{measurement}"')
-    select_all = pm(query, 'SELECT * FROM "{measurement}"')
-    show_databases = pm(query, "SHOW DATABASES")
-    show_continuous_queries = pm(query, "SHOW CONTINUOUS QUERIES")
-    show_measurements = pm(query, "SHOW MEASUREMENTS")
-    show_retention_policies = pm(query, "SHOW RETENTION POLICIES")
-    show_users = pm(query, "SHOW USERS")
-    show_series = pm(query, 'SHOW SERIES')
-    show_series_from = pm(query, 'SHOW SERIES FROM "{measurement}"')
-    show_tag_keys = pm(query, "SHOW TAG KEYS")
-    show_tag_values = pm(query, 'SHOW TAG VALUES WITH key = "{key}"')
-    show_tag_keys_from = pm(query, 'SHOW TAG KEYS FROM "{measurement}"')
-    show_tag_values_from = pm(query, 'SHOW TAG VALUES FROM "{measurement}" WITH key = "{key}"')
+    # InfluxQL - Data management
+    # --------------------------
 
-    @classmethod
-    def set_query_pattern(cls, name: str, qp: str) -> None:
-        """Defines custom methods to provide quick access to commonly used query patterns.
-        Query patterns are plain strings, with optional the named placed holders.
-        Named placed holders are processed as keyword arguments in ``str.format``.
-        Positional arguments are also supported.
+    def create_database(self, db=None):
+        db = db or self.db
+        return self.query(f'CREATE DATABASE "{db}"')
 
-        Sample query pattern:
-        ``"SELECT mean(load) FROM cpu_stats WHERE host = '{host}' AND time > now() - {days}d"``
+    def drop_database(self, db=None):
+        db = db or self.db
+        return self.query(f'DROP DATABASE "{db}"')
 
-        :param name: Name of the query pattern class method. Must be a valid Python identifier.
-        :param qp: Query pattern string
-        """
-        warnings.warn("'set_query_pattern' is deprecated and "
-                      "will be removed in a future version. "
-                      "Define query patterns as functions in your own code instead.",
-                      DeprecationWarning, stacklevel=2)
-        restricted_kwargs = ('q', 'epoch', 'chunked' 'chunk_size', 'parser')
-        if any(kw in restricted_kwargs for kw in re.findall(r'{(\w+)}', qp)):
-            warnings.warn(f'Ignoring invalid query pattern: {qp}')
-        elif not name.isidentifier() or (name in dir(cls) and name not in cls._user_qp):
-            warnings.warn(f'Ignoring invalid query pattern name: {name}')
-        else:
-            cls._user_qp.add(name)
-            setattr(cls, name, pm(cls.query, qp))
+    def drop_measurement(self, measurement):
+        return self.query(f'DROP MEASUREMENT "{measurement}"')
+
+    # InfluxQL - Schema exploration
+    # -----------------------------
+
+    def show_databases(self):
+        return self.query("SHOW DATABASES")
+
+    def show_measurements(self):
+        return self.query("SHOW MEASUREMENTS")
+
+    def show_users(self):
+        return self.query("SHOW USERS")
+
+    def show_series(self, measurement=None):
+        if measurement:
+            return self.query(f"SHOW SERIES FROM {measurement}")
+        return self.query("SHOW SERIES")
+
+    def show_tag_keys(self, measurement=None):
+        if measurement:
+            return self.query(f"SHOW TAG KEYS FROM {measurement}")
+        return self.query("SHOW TAG KEYS")
+
+    def show_field_keys(self, measurement=None):
+        if measurement:
+            return self.query(f"SHOW FIELD KEYS FROM {measurement}")
+        return self.query("SHOW FIELD KEYS")
+
+    def show_tag_values(self, key, measurement=None):
+        if measurement:
+            return self.query(f'SHOW TAG VALUES FROM "{measurement}" WITH key = "{key}"')
+        return self.query(f'SHOW TAG VALUES WITH key = "{key}"')
+
+    def show_retention_policies(self):
+        return self.query("SHOW RETENTION POLICIES")
+
+    # InfluxQL - Other
+    # ----------------
+
+    def show_continuous_queries(self):
+        return self.query("SHOW CONTINUOUS QUERIES")

@@ -15,8 +15,7 @@ async def test_iterpoints_with_parser(iter_client):
 
 @pytest.mark.asyncio
 async def test_aiter_point(iter_client):
-    resp = await iter_client.select_all(measurement='cpu_load',
-                                        chunked=True, chunk_size=10)
+    resp = await iter_client.query('SELECT * from cpu_load', chunked=True, chunk_size=10)
     points = []
     async for chunk in resp:
         for point in iterpoints(chunk):
@@ -29,7 +28,7 @@ async def test_iter_point_namedtuple(iter_client):
     from collections import namedtuple
     nt = namedtuple('cpu_load', ['time', 'direction', 'host', 'region', 'value'])
 
-    resp = await iter_client.select_all(measurement='cpu_load')
+    resp = await iter_client.query('SELECT * from cpu_load')
     points = []
     for point in iterpoints(resp, parser=nt):
         points.append(point)
