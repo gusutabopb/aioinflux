@@ -7,6 +7,7 @@ from functools import wraps, partialmethod as pm
 from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
 
 import aiohttp
+from aiohttp.client import ClientTimeout, DEFAULT_TIMEOUT
 
 from . import serialization
 from .compat import pd, no_pandas_warning
@@ -65,6 +66,7 @@ class InfluxDBClient:
         password: Optional[str] = None,
         database: Optional[str] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        timeout: ClientTimeout = DEFAULT_TIMEOUT,
     ):
         """
         :class:`~aioinflux.client.InfluxDBClient`  holds information necessary
@@ -108,6 +110,7 @@ class InfluxDBClient:
         :param database: Default database to be used by the client.
             This field is for argument consistency with the official InfluxDB Python client.
         :param loop: Asyncio event loop.
+        :param timeout: Aiohttp client timeout.
         """
         self._loop = asyncio.get_event_loop() if loop is None else loop
         with warnings.catch_warnings():
@@ -117,6 +120,7 @@ class InfluxDBClient:
                 auth=aiohttp.BasicAuth(username, password) if username and password else None,
                 connector=aiohttp.UnixConnector(path=unix_socket,
                                                 loop=self._loop) if unix_socket else None,
+                timeout=timeout,
             )
         self._url = f'{"https" if ssl else "http"}://{host}:{port}/{{endpoint}}'
         self.host = host
