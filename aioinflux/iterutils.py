@@ -1,9 +1,9 @@
 import inspect
 
-from typing import Optional, Iterator, Callable
+from typing import Optional, Iterator, Callable, Any
 
 
-def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Iterator:
+def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Iterator[Any]:
     """Iterates a response JSON yielding data point by point.
 
     Can be used with both regular and chunked responses.

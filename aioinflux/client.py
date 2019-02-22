@@ -3,8 +3,8 @@ import json
 import logging
 import re
 import warnings
-from typing import Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
 from functools import wraps
+from typing import TypeVar, Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
 
 import aiohttp
 
@@ -12,10 +12,11 @@ from . import serialization
 from .compat import pd, no_pandas_warning
 
 if not pd:
-    PointType = Union[AnyStr, Mapping]
+    PointType = TypeVar('PointType', Mapping, dict, bytes, pd.DataFrame)
+    ResultType = TypeVar('ResultType', dict, bytes, pd.DataFrame)
 else:
-    PointType = Union[AnyStr, Mapping, pd.DataFrame]
-ResultType = Union[AsyncGenerator, dict, bytes]
+    PointType = TypeVar('PointType', Mapping, dict, bytes)
+    ResultType = TypeVar('ResultType', dict, bytes)
 
 # Aioinflux uses logging mainly for debugging purposes.
 # Please attach your own handlers if you need logging.
@@ -281,7 +282,7 @@ class InfluxDBClient:
         chunk_size: Optional[int] = None,
         db: Optional[str] = None,
         **kwargs,
-    ) -> ResultType:
+    ) -> Union[AsyncGenerator[ResultType, None], ResultType]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
         https://docs.influxdata.com/influxdb/latest/query_language/
