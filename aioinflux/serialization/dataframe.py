@@ -86,6 +86,8 @@ def _replace(df):
 def serialize(df, measurement, tag_columns=None, **extra_tags) -> bytes:
     """Converts a Pandas DataFrame into line protocol format"""
     # Pre-processing
+    if measurement is None:
+        raise ValueError("Missing 'measurement'")
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError('DataFrame index is not DatetimeIndex')
     tag_columns = set(tag_columns or [])
