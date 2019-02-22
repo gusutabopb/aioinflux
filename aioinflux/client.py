@@ -78,9 +78,9 @@ class InfluxDBClient:
         wrapper object or be parsed to Pandas DataFrames.
         The three main public methods are the three endpoints of the InfluxDB API, namely:
 
-        1. :meth:`~aioinflux.client.InfluxDBClient.ping`
-        2. :meth:`~aioinflux.client.InfluxDBClient.write`
-        3. :meth:`~aioinflux.client.InfluxDBClient.query`
+        1. :meth:`~.InfluxDBClient.ping`
+        2. :meth:`~.InfluxDBClient.write`
+        3. :meth:`~.InfluxDBClient.query`
 
         See each of the above methods documentation for further usage details.
 
@@ -136,7 +136,7 @@ class InfluxDBClient:
     async def create_session(self, **kwargs):
         """Creates an :class:`aiohttp.ClientSession`
 
-        Override this or call it with ``kwargs`` to used other aiohttp
+        Override this or call it with ``kwargs`` to use other :mod:`aiohttp`
         functionality not covered by :class:`~.InfluxDBClient.__init__`
         """
         self.opts.update(kwargs)
@@ -208,7 +208,8 @@ class InfluxDBClient:
 
     @runner
     async def ping(self) -> dict:
-        """Pings InfluxDB.
+        """Pings InfluxDB
+
          Returns a dictionary containing the headers of the response from ``influxd``.
          """
         if not self._session:
@@ -300,7 +301,7 @@ class InfluxDBClient:
         :param kwargs: Keyword arguments for query patterns
         :param parser: Optional parser function for 'iterable' mode
         :return: Response in the format specified by the combination of
-           ``InfluxDBClient.output`` and ``chunked``
+           :attr:`.InfluxDBClient.output` and ``chunked``
         """
 
         # noinspection PyShadowingNames

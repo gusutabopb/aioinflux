@@ -331,8 +331,8 @@ User-defined class schema/type annotations
 """"""""""""""""""""""""""""""""""""""""""
 
 In Aioinflux, InfluxDB types (and derived types) are represented by :py:class:`~typing.TypeVar`
-defined in :mod:`~aioinflux.serialization.usertype`.
-All schema values (type annotations) MUST be one of those types.
+defined in :mod:`aioinflux.serialization.usertype` module.
+All schema types (type annotations) **must** be one of those types.
 The types available are based on the native types of InfluxDB
 (see the `InfluxDB docs <https://docs.influxdata.com/influxdb/v1.6/write_protocols/line_protocol_reference/#data-types>`__ for
 details), with some extra types to help the serialization to line protocol and/or allow more flexible usage
@@ -671,7 +671,7 @@ HTTPS/SSL
 Aioinflux/InfluxDB uses HTTP by default, but HTTPS can be used by passing ``ssl=True``
 when instantiating |client|.
 If you are acessing your your InfluxDB instance over the public internet, setting up HTTPS is
-`strongly recommended <https://docs.influxdata.com/influxdb/v1.6/administration/https_setup/>`__.
+`strongly recommended <https://docs.influxdata.com/influxdb/v1.7/administration/https_setup/>`__.
 
 
 .. code:: python
