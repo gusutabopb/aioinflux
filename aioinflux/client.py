@@ -11,7 +11,7 @@ import aiohttp
 from . import serialization
 from .compat import pd, no_pandas_warning
 
-if not pd:
+if pd:
     PointType = TypeVar('PointType', Mapping, dict, bytes, pd.DataFrame)
     ResultType = TypeVar('ResultType', dict, bytes, pd.DataFrame)
 else:
