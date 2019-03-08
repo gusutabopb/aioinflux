@@ -1,6 +1,6 @@
 aioinflux
 =========
-.. image:: https://img.shields.io/circleci/project/github/gusutabopb/aioinflux.svg
+.. image:: https://img.shields.io/circleci/project/github/gusutabopb/aioinflux/master.svg
    :target: https://circleci.com/gh/gusutabopb/aioinflux
    :alt: CI status
 
