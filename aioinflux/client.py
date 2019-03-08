@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import re
 import warnings
 from functools import wraps
@@ -17,10 +16,6 @@ if pd:
 else:
     PointType = TypeVar('PointType', Mapping, dict, bytes)
     ResultType = TypeVar('ResultType', dict, bytes)
-
-# Aioinflux uses logging mainly for debugging purposes.
-# Please attach your own handlers if you need logging.
-logger = logging.getLogger('aioinflux')
 
 
 def runner(coro):
@@ -215,7 +210,6 @@ class InfluxDBClient:
         if not self._session:
             await self.create_session()
         async with self._session.get(self.url.format(endpoint='ping')) as resp:
-            logger.debug(f'{resp.status}: {resp.reason}')
             return dict(resp.headers.items())
 
     @runner
@@ -263,7 +257,6 @@ class InfluxDBClient:
             # FIXME: Implement. Related issue: aioinflux/pull/13
             raise NotImplementedError("'precision' parameter is not supported yet")
         data = serialization.serialize(data, measurement, tag_columns, **extra_tags)
-        logger.debug(data)
         params = {'db': db or self.db}
         if rp:
             params['rp'] = rp
@@ -346,9 +339,7 @@ class InfluxDBClient:
                 raise ValueError("Chunked queries are not support with 'dataframe' output")
 
         async with self._session.post(url, data=data) as resp:
-            logger.debug(resp)
             output = await resp.read()
-            logger.debug(output)
             output = json.loads(output.decode())
             self._check_error(output)
             if self.output == 'json':
