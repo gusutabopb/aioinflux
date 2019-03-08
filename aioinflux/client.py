@@ -1,6 +1,5 @@
 import asyncio
 import json
-import re
 import warnings
 from functools import wraps
 from typing import TypeVar, Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
@@ -45,7 +44,6 @@ class InfluxDBWriteError(InfluxDBError):
                          f'{self.headers.get("X-Influxdb-Error", "")}')
 
 
-# noinspection PyAttributeOutsideInit
 class InfluxDBClient:
     def __init__(
         self,
@@ -109,6 +107,9 @@ class InfluxDBClient:
         """
         self._loop = loop or asyncio.get_event_loop()
         self._session = None
+        self._mode = None
+        self._output = None
+        self._db = None
         self.ssl = ssl
         self.host = host
         self.port = port
@@ -229,11 +230,13 @@ class InfluxDBClient:
         1. A mapping (e.g. ``dict``) containing the keys:
            ``measurement``, ``time``, ``tags``, ``fields``
         2. A Pandas :class:`~pandas.DataFrame` with a :class:`~pandas.DatetimeIndex`
-        3. A user defined class decorated w/ :func:`~aioinflux.serialization.usertype.lineprotocol`
+        3. A user defined class decorated w/
+            :func:`~aioinflux.serialization.usertype.lineprotocol`
         4. A string (``str`` or ``bytes``) properly formatted in InfluxDB's line protocol
         5. An iterable of one of the above
 
-        Input data in formats 1-3 are parsed to the line protocol before being written to InfluxDB.
+        Input data in formats 1-3 are parsed to the line protocol before being
+        written to InfluxDB.
         See the `InfluxDB docs <https://docs.influxdata.com/influxdb/latest/
         write_protocols/line_protocol_reference/>`_ for more details.
 
@@ -245,11 +248,13 @@ class InfluxDBClient:
         :param precision: Sets the precision for the supplied Unix time values.
             Ignored if input timestamp data is of non-integer type.
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``
-        :param rp: Sets the target retention policy for the write. If unspecified,
-            data is written to the default retention policy.
-        :param tag_columns: Columns to be treated as tags (used when writing DataFrames only)
+        :param rp: Sets the target retention policy for the write.
+            If unspecified, data is written to the default retention policy.
+        :param tag_columns: Columns to be treated as tags
+            (used when writing DataFrames only)
         :param extra_tags: Additional tags to be added to all points passed.
-        :return: Returns ``True`` if insert is successful. Raises :py:class:`ValueError` otherwise.
+        :return: Returns ``True`` if insert is successful.
+            Raises :py:class:`ValueError` otherwise.
         """
         if not self._session:
             await self.create_session()
@@ -285,16 +290,15 @@ class InfluxDBClient:
         :param epoch: Precision level of response timestamps.
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
         :param chunked: If ``True``, makes InfluxDB return results in streamed batches
-            rather than as a single response. Returns an AsyncGenerator which yields responses
+            rather than as a single response.
+            Returns an AsyncGenerator which yields responses
             in the same format as non-chunked queries.
         :param chunk_size: Max number of points for each chunk. By default, InfluxDB chunks
             responses by series or by every 10,000 points, whichever occurs first.
-        :param parser: Optional parser function for 'iterable' mode
         :return: Response in the format specified by the combination of
            :attr:`.InfluxDBClient.output` and ``chunked``
         """
 
-        # noinspection PyShadowingNames
         async def _chunked_generator(url, data):
             async with self._session.post(url, data=data) as resp:
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
