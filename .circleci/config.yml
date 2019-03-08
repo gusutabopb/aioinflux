@@ -3,7 +3,7 @@ version: 2
 jobs:
   build: &build
     docker:
-      - image: circleci/python:3.7.0
+      - image: circleci/python:3.7.2
     steps:
       - checkout
       - run:
@@ -36,11 +36,11 @@ jobs:
   build-3.6:
     <<: *build
     docker:
-      - image: circleci/python:3.6.6
+      - image: circleci/python:3.6.8
   test-3.6:
     <<: *test
     docker:
-      - image: circleci/python:3.6.6
+      - image: circleci/python:3.6.8
       - image: influxdb:latest
 workflows:
   version: 2
