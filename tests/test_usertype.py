@@ -1,3 +1,4 @@
+# flake8: noqa
 import uuid
 import enum
 from datetime import datetime

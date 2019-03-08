@@ -64,7 +64,7 @@ def _validate_schema(schema, placeholder):
         raise SchemaError(f"Must have one or more field-type attributes {field_types}")
 
 
-def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):
+def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):  # noqa: C901
     """Factory of line protocol parsers"""
     _validate_schema(schema, placeholder)
     tags = []

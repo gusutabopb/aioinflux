@@ -17,6 +17,9 @@ test_requirements = [
     'pyyaml',
     'pytz',
     'flake8',
+    'pep8-naming',
+    'flake8-docstrings',
+    'flake8-rst-docstrings',
 ]
 
 if sys.version_info[:2] == (3, 6):
@@ -28,7 +31,7 @@ setup(name='aioinflux',
       long_description=long_description,
       author='Gustavo Bezerra',
       author_email='gusutabopb@gmail.com',
-      url='https://github.com/plugaai/aioinflux',
+      url='https://github.com/gusutabopb/aioinflux',
       packages=[
           'aioinflux',
           'aioinflux.serialization',
