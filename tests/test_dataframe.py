@@ -1,5 +1,6 @@
 import pytest
-from aioinflux import logger, testing_utils as utils
+import testing_utils as utils
+from testing_utils import logger
 from aioinflux.compat import pd, np
 
 if pd is not None:

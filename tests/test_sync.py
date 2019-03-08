@@ -1,6 +1,7 @@
 import pytest
-from aioinflux import (InfluxDBClient, InfluxDBError, InfluxDBWriteError,
-                       logger, testing_utils as utils)
+from aioinflux import InfluxDBClient, InfluxDBError, InfluxDBWriteError
+import testing_utils as utils
+from testing_utils import logger
 from aioinflux.compat import pd
 
 

@@ -1,5 +1,7 @@
 import pytest
-from aioinflux import logger, InfluxDBError, iterpoints, testing_utils as utils
+from aioinflux import InfluxDBError, iterpoints
+import testing_utils as utils
+from testing_utils import logger
 
 
 @pytest.mark.asyncio

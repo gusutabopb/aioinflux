@@ -1,5 +1,6 @@
 import pytest
-from aioinflux import logger, iterpoints
+from aioinflux import iterpoints
+from testing_utils import logger
 
 
 @pytest.mark.asyncio
