@@ -270,19 +270,17 @@ class InfluxDBClient:
     async def query(
         self,
         q: AnyStr,
-        *args,
+        *,
         epoch: str = 'ns',
         chunked: bool = False,
         chunk_size: Optional[int] = None,
         db: Optional[str] = None,
-        **kwargs,
     ) -> Union[AsyncGenerator[ResultType, None], ResultType]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
         https://docs.influxdata.com/influxdb/latest/query_language/
 
         :param q: Raw query string
-        :param args: Positional arguments for query patterns
         :param db: Database to be queried. Defaults to `self.db`.
         :param epoch: Precision level of response timestamps.
             Valid values: ``{'ns', 'u', 'µ', 'ms', 's', 'm', 'h'}``.
@@ -291,7 +289,6 @@ class InfluxDBClient:
             in the same format as non-chunked queries.
         :param chunk_size: Max number of points for each chunk. By default, InfluxDB chunks
             responses by series or by every 10,000 points, whichever occurs first.
-        :param kwargs: Keyword arguments for query patterns
         :param parser: Optional parser function for 'iterable' mode
         :return: Response in the format specified by the combination of
            :attr:`.InfluxDBClient.output` and ``chunked``
@@ -311,20 +308,11 @@ class InfluxDBClient:
         if not self._session:
             await self.create_session()
 
-        try:
-            if args:
-                fields = [i for i in re.findall(r'{(\w+)}', q) if i not in kwargs]
-                kwargs.update(dict(zip(fields, args)))
-            db = self.db if db is None else db
-            query = q.format(db=db, **kwargs)
-        except KeyError as e:
-            raise ValueError(f'Missing argument "{e.args[0]}" in {repr(q)}')
-
         # InfluxDB documentation is wrong regarding `/query` parameters
         # See https://github.com/influxdata/docs.influxdata.com/issues/1807
         if not isinstance(chunked, bool):
             raise ValueError("'chunked' must be a boolean")
-        data = dict(q=query, db=db, chunked=str(chunked).lower(), epoch=epoch)
+        data = dict(q=q, db=db, chunked=str(chunked).lower(), epoch=epoch)
         if chunked and chunk_size:
             data['chunk_size'] = chunk_size
 
