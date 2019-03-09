@@ -660,6 +660,17 @@ See |unix_connector|_ for details.
 .. _unix_connector: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.UnixConnector
 
 
+Custom timeouts
+^^^^^^^^^^^^^^^
+
+.. todo:: TODO
+
+Other ``aiohttp`` functionality
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. todo:: Explain how to customize :class:`aiohttp.ClientSession` creation
+
+
 HTTPS/SSL
 ^^^^^^^^^
 Aioinflux/InfluxDB uses HTTP by default, but HTTPS can be used by passing ``ssl=True``
