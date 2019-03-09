@@ -594,47 +594,6 @@ dictionary containing all or a subset of the following:
     MyPoint(time=1439856720000000000, index=65, location='santa_monica', randtag='3')
 
 
-Query patterns
-^^^^^^^^^^^^^^
-
-.. deprecated:: 0.6.0
-   Define query patterns as functions in your own code instead
-
-Aioinflux provides a wrapping mechanism around |query| in
-order to provide convenient access to commonly used query patterns.
-
-Query patterns are query strings containing optional named "replacement fields"
-surrounded by curly braces ``{}``, just as in |str_format|_.
-Replacement field values are defined by keyword arguments when calling the method
-associated with the query pattern. Differently from plain |str_format|, positional
-arguments are also supported and can be mixed with keyword arguments.
-
-Aioinflux built-in query patterns are defined here_.
-Users can also dynamically define additional query patterns by using
-the :meth:`~aioinflux.client.InfluxDBClient.set_query_pattern` helper method.
-User-defined query patterns have the disadvantage of not being shown for
-auto-completion in IDEs such as Pycharm.
-However, they do show up in dynamic environments such as Jupyter.
-If you have a query pattern that you think will used by many people and should be built-in,
-please submit a PR.
-
-Built-in query pattern examples:
-
-.. code:: python
-
-    client.create_database(db='foo')   # CREATE DATABASE {db}
-    client.drop_measurement('bar')     # DROP MEASUREMENT {measurement}'
-    client.show_users()                # SHOW USERS
-
-    # Positional and keyword arguments can be mixed
-    client.show_tag_values_from('bar', key='spam')  # SHOW TAG VALUES FROM {measurement} WITH key = "{key}"
-
-Please refer to InfluxDB documentation_ for further query-related information.
-
-.. _here: https://github.com/gusutabopb/aioinflux/blob/master/aioinflux/client.py#L344
-.. _documentation: https://docs.influxdata.com/influxdb/latest/query_language/
-.. |str_format| replace:: ``str_format()``
-.. _str_format: https://docs.python.org/3/library/string.html#formatstrings
 
 Other functionality
 -------------------
