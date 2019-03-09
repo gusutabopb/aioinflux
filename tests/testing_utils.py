@@ -5,12 +5,12 @@ import string
 import uuid
 from itertools import combinations, cycle, islice
 
-from aioinflux.compat import pd, np, no_pandas_warning
+from aioinflux.compat import *
 
 import pytest
 
 requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
-
+requires_redis = pytest.mark.skipif(aioredis is None, reason=no_redis_warning)
 logger = logging.getLogger('aioinflux')
 
 

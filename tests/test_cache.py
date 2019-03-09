@@ -1,7 +1,8 @@
 import pytest
-from testing_utils import logger
+from testing_utils import logger, requires_redis
 
 
+@requires_redis
 @pytest.mark.asyncio
 async def test_cache(cache_client):
     assert await cache_client.write('foo bar=1')
