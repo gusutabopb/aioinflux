@@ -10,6 +10,7 @@ import pytest
 
 import aioinflux
 from aioinflux import lineprotocol, SchemaError
+from testing_utils import logger
 
 
 class CpuLoad(enum.Enum):
@@ -44,8 +45,8 @@ def test_decorator(sync_client):
     assert p
     assert hasattr(p, 'to_lineprotocol')
     assert sync_client.write(p)
-    print(sync_client.query('SELECT * FROM dp'))
-    print(sync_client.query("SHOW FIELD KEYS FROM dp"))
+    logger.info(sync_client.query('SELECT * FROM dp'))
+    logger.info(sync_client.query("SHOW FIELD KEYS FROM dp"))
 
 
 def test_functional():
@@ -58,7 +59,7 @@ def test_functional():
     )
     MyPoint = lineprotocol(namedtuple('MyPoint', schema.keys()), schema=schema)
     p = MyPoint("a", 2, "b", False, 5)
-    print(p.to_lineprotocol())
+    logger.debug(p.to_lineprotocol())
     assert isinstance(p.to_lineprotocol(), bytes)
 
 
@@ -72,7 +73,7 @@ def test_datestr():
     )
     MyPoint = lineprotocol(namedtuple('MyPoint', schema.keys()), schema=schema)
     p = MyPoint("a", "2018-08-08 15:22:33", "b", False, 5)
-    print(p.to_lineprotocol())
+    logger.debug(p.to_lineprotocol())
     assert isinstance(p.to_lineprotocol(), bytes)
 
 
@@ -86,7 +87,7 @@ def test_datetime():
     )
     MyPoint = lineprotocol(namedtuple('MyPoint', schema.keys()), schema=schema)
     p = MyPoint("a", datetime.utcnow(), "b", False, 5)
-    print(p.to_lineprotocol())
+    logger.debug(p.to_lineprotocol())
     assert isinstance(p.to_lineprotocol(), bytes)
 
 
@@ -97,7 +98,7 @@ def test_placeholder():
         timestamp: aioinflux.TIMEINT
 
     lp = MyPoint(0).to_lineprotocol()
-    print(lp)
+    logger.debug(lp)
 
 
 def test_extra_tags():
@@ -122,7 +123,7 @@ def test_rm_none():
         users: aioinflux.INT
 
     p = MyPoint("a", 2, "b", True, None)
-    print(p.to_lineprotocol())
+    logger.debug(p.to_lineprotocol())
     assert b'users' not in p.to_lineprotocol()
 
 

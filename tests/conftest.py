@@ -1,15 +1,10 @@
 import asyncio
-import logging.config
-from pathlib import Path
 
 import pytest
-import yaml
 
 from aioinflux import InfluxDBClient
 import testing_utils as utils
 
-with open(Path(__file__).parent / 'logging.yml') as f:
-    logging.config.dictConfig(yaml.load(f))
 
 
 @pytest.yield_fixture(scope='module')
