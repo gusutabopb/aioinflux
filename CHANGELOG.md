@@ -1,5 +1,26 @@
 # Changelog
 
+
+## [0.7.0] - 2019-03-??
+
+## Added
+- Redis-based caching functionality. See the 
+  [docs](https://aioinflux.readthedocs.io/en/latest/usage.html#caching-query-results) for details.
+- Timeout functionality (#21 by @SuminAndrew)
+
+### Changed
+- Move `ClientSession` creation logic outside `__init__`. 
+It is now easier to used advanced ``aiohttp.ClientSession`` options.
+See the [docs](https://aioinflux.readthedocs.io/en/latest/usage.html#other-aiohttp-functionality) for details. 
+
+### Removed
+- Query pattern functionality
+
+### Internal
+- Refactor test suite
+- Various other internal changes 
+
+
 ## [0.6.1] - 2019-02-01
 
 This is version is backwards compatible with v0.6.0
