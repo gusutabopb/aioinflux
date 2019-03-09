@@ -1,4 +1,5 @@
 test:
+	rm -rf .cache htmlcov .coverage .pytest_cache
 	flake8
 	pytest --verbose --cov=aioinflux --cov-append --cov-report html --cov-report term tests/
 
@@ -10,7 +11,9 @@ clean:
 	rm -rf .cache htmlcov .coverage .pytest_cache
 	rm -f .DS_Store README.html
 
-docs: clean
+.PHONY: docs
+docs:
+	rm -rf docs/_build/*
 	cd docs && $(MAKE) html
 
 build: clean test docs
