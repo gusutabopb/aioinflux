@@ -20,6 +20,7 @@ test_requirements = [
     'pep8-naming',
     'flake8-docstrings',
     'flake8-rst-docstrings',
+    'pygments',
 ]
 
 if sys.version_info[:2] == (3, 6):
