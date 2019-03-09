@@ -316,7 +316,7 @@ class InfluxDBClient:
         # See https://github.com/influxdata/docs.influxdata.com/issues/1807
         if not isinstance(chunked, bool):
             raise ValueError("'chunked' must be a boolean")
-        data = dict(q=q, db=db, chunked=str(chunked).lower(), epoch=epoch)
+        data = dict(q=q, db=db or self.db, chunked=str(chunked).lower(), epoch=epoch)
         if chunked and chunk_size:
             data['chunk_size'] = chunk_size
 

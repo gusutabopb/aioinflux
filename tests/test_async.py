@@ -36,7 +36,7 @@ async def test_simple_query(async_client):
 @pytest.mark.asyncio
 async def test_chunked_query(async_client):
     resp = await async_client.query('SELECT * FROM test_measurement',
-                                    chunked=True, chunk_size=10, wrap=False)
+                                    chunked=True, chunk_size=10)
     points = []
     async for chunk in resp:
         for point in iterpoints(chunk):
