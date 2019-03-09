@@ -594,6 +594,41 @@ dictionary containing all or a subset of the following:
     MyPoint(time=1439856720000000000, index=65, location='santa_monica', randtag='3')
 
 
+Caching query results
+^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: v0.7.0
+
+Aioinflux provides an optional caching layer on top of InfluxDB, based on `Redis`_ and :mod:`aioredis`.
+
+The caching functionality is designed for highly iterative/repetitive workloads
+(i.e.: machine learning / quantitative finance model tuning)
+that constantly query InfluxDB for the same historical data repeatedly.
+By saving query results in memory locally, load on your InfluxDB instance can be greatly reduced.
+
+In order to enable/use caching functionality:
+
+1. Install the necessary optional dependencies: ``pip install aioinflux[cache]``
+
+2. Pass Redis host information when initializing :class:`.InfluxDBClient` with the ``redis_opts`` argument.
+   ``redis_opts`` takes a dictionary with keyword arguments used when calling :func:`aioredis.create_redis`.
+
+3. When using :class:`.InfluxDBClient` , set ``use_cache`` to ``True``.
+   Even when Redis is properly configured, cache will be ignored unless specified on a per-query basis.
+
+Optionally,  to control when the cache expires, use the ``cache_expiry`` argument of :class:`.InfluxDBClient`.
+You can also just simply use Redis CLI to clear the cache:
+
+.. code:: bash
+
+    redis-cli -n <db> flushdb
+
+In order to debug whether or not cache is being used or being hit/miss, enable logging for ``aioinflux`` at
+``DEBUG`` level. See :ref:`Debugging` for more details.
+
+
+.. _Redis: https://redis.io/
+
 
 Other functionality
 -------------------

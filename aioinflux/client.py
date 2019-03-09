@@ -111,7 +111,7 @@ class InfluxDBClient:
             This field is for argument consistency with the official InfluxDB Python client.
         :param loop: Asyncio event loop.
         :param redis_opts: Dict fo keyword arguments for :func:`aioredis.create_redis`
-        :param cache_expiry:
+        :param cache_expiry: Expiry time (in seconds) for cached data
         :param kwargs: Additional kwargs for :class:`aiohttp.ClientSession`
         """
         self._loop = loop or asyncio.get_event_loop()
