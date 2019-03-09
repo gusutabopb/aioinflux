@@ -697,6 +697,25 @@ InfluxDB requires that a databases is explicitly created (by using the
 .. |CREATE_DATABASE| replace:: ``CREATE DATABASE``
 .. _`CREATE_DATABASE`: https://docs.influxdata.com/influxdb/latest/query_language/database_management/#create-database
 
+
+Debugging
+^^^^^^^^^
+
+If you are having problems while using Aioinflux, enabling logging might be useful.
+
+Below is a simple way to setup logging from your application:
+
+.. code:: python
+
+    import logging
+
+    logging.basicConfig()
+    logging.getLogger('aioinflux').setLevel(logging.DEBUG)
+
+For further information about logging, please refer to the
+`official documentation <https://docs.python.org/3/library/logging.html>`__.
+
+
 .. |lineprotocol| replace:: :func:`~aioinflux.serialization.usertype.lineprotocol`
 .. |client| replace:: :class:`~aioinflux.client.InfluxDBClient`
 .. |write| replace:: :meth:`~aioinflux.client.InfluxDBClient.write`

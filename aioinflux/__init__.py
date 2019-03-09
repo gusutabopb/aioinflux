@@ -1,6 +1,6 @@
 # flake8: noqa
 from . import serialization
-from .client import InfluxDBClient, InfluxDBError, InfluxDBWriteError, logger
+from .client import InfluxDBClient, InfluxDBError, InfluxDBWriteError
 from .iterutils import iterpoints
 from .serialization.usertype import *
 

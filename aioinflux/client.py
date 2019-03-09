@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import warnings
 from functools import wraps
 from typing import TypeVar, Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
@@ -15,6 +16,10 @@ if pd:
 else:
     PointType = TypeVar('PointType', Mapping, dict, bytes)
     ResultType = TypeVar('ResultType', dict, bytes)
+
+# Aioinflux uses logging mainly for debugging purposes.
+# Please attach your own handlers if you need logging.
+logger = logging.getLogger('aioinflux')
 
 
 def runner(coro):
@@ -211,6 +216,7 @@ class InfluxDBClient:
         if not self._session:
             await self.create_session()
         async with self._session.get(self.url.format(endpoint='ping')) as resp:
+            logger.debug(f'{resp.status}: {resp.reason}')
             return dict(resp.headers.items())
 
     @runner
@@ -301,6 +307,7 @@ class InfluxDBClient:
 
         async def _chunked_generator(url, data):
             async with self._session.post(url, data=data) as resp:
+                logger.debug(f'{resp.status} (CHUNKED): {q}')
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
                 # The number 16 is arbitrary (may be too large/small).
                 resp.content._high_water *= 16
@@ -331,6 +338,7 @@ class InfluxDBClient:
                 raise ValueError("Chunked queries are not support with 'dataframe' output")
 
         async with self._session.post(url, data=data) as resp:
+            logger.debug(f'{resp.status}: {q}')
             output = await resp.read()
             output = json.loads(output.decode())
             self._check_error(output)
