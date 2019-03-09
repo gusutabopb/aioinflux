@@ -77,14 +77,14 @@ def test_read_dataframe_show_databases(df_client):
 
 @utils.requires_pandas
 @pytest.mark.asyncio
-async def test_change_db(async_client):
-    state = async_client.db, async_client.output
-    async_client.output = 'dataframe'
+async def test_change_db(client):
+    state = client.db, client.output
+    client.output = 'dataframe'
 
-    async_client.db = 'foo'
-    await async_client.ping()
+    client.db = 'foo'
+    await client.ping()
 
-    async_client.db, async_client.output = state
+    client.db, client.output = state
 
 
 ###############
@@ -92,15 +92,16 @@ async def test_change_db(async_client):
 ###############
 
 @utils.requires_pandas
-def test_invalid_data_write_dataframe(sync_client):
+@pytest.mark.asyncio
+async def test_invalid_data_write_dataframe(client):
     with pytest.raises(ValueError) as e:
         # Non-DatetimeIndex DataFrame
-        sync_client.write(utils.random_dataframe().reset_index(), measurement='foo')
+        await client.write(utils.random_dataframe().reset_index(), measurement='foo')
     logger.error(e)
 
     with pytest.raises(ValueError) as e:
         # DataFrame write without specifying measurement
-        sync_client.write(utils.random_dataframe())
+        await client.write(utils.random_dataframe())
     logger.error(e)
 
 

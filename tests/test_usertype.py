@@ -18,7 +18,8 @@ class CpuLoad(enum.Enum):
     HIGH = 100
 
 
-def test_decorator(sync_client):
+@pytest.mark.asyncio
+async def test_decorator(client):
     @lineprotocol
     class MyPoint(NamedTuple):
         measurement: aioinflux.MEASUREMENT
@@ -44,9 +45,9 @@ def test_decorator(sync_client):
     )
     assert p
     assert hasattr(p, 'to_lineprotocol')
-    assert sync_client.write(p)
-    logger.info(sync_client.query('SELECT * FROM dp'))
-    logger.info(sync_client.query("SHOW FIELD KEYS FROM dp"))
+    assert await client.write(p)
+    logger.info(await client.query('SELECT * FROM dp'))
+    logger.info(await client.query("SHOW FIELD KEYS FROM dp"))
 
 
 def test_functional():

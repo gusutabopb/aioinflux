@@ -6,7 +6,6 @@ from aioinflux import InfluxDBClient
 import testing_utils as utils
 
 
-
 @pytest.yield_fixture(scope='module')
 def event_loop():
     loop = asyncio.new_event_loop()
@@ -15,19 +14,11 @@ def event_loop():
 
 
 @pytest.fixture(scope='module')
-async def async_client():
-    async with InfluxDBClient(db='async_client_test', mode='async') as client:
+async def client():
+    async with InfluxDBClient(db='client_test', mode='async') as client:
         await client.create_database()
         yield client
         await client.drop_database()
-
-
-@pytest.fixture(scope='module')
-def sync_client():
-    with InfluxDBClient(db='sync_client_test', mode='blocking') as client:
-        client.create_database()
-        yield client
-        client.drop_database()
 
 
 @pytest.fixture(scope='module')
