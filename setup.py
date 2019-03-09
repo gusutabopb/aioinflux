@@ -50,6 +50,10 @@ setup(name='aioinflux',
           'pandas': [
               'pandas>=0.21',
               'numpy'
+          ],
+          'cache': [
+              'aioredis>=1.2.0',
+              'lz4>=2.1.0',
           ]
       },
       classifiers=[

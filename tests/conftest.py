@@ -22,6 +22,23 @@ async def client():
 
 
 @pytest.fixture(scope='module')
+async def cache_client():
+    opts = dict(
+        db='cache_client_test',
+        redis_opts=dict(
+            address='redis://localhost:6379/8',
+            timeout=5,
+        ),
+        cache_expiry=600
+    )
+    async with InfluxDBClient(**opts, mode='async') as client:
+        assert await client.create_database()
+        yield client
+        await client.drop_database()
+        await client._redis.flushdb()
+
+
+@pytest.fixture(scope='module')
 def df_client():
     if utils.pd is None:
         return
