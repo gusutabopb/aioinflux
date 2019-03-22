@@ -358,16 +358,17 @@ class InfluxDBClient:
 
         key = f'aioinflux:{q}'
         if use_cache and self._redis and await self._redis.exists(key):
-            logger.debug('Cache HIT')
+            logger.debug(f'Cache HIT: {q}')
             data = lz4.decompress(await self._redis.get(key))
         else:
             async with self._session.post(url, data=data) as resp:
-                logger.debug(f'{resp.status}: {q}')
                 data = await resp.read()
                 if use_cache and self._redis:
-                    logger.debug('Cache MISS')
+                    logger.debug(f'Cache MISS ({resp.status}): {q}')
                     await self._redis.set(key, lz4.compress(data))
                     await self._redis.expire(key, self.cache_expiry)
+                else:
+                    logger.debug(f'{resp.status}: {q}')
 
         data = json.loads(data)
         self._check_error(data)
