@@ -1,7 +1,10 @@
 # Changelog
 
 
-## [0.7.0] - 2019-03-??
+## [0.7.0] - 2019-03-22
+
+This is version is mostly backwards compatible with v0.6.x 
+(w/ the exception of query patterns functionality)
 
 ## Added
 - Redis-based caching functionality. See the 
@@ -14,7 +17,7 @@ It is now easier to used advanced ``aiohttp.ClientSession`` options.
 See the [docs](https://aioinflux.readthedocs.io/en/latest/usage.html#other-aiohttp-functionality) for details. 
 
 ### Removed
-- Query pattern functionality
+- Query patterns functionality
 
 ### Internal
 - Refactor test suite
