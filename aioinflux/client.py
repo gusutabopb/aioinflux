@@ -365,8 +365,9 @@ class InfluxDBClient:
                 data = await resp.read()
                 if use_cache and self._redis:
                     logger.debug(f'Cache MISS ({resp.status}): {q}')
-                    await self._redis.set(key, lz4.compress(data))
-                    await self._redis.expire(key, self.cache_expiry)
+                    if resp.status == 200:
+                        await self._redis.set(key, lz4.compress(data))
+                        await self._redis.expire(key, self.cache_expiry)
                 else:
                     logger.debug(f'{resp.status}: {q}')
 
