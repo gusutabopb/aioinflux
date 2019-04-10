@@ -613,18 +613,18 @@ In order to enable/use caching functionality:
 2. Pass Redis host information when initializing :class:`.InfluxDBClient` with the ``redis_opts`` argument.
    ``redis_opts`` takes a dictionary with keyword arguments used when calling :func:`aioredis.create_redis`.
 
-3. When using :class:`.InfluxDBClient` , set ``use_cache`` to ``True``.
+3. When using :meth:`~.InfluxDBClient.query` , set ``use_cache`` to ``True``.
    Even when Redis is properly configured, cache will be ignored unless specified on a per-query basis.
 
-Optionally,  to control when the cache expires, use the ``cache_expiry`` argument of :class:`.InfluxDBClient`.
+Optionally, to control when the cache expires, use the ``cache_expiry`` argument of :class:`.InfluxDBClient`.
 You can also just simply use Redis CLI to clear the cache:
 
 .. code:: bash
 
     redis-cli -n <db> flushdb
 
-In order to debug whether or not cache is being used or being hit/miss, enable logging for ``aioinflux`` at
-``DEBUG`` level. See :ref:`Debugging` for more details.
+In order to debug whether or not cache is being used or being hit/miss, enable the ``aioinflux`` logger
+and set it to ``DEBUG`` level. See :ref:`Debugging` for more details.
 
 
 .. _Redis: https://redis.io/

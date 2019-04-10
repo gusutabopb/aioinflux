@@ -1,7 +1,7 @@
 import warnings
 
 no_pandas_warning = "Pandas/Numpy is not available. Support for 'dataframe' mode is disabled."
-no_redis_warning = "Redis is not available. Support for caching functionality is disabled."
+no_redis_warning = "Redis dependencies not available. Support for caching is disabled."
 
 try:
     import pandas as pd
