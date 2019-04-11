@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.1] - 2019-04-11
+
+This is version is backwards compatible with v0.7.0
+
+### Fixed
+- Don't cache error responses (be7b87c)
+
+### Docs
+- Minor wording changes
+
+### Internal
+- Minor internal changes 
+
+
 
 ## [0.7.0] - 2019-03-22
 
