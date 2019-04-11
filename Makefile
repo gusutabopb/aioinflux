@@ -1,5 +1,4 @@
 test:
-	rm -rf .cache htmlcov .coverage .pytest_cache
 	flake8
 	pytest --verbose --cov=aioinflux --cov-append --cov-report html --cov-report term tests/
 
