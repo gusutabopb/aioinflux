@@ -348,13 +348,13 @@ class InfluxDBClient:
 
         url = self.url.format(endpoint='query')
         if chunked:
+            if use_cache:
+                raise ValueError("Can't use cache w/ chunked queries")
             if self.mode != 'async':
                 raise ValueError("Can't use 'chunked' with non-async mode")
-            g = _chunked_generator(url, data)
             if self.output == 'json':
-                return g
-            elif self.output == 'dataframe':
-                raise ValueError("Chunked queries are not support with 'dataframe' output")
+                return _chunked_generator(url, data)
+            raise ValueError(f"Chunked queries are not support with {self.output!r} output")
 
         key = f'aioinflux:{q}'
         if use_cache and self._redis and await self._redis.exists(key):
