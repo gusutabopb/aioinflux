@@ -27,7 +27,7 @@ def test_write_dataframe_with_nan(df_client):
             i = np.random.randint(df.shape[0])
             j = np.random.randint(df.shape[1])
             df.iloc[i, j] = np.nan
-        df_client.write(df, f'fills{i+1:02d}')
+        df_client.write(df, f'fills{i + 1:02d}')
 
 
 @utils.requires_pandas
@@ -43,6 +43,7 @@ def test_read_dataframe(df_client):
     df = df_client.query('SELECT * from m1')
     logger.info(f'\n{df.head()}')
     assert df.shape == (50, 8)
+
 
 @utils.requires_pandas
 @pytest.mark.asyncio
