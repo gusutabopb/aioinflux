@@ -324,7 +324,7 @@ class InfluxDBClient:
            :attr:`.InfluxDBClient.output` and ``chunked``
         """
 
-        async def _chunked_generator(url, data):
+        async def _chunked_generator(url, data, dataframe):
             async with self._session.post(url, data=data) as resp:
                 logger.debug(f'{resp.status} (CHUNKED): {q}')
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
@@ -333,7 +333,10 @@ class InfluxDBClient:
                 async for chunk in resp.content:
                     chunk = json.loads(chunk)
                     self._check_error(chunk)
-                    yield chunk
+                    if dataframe:
+                        yield serialization.dataframe.parse(chunk)
+                    else:
+                        yield chunk
 
         if not self._session:
             await self.create_session()
@@ -350,11 +353,10 @@ class InfluxDBClient:
         if chunked:
             if use_cache:
                 raise ValueError("Can't use cache w/ chunked queries")
-            if self.mode != 'async':
+            elif self.mode != 'async':
                 raise ValueError("Can't use 'chunked' with non-async mode")
-            if self.output == 'json':
-                return _chunked_generator(url, data)
-            raise ValueError(f"Chunked queries are not support with {self.output!r} output")
+            else:
+                return _chunked_generator(url, data, self.output == 'dataframe')
 
         key = f'aioinflux:{q}'
         if use_cache and self._redis and await self._redis.exists(key):
