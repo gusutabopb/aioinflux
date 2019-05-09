@@ -508,7 +508,15 @@ the full response is retrieved, reducing overall query time
         # do something
         await process_chunk(...)
 
-Chunked responses are not supported when using the ``dataframe`` output format.
+When using chunked responses with ``dataframe`` output, the following construct may be useful:
+
+.. code:: python
+
+    cursor = await client.query("SELECT * FROM mymeasurement", chunked=True)
+    df = pd.concat([i async for i in cursor])
+
+If you need to keep track of when the chunks are being returned,
+consider setting up a logging handler at ``DEBUG`` level (see :ref:`Debugging` for details).
 
 See the `InfluxDB official docs <https://docs.influxdata.com/influxdb/v1.7/guides/querying_data/#chunking>`__
 for more on chunked responses.
