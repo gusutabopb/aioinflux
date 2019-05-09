@@ -41,6 +41,7 @@ class InfluxDBError(Exception):
 
 class InfluxDBWriteError(InfluxDBError):
     """Raised when a server-side writing error occurs"""
+
     def __init__(self, resp):
         self.status = resp.status
         self.headers = resp.headers
@@ -326,13 +327,14 @@ class InfluxDBClient:
 
         async def _chunked_generator(url, data, dataframe):
             async with self._session.post(url, data=data) as resp:
-                logger.debug(f'{resp.status} (CHUNKED): {q}')
+                logger.debug(f'{resp.status} (CHUNKED): {q!r}')
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
                 # The number 128 is arbitrary (may be too large/small).
                 resp.content._high_water *= 128
                 async for chunk in resp.content:
                     chunk = json.loads(chunk)
                     self._check_error(chunk)
+                    logger.debug('Yielding chunk')
                     if dataframe:
                         yield serialization.dataframe.parse(chunk)
                     else:
