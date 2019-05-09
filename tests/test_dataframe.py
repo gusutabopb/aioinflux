@@ -44,6 +44,25 @@ def test_read_dataframe(df_client):
     logger.info(f'\n{df.head()}')
     assert df.shape == (50, 8)
 
+@utils.requires_pandas
+@pytest.mark.asyncio
+async def test_dataframe_chunked_query(client):
+    client.output = 'dataframe'
+
+    df1 = utils.random_dataframe()
+    await client.write(df1, measurement='m3')
+
+    cursor = await client.query('SELECT * FROM m3', chunked=True, chunk_size=10)
+    dfs = []
+    async for subdf in cursor:
+        assert isinstance(subdf, pd.DataFrame)
+        assert len(subdf) == 10
+        dfs.append(subdf)
+    df = pd.concat(dfs)
+    assert df.shape == (50, 7)
+
+    client.output = 'json'
+
 
 @utils.requires_pandas
 def test_read_dataframe_groupby(df_client):
@@ -110,13 +129,3 @@ def test_chunked_dataframe(df_client):
     with pytest.raises(ValueError) as e:
         _ = df_client.query('SELECT * FROM foo', chunked=True)
     logger.error(e)
-
-
-@utils.requires_pandas
-@pytest.mark.asyncio
-async def test_async_chunked_dataframe(df_client):
-    df_client.mode = 'async'
-    with pytest.raises(ValueError) as e:
-        _ = await df_client.query('SELECT * FROM foo', chunked=True)
-    logger.error(e)
-    df_client.mode = 'blocking'
