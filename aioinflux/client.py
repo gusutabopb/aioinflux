@@ -328,8 +328,8 @@ class InfluxDBClient:
             async with self._session.post(url, data=data) as resp:
                 logger.debug(f'{resp.status} (CHUNKED): {q}')
                 # Hack to avoid aiohttp raising ValueError('Line is too long')
-                # The number 16 is arbitrary (may be too large/small).
-                resp.content._high_water *= 16
+                # The number 128 is arbitrary (may be too large/small).
+                resp.content._high_water *= 128
                 async for chunk in resp.content:
                     chunk = json.loads(chunk)
                     self._check_error(chunk)
