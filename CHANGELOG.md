@@ -1,5 +1,14 @@
 # Changelog
 
+
+## [0.8.0] - 2019-05-10
+
+This is version is backwards compatible with v0.7.x
+
+### Added
+- Add dataframe support for chunked queries (e3c2a0b)
+
+
 ## [0.7.1] - 2019-04-11
 
 This is version is backwards compatible with v0.7.0
