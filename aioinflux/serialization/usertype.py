@@ -23,12 +23,12 @@ TIMEINT = TypeVar('TIMEINT', bound=int)
 TIMESTR = TypeVar('TIMESTR', bound=str)
 TIMEDT = TypeVar('TIMEDT', bound=datetime)
 TAG = TypeVar('TAG', bound=str)
-TAGENUM = TypeVar('TAGENUM', enum.Enum, str)
+TAGENUM = TypeVar('TAGENUM', bound=enum.Enum)
 BOOL = TypeVar('BOOL', bound=bool)
 INT = TypeVar('INT', bound=int)
 FLOAT = TypeVar('FLOAT', bound=float)
 STR = TypeVar('STR', bound=str)
-ENUM = TypeVar('ENUM', enum.Enum, str)
+ENUM = TypeVar('ENUM', bound=enum.Enum)
 
 time_types = [TIMEINT, TIMEDT, TIMESTR]
 field_types = [BOOL, INT, FLOAT, STR, ENUM]
