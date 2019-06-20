@@ -123,9 +123,12 @@ def test_rm_none():
         running: aioinflux.BOOL
         users: aioinflux.INT
 
-    p = MyPoint("a", 2, "b", True, None)
-    logger.debug(p.to_lineprotocol())
-    assert b'users' not in p.to_lineprotocol()
+    p1= MyPoint("a", 2, "b", True, None)
+    p2 = MyPoint("a", 2, "b", None, 1)
+    logger.debug(p1.to_lineprotocol())
+    logger.debug(p2.to_lineprotocol())
+    assert b'users' not in p1.to_lineprotocol()
+    assert b'running' not in p2.to_lineprotocol()
 
 
 # noinspection PyUnusedLocal
