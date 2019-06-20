@@ -1,8 +1,6 @@
 import enum
 import ciso8601
 import time
-# noinspection PyUnresolvedReferences
-import re  # noqa
 from collections import Counter
 from typing import TypeVar, Optional, Mapping
 from datetime import datetime
@@ -61,10 +59,10 @@ def _validate_schema(schema, placeholder):
     if sum(c[e] for e in time_types) > 1:
         raise SchemaError(f"Can't have more than one timestamp-type attribute {time_types}")
     if sum(c[e] for e in field_types) < 1 and not placeholder:
-        raise SchemaError(f"Must have one or more field-type attributes {field_types}")
+        raise SchemaError(f"Must have one or more non-empty field-type attributes {field_types}")
 
 
-def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):  # noqa: C901
+def _make_serializer(meas, schema, extra_tags, placeholder):  # noqa: C901
     """Factory of line protocol parsers"""
     _validate_schema(schema, placeholder)
     tags = []
@@ -109,16 +107,8 @@ def _make_serializer(meas, schema, rm_none, extra_tags, placeholder):  # noqa: C
     sep = ',' if tags else ''
     ts = f' {ts}' if ts else ''
     fmt = f"{meas}{sep}{','.join(tags)} {','.join(fields)}{ts}"
-    if rm_none:
-        # Has substantial runtime impact. Best avoided if performance is critical.
-        # First field can't be removed.
-        pat = r',\w+="?None"?i?'
-        f = eval('lambda i: re.sub(r\'{}\', "", f"{}").encode()'.format(pat, fmt))
-    else:
-        f = eval('lambda i: f"{}".encode()'.format(fmt))
+    f = eval(f'lambda i: f"{fmt}".encode()')
     f.__doc__ = "Returns InfluxDB line protocol representation of user-defined class"
-    f._args = dict(meas=meas, schema=schema, rm_none=rm_none,
-                   extra_tags=extra_tags, placeholder=placeholder)
     return f
 
 
@@ -145,8 +135,34 @@ def lineprotocol(
 
     def _lineprotocol(cls):
         _schema = schema or getattr(cls, '__annotations__', {})
-        f = _make_serializer(cls.__name__, _schema, rm_none, extra_tags, placeholder)
+        f = _make_serializer(cls.__name__, _schema, extra_tags, placeholder)
         cls.to_lineprotocol = f
         return cls
 
-    return _lineprotocol(cls) if cls else _lineprotocol
+    def _rm_none_lineprotocol(cls):
+
+        def _parser_selector(i):
+            if not hasattr(i, '_asdict'):
+                raise ValueError("'rm_none' can only be used with namedtuples")
+            key = tuple([k for k, v in i._asdict().items() if v != '' and v is not None])
+            if key not in parsers:
+                _schema = schema or getattr(cls, '__annotations__', {})
+                _schema = {k: v for k, v in _schema.items() if k in key}
+                parsers[key] = _make_serializer(cls.__name__, _schema, extra_tags, placeholder)
+            return parsers[key](i)
+
+        parsers = {}
+        cls.to_lineprotocol = _parser_selector
+        return cls
+
+
+    if cls:
+        # No options
+        return _lineprotocol(cls)
+    elif rm_none:
+        # Using rm_none has substantial runtime impact.
+        # Best avoided if performance is critical.
+        return _rm_none_lineprotocol
+    else:
+        return _lineprotocol
+
