@@ -132,11 +132,18 @@ def lineprotocol(
         which is always equal to ``True``. This is a workaround for creating field-less points
         (which is not supported natively by InfluxDB)
     """
+    opts = dict(
+        schema=schema,
+        rm_none=rm_none,
+        extra_tags=extra_tags or {},
+        placeholder=placeholder,
+    )
 
     def _lineprotocol(cls):
         _schema = schema or getattr(cls, '__annotations__', {})
         f = _make_serializer(cls.__name__, _schema, extra_tags, placeholder)
         cls.to_lineprotocol = f
+        cls.to_lineprotocol.opts = opts
         return cls
 
     def _rm_none_lineprotocol(cls):
@@ -153,6 +160,7 @@ def lineprotocol(
 
         parsers = {}
         cls.to_lineprotocol = _parser_selector
+        cls.to_lineprotocol.opts = opts
         return cls
 
 
