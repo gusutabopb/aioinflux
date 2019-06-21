@@ -55,6 +55,7 @@ class InfluxDBClient:
         self,
         host: str = 'localhost',
         port: int = 8086,
+        path: str = '/',
         mode: str = 'async',
         output: str = 'json',
         db: Optional[str] = None,
@@ -89,6 +90,7 @@ class InfluxDBClient:
 
         :param host: Hostname to connect to InfluxDB.
         :param port: Port to connect to InfluxDB.
+        :param path: Path to connect to InfluxDB.
         :param mode: Mode in which client should run. Available options:
 
            - ``async``: Default mode. Each query/request to the backend will
@@ -124,6 +126,7 @@ class InfluxDBClient:
         self.ssl = ssl
         self.host = host
         self.port = port
+        self.path = path
         self.mode = mode
         self.output = output
         self.db = database or db
@@ -161,7 +164,8 @@ class InfluxDBClient:
 
     @property
     def url(self):
-        return f'{"https" if self.ssl else "http"}://{self.host}:{self.port}/{{endpoint}}'
+        protocol = "https" if self.ssl else "http"
+        return f"{protocol}://{self.host}:{self.port}{self.path}{{endpoint}}"
 
     @property
     def mode(self):
