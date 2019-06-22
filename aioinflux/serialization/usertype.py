@@ -163,14 +163,14 @@ def lineprotocol(
         cls.to_lineprotocol.opts = opts
         return cls
 
-
     if cls:
+        if rm_none:
+            # Using rm_none has substantial runtime impact.
+            # Best avoided if performance is critical.
+            return _rm_none_lineprotocol(cls)
         # No options
         return _lineprotocol(cls)
-    elif rm_none:
-        # Using rm_none has substantial runtime impact.
-        # Best avoided if performance is critical.
-        return _rm_none_lineprotocol
     else:
+        if rm_none:
+            return _rm_none_lineprotocol
         return _lineprotocol
-
