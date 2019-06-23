@@ -1,6 +1,7 @@
 import enum
 import ciso8601
 import time
+import decimal
 from collections import Counter
 from typing import TypeVar, Optional, Mapping
 from datetime import datetime
@@ -13,7 +14,7 @@ __all__ = [
     'lineprotocol', 'SchemaError',
     'MEASUREMENT', 'TIMEINT', 'TIMESTR', 'TIMEDT',
     'TAG', 'TAGENUM',
-    'BOOL', 'INT', 'FLOAT', 'STR', 'ENUM',
+    'BOOL', 'INT', 'DECIMAL', 'FLOAT', 'STR', 'ENUM',
 ]
 
 MEASUREMENT = TypeVar('MEASUREMENT', bound=str)
@@ -24,12 +25,13 @@ TAG = TypeVar('TAG', bound=str)
 TAGENUM = TypeVar('TAGENUM', bound=enum.Enum)
 BOOL = TypeVar('BOOL', bound=bool)
 INT = TypeVar('INT', bound=int)
+DECIMAL = TypeVar('DECIMAL', bound=decimal.Decimal)
 FLOAT = TypeVar('FLOAT', bound=float)
 STR = TypeVar('STR', bound=str)
 ENUM = TypeVar('ENUM', bound=enum.Enum)
 
 time_types = [TIMEINT, TIMEDT, TIMESTR]
-field_types = [BOOL, INT, FLOAT, STR, ENUM]
+field_types = [BOOL, INT, DECIMAL, FLOAT, STR, ENUM]
 
 
 class SchemaError(TypeError):
@@ -88,7 +90,11 @@ def _make_serializer(meas, schema, extra_tags, placeholder):  # noqa: C901
             tags.append(f"{k}={{str(i.{k}).translate(tag_escape)}}")
         elif t is TAGENUM:
             tags.append(f"{k}={{getattr(i.{k}, 'name', i.{k} or None)}}")
-        elif t in (FLOAT, BOOL):
+        elif t is FLOAT:
+            fields.append(f"{k}={{i.{k}}}")
+        elif t is DECIMAL:
+            fields.append(f"{k}={{i.{k}}}")
+        elif t is BOOL:
             fields.append(f"{k}={{i.{k}}}")
         elif t is INT:
             fields.append(f"{k}={{i.{k}}}i")
