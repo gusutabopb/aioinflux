@@ -3,7 +3,7 @@ import ciso8601
 import time
 import decimal
 from collections import Counter
-from typing import TypeVar, Optional, Mapping
+from typing import TypeVar, Optional, Mapping, Union
 from datetime import datetime
 
 # noinspection PyUnresolvedReferences
@@ -31,6 +31,7 @@ STR = TypeVar('STR', bound=str)
 ENUM = TypeVar('ENUM', bound=enum.Enum)
 
 time_types = [TIMEINT, TIMEDT, TIMESTR]
+tag_types = [TAG, TAGENUM]
 field_types = [BOOL, INT, DECIMAL, FLOAT, STR, ENUM]
 
 
@@ -64,6 +65,22 @@ def _validate_schema(schema, placeholder):
         raise SchemaError(f"Must have one or more non-empty field-type attributes {field_types}")
 
 
+def is_optional(t, base_type):
+    """Checks if type hint is Optional[base_type]"""
+    # NOTE: The 'typing' module is still "provisional" and documentation sub-optimal,
+     # which requires these kinds instrospection into undocumented implementation details
+    # NOTE: May break in Python 3.8
+    # TODO: Check if works on Python 3.6
+    try:
+        cond1 = getattr(t, '__origin__') is Union
+        cond2 = {type(None), base_type} == set(getattr(t, '__args__', []))
+        if cond1 and cond2:
+            return True
+    except AttributeError:
+        return False
+    return False
+
+
 def _make_serializer(meas, schema, extra_tags, placeholder):  # noqa: C901
     """Factory of line protocol parsers"""
     _validate_schema(schema, placeholder)
@@ -86,21 +103,21 @@ def _make_serializer(meas, schema, extra_tags, placeholder):  # noqa: C901
                 ts = f"{{pd.Timestamp(i.{k} or 0).value}}"
             else:
                 ts = f"{{dt_to_int(i.{k})}}"
-        elif t is TAG:
+        elif t is TAG or is_optional(t, TAG):
             tags.append(f"{k}={{str(i.{k}).translate(tag_escape)}}")
-        elif t is TAGENUM:
+        elif t is TAGENUM or is_optional(t, TAGENUM):
             tags.append(f"{k}={{getattr(i.{k}, 'name', i.{k} or None)}}")
-        elif t is FLOAT:
+        elif t is FLOAT or is_optional(t, FLOAT):
             fields.append(f"{k}={{i.{k}}}")
-        elif t is DECIMAL:
+        elif t is DECIMAL or is_optional(t, DECIMAL):
             fields.append(f"{k}={{i.{k}}}")
-        elif t is BOOL:
+        elif t is BOOL or is_optional(t, BOOL):
             fields.append(f"{k}={{i.{k}}}")
-        elif t is INT:
+        elif t is INT or is_optional(t, INT):
             fields.append(f"{k}={{i.{k}}}i")
-        elif t is STR:
+        elif t is STR or is_optional(t, STR):
             fields.append(f"{k}=\\\"{{str(i.{k}).translate(str_escape)}}\\\"")
-        elif t is ENUM:
+        elif t is ENUM or is_optional(t, ENUM):
             fields.append(f"{k}=\\\"{{getattr(i.{k}, 'name', i.{k} or None)}}\\\"")
         else:
             raise SchemaError(f"Invalid attribute type {k!r}: {t!r}")
@@ -147,6 +164,11 @@ def lineprotocol(
 
     def _lineprotocol(cls):
         _schema = schema or getattr(cls, '__annotations__', {})
+        # TODO: Raise warning or exception if schema has optionals but rm_none is False
+        # for t in _schema.values():
+        #     for bt in field_types + tag_types:
+        #         if is_optional(t, bt):
+        #             warnings.warn("")
         f = _make_serializer(cls.__name__, _schema, extra_tags, placeholder)
         cls.to_lineprotocol = f
         cls.to_lineprotocol.opts = opts
