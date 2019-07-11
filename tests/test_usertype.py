@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import NamedTuple
 from collections import namedtuple
 from dataclasses import dataclass
+from decimal import Decimal
 
 import pytest
 
@@ -30,6 +31,7 @@ async def test_decorator(client):
         cpu_load: aioinflux.FLOAT
         cpu_load_level: aioinflux.ENUM
         cpu_load_level_tag: aioinflux.TAGENUM
+        running_cost: aioinflux.DECIMAL
         uuid: aioinflux.STR
 
     p = MyPoint(
@@ -41,6 +43,7 @@ async def test_decorator(client):
         cpu_load=99.5,
         cpu_load_level=CpuLoad.HIGH,
         cpu_load_level_tag=CpuLoad.LOW,
+        running_cost=Decimal('3.54'),
         uuid=str(uuid.uuid4()),
     )
     assert p
