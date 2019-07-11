@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.9.0] - 2019-07-11
+
+### Added
+- Add support for custom path to InfluxDB (#24)
+- Add support for `Decimal` serialization (812c1a8, 100d931)
+- Add chunk count on chunked response debugging message (b9e85ad)
+
+### Changed
+- Refactor `rm_none` option implementation (5735b51, 13062ed, 89bae37)
+- Make enum typevars more strict (f177212) 
+
 
 ## [0.8.0] - 2019-05-10
 
