@@ -33,6 +33,7 @@ ENUM = TypeVar('ENUM', bound=enum.Enum)
 time_types = [TIMEINT, TIMEDT, TIMESTR]
 tag_types = [TAG, TAGENUM]
 field_types = [BOOL, INT, DECIMAL, FLOAT, STR, ENUM]
+optional_field_types = [Optional[f] for f in field_types]
 
 
 class SchemaError(TypeError):
@@ -61,7 +62,7 @@ def _validate_schema(schema, placeholder):
         raise SchemaError("Class can't have more than one 'MEASUREMENT' attribute")
     if sum(c[e] for e in time_types) > 1:
         raise SchemaError(f"Can't have more than one timestamp-type attribute {time_types}")
-    if sum(c[e] for e in field_types) < 1 and not placeholder:
+    if sum(c[e] for e in field_types + optional_field_types) < 1 and not placeholder:
         raise SchemaError(f"Must have one or more non-empty field-type attributes {field_types}")
 
 

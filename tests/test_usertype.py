@@ -2,7 +2,7 @@
 import uuid
 import enum
 from datetime import datetime
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from collections import namedtuple
 from dataclasses import dataclass
 from decimal import Decimal
@@ -123,8 +123,8 @@ def test_rm_none():
         measurement: aioinflux.MEASUREMENT
         time: aioinflux.TIMEINT
         host: aioinflux.TAG
-        running: aioinflux.BOOL
-        users: aioinflux.INT
+        running: Optional[aioinflux.BOOL]
+        users: Optional[aioinflux.INT]
 
     p1= MyPoint("a", 2, "b", True, None)
     p2 = MyPoint("a", 2, "b", None, 1)
