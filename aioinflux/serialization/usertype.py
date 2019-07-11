@@ -63,13 +63,14 @@ def _validate_schema(schema, placeholder):
     if sum(c[e] for e in time_types) > 1:
         raise SchemaError(f"Can't have more than one timestamp-type attribute {time_types}")
     if sum(c[e] for e in field_types + optional_field_types) < 1 and not placeholder:
-        raise SchemaError(f"Must have one or more non-empty field-type attributes {field_types}")
+        raise SchemaError(f"Must have one or more non-empty "
+                          f"field-type attributes {field_types}")
 
 
 def is_optional(t, base_type):
     """Checks if type hint is Optional[base_type]"""
     # NOTE: The 'typing' module is still "provisional" and documentation sub-optimal,
-     # which requires these kinds instrospection into undocumented implementation details
+    #  which requires these kinds instrospection into undocumented implementation details
     # NOTE: May break in Python 3.8
     # TODO: Check if works on Python 3.6
     try:

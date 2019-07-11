@@ -18,7 +18,7 @@ test_requirements = [
     'pytz',
     'flake8',
     'pep8-naming',
-    'flake8-docstrings',
+    # 'flake8-docstrings',
     'flake8-rst-docstrings',
     'pygments',
 ]
