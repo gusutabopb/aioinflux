@@ -6,6 +6,7 @@ from functools import wraps
 from typing import TypeVar, Union, AnyStr, Mapping, Iterable, Optional, AsyncGenerator
 
 import aiohttp
+import zlib
 
 from . import serialization
 from .compat import *
@@ -69,6 +70,7 @@ class InfluxDBClient:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         redis_opts: Optional[dict] = None,
         cache_expiry: int = 86400,
+        gzip: bool =False
         **kwargs
     ):
         """
@@ -115,6 +117,7 @@ class InfluxDBClient:
         :param loop: Asyncio event loop.
         :param redis_opts: Dict fo keyword arguments for :func:`aioredis.create_redis`
         :param cache_expiry: Expiry time (in seconds) for cached data
+        :param gzip: Enable read/write compression.
         :param kwargs: Additional kwargs for :class:`aiohttp.ClientSession`
         """
         self._loop = loop or asyncio.get_event_loop()
@@ -130,6 +133,8 @@ class InfluxDBClient:
         self.mode = mode
         self.output = output
         self.db = database or db
+        self._headers = {}
+        self._gzip = gzip
 
         # ClientSession configuration
         if username:
@@ -153,8 +158,14 @@ class InfluxDBClient:
         Override this or call it with ``kwargs`` to use other :mod:`aiohttp`
         functionality not covered by :class:`~.InfluxDBClient.__init__`
         """
+        if self._gzip:
+            self._headers.update({
+                'Accept-Encoding': 'gzip',
+                'Content-Encoding': 'gzip',
+            })
+                         
         self.opts.update(kwargs)
-        self._session = aiohttp.ClientSession(**self.opts, loop=self._loop)
+        self._session = aiohttp.ClientSession(**self.opts, loop=self._loop, headers=self._headers)
         if self.redis_opts:
             if aioredis:
                 self._redis = await aioredis.create_redis(**self.redis_opts,
@@ -294,7 +305,12 @@ class InfluxDBClient:
         if rp:
             params['rp'] = rp
         url = self.url.format(endpoint='write')
-        async with self._session.post(url, params=params, data=data) as resp:
+        
+        if self._gzip is True:
+            gzip_compress = zlib.compressobj(9, zlib.DEFLATED, zlib.MAX_WBITS | 16)
+            data = gzip_compress.compress(data) + gzip_compress.flush()
+            
+        async with self._session.post(url, params=params, data=data, headers=self._headers) as resp:
             if resp.status == 204:
                 return True
             raise InfluxDBWriteError(resp)
