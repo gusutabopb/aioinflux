@@ -70,7 +70,7 @@ class InfluxDBClient:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         redis_opts: Optional[dict] = None,
         cache_expiry: int = 86400,
-        gzip: bool =False
+        gzip: bool = False,
         **kwargs
     ):
         """
