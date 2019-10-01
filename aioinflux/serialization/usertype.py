@@ -125,7 +125,7 @@ def _make_serializer(meas, schema, extra_tags, placeholder):  # noqa: C901
             raise SchemaError(f"Invalid attribute type {k!r}: {t!r}")
     extra_tags = extra_tags or {}
     for k, v in extra_tags.items():
-        tags.append(f"{k}={v}")
+        tags.append(f"{k}={v.translate(tag_escape)}")
     if placeholder:
         fields.insert(0, f"_=true")
 
