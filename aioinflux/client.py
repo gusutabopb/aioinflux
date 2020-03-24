@@ -286,13 +286,14 @@ class InfluxDBClient:
         """
         if not self._session:
             await self.create_session()
-        if precision is not None:
-            # FIXME: Implement. Related issue: aioinflux/pull/13
-            raise NotImplementedError("'precision' parameter is not supported yet")
+        if precision and precision not in {"ns","u","ms","s","m","h"}:
+            raise NotImplementedError("'precision' must must be one of the following: ns, u, ms, s, m, h")
         data = serialization.serialize(data, measurement, tag_columns, **extra_tags)
         params = {'db': db or self.db}
         if rp:
             params['rp'] = rp
+        if precision:
+            params["precision"] = precision
         url = self.url.format(endpoint='write')
         async with self._session.post(url, params=params, data=data) as resp:
             if resp.status == 204:
