@@ -52,24 +52,24 @@ class InfluxDBWriteError(InfluxDBError):
 
 class InfluxDBClient:
     def __init__(
-        self,
-        host: str = 'localhost',
-        port: int = 8086,
-        path: str = '/',
-        mode: str = 'async',
-        output: str = 'json',
-        db: Optional[str] = None,
-        database: Optional[str] = None,
-        ssl: bool = False,
-        *,
-        unix_socket: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        timeout: Optional[Union[aiohttp.ClientTimeout, float]] = None,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
-        redis_opts: Optional[dict] = None,
-        cache_expiry: int = 86400,
-        **kwargs
+            self,
+            host: str = 'localhost',
+            port: int = 8086,
+            path: str = '/',
+            mode: str = 'async',
+            output: str = 'json',
+            db: Optional[str] = None,
+            database: Optional[str] = None,
+            ssl: bool = False,
+            *,
+            unix_socket: Optional[str] = None,
+            username: Optional[str] = None,
+            password: Optional[str] = None,
+            timeout: Optional[Union[aiohttp.ClientTimeout, float]] = None,
+            loop: Optional[asyncio.AbstractEventLoop] = None,
+            redis_opts: Optional[dict] = None,
+            cache_expiry: int = 86400,
+            **kwargs
     ):
         """
         :class:`~aioinflux.client.InfluxDBClient`  holds information necessary
@@ -243,14 +243,14 @@ class InfluxDBClient:
 
     @runner
     async def write(
-        self,
-        data: Union[PointType, Iterable[PointType]],
-        measurement: Optional[str] = None,
-        db: Optional[str] = None,
-        precision: Optional[str] = None,
-        rp: Optional[str] = None,
-        tag_columns: Optional[Iterable] = None,
-        **extra_tags,
+            self,
+            data: Union[PointType, Iterable[PointType]],
+            measurement: Optional[str] = None,
+            db: Optional[str] = None,
+            precision: Optional[str] = None,
+            rp: Optional[str] = None,
+            tag_columns: Optional[Iterable] = None,
+            **extra_tags,
     ) -> bool:
         """Writes data to InfluxDB.
         Input can be:
@@ -286,13 +286,15 @@ class InfluxDBClient:
         """
         if not self._session:
             await self.create_session()
-        if precision is not None:
-            # FIXME: Implement. Related issue: aioinflux/pull/13
-            raise NotImplementedError("'precision' parameter is not supported yet")
+        if precision and precision not in {"ns", "u", "ms", "s", "m", "h"}:
+            raise NotImplementedError("'precision' must must be one of "
+                                      "the following: 'ns', 'u', 'ms', 's', 'm', 'h'")
         data = serialization.serialize(data, measurement, tag_columns, **extra_tags)
         params = {'db': db or self.db}
         if rp:
             params['rp'] = rp
+        if precision:
+            params["precision"] = precision
         url = self.url.format(endpoint='write')
         async with self._session.post(url, params=params, data=data) as resp:
             if resp.status == 204:
@@ -301,14 +303,14 @@ class InfluxDBClient:
 
     @runner
     async def query(
-        self,
-        q: AnyStr,
-        *,
-        epoch: str = 'ns',
-        chunked: bool = False,
-        chunk_size: Optional[int] = None,
-        db: Optional[str] = None,
-        use_cache: bool = False,
+            self,
+            q: AnyStr,
+            *,
+            epoch: str = 'ns',
+            chunked: bool = False,
+            chunk_size: Optional[int] = None,
+            db: Optional[str] = None,
+            use_cache: bool = False,
     ) -> Union[AsyncGenerator[ResultType, None], ResultType]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
