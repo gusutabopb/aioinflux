@@ -128,7 +128,7 @@ def _make_serializer(meas, schema, extra_tags, placeholder):  # noqa: C901
     for k, v in extra_tags.items():
         tags.append(f"{k}={v.translate(tag_escape)}")
     if placeholder:
-        fields.insert(0, f"_=true")
+        fields.insert(0, "_=true")
 
     sep = ',' if tags else ''
     ts = f' {ts}' if ts else ''

@@ -126,7 +126,7 @@ def test_rm_none():
         running: Optional[aioinflux.BOOL]
         users: Optional[aioinflux.INT]
 
-    p1= MyPoint("a", 2, "b", True, None)
+    p1 = MyPoint("a", 2, "b", True, None)
     p2 = MyPoint("a", 2, "b", None, 1)
     logger.debug(p1.to_lineprotocol())
     logger.debug(p2.to_lineprotocol())

@@ -8,7 +8,7 @@ with open('README.rst', 'r') as f:
 
 meta = {}
 with open(Path(__file__).parent / 'aioinflux' / '__init__.py') as f:
-    exec('\n'.join(l for l in f if l.startswith('__')), meta)
+    exec('\n'.join(line for line in f if line.startswith('__')), meta)
 
 test_requirements = [
     'pytest',

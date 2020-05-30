@@ -21,7 +21,7 @@ def random_point():
         'tags': {'tag key with sp🚀ces': 'tag,value,with"commas"'},
         'time': random.choice([now, str(now)]),
         'fields': {
-            'fi\neld_k\ey': random.randint(0, 200),
+            r'fi\neld_k\ey': random.randint(0, 200),
             'quote': '"',
             'value': random.random(),
         }

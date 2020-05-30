@@ -197,8 +197,8 @@ class InfluxDBClient:
     def db(self, db):
         self._db = db
         if not db:
-            warnings.warn(f'No default databases is set. '
-                          f'Database must be specified when querying/writing.')
+            warnings.warn('No default databases is set. '
+                          'Database must be specified when querying/writing.')
 
     def __enter__(self):
         return self

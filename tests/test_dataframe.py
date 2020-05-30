@@ -21,7 +21,7 @@ def test_write_dataframe(df_client):
 @utils.requires_pandas
 def test_write_dataframe_with_nan(df_client):
     df = utils.trading_df()
-    df_client.write(df, f'fills00')
+    df_client.write(df, 'fills00')
     for i in range(10):
         for _ in range(int(len(df) / 5)):
             i = np.random.randint(df.shape[0])
