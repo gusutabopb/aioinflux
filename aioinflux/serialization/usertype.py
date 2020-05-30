@@ -2,6 +2,7 @@ import enum
 import ciso8601
 import time
 import decimal
+import typing
 from collections import Counter
 from typing import TypeVar, Optional, Mapping, Union
 from datetime import datetime
@@ -165,7 +166,7 @@ def lineprotocol(
     )
 
     def _lineprotocol(cls):
-        _schema = schema or getattr(cls, '__annotations__', {})
+        _schema = schema or typing.get_type_hints(cls)
         # TODO: Raise warning or exception if schema has optionals but rm_none is False
         # for t in _schema.values():
         #     for bt in field_types + tag_types:
@@ -183,7 +184,7 @@ def lineprotocol(
                 raise ValueError("'rm_none' can only be used with namedtuples")
             key = tuple([k for k, v in i._asdict().items() if v != '' and v is not None])
             if key not in parsers:
-                _schema = schema or getattr(cls, '__annotations__', {})
+                _schema = schema or typing.get_type_hints(cls) or {}
                 _schema = {k: v for k, v in _schema.items() if k in key}
                 parsers[key] = _make_serializer(cls.__name__, _schema, extra_tags, placeholder)
             return parsers[key](i)
