@@ -10,7 +10,6 @@ from aioinflux.compat import *
 import pytest
 
 requires_pandas = pytest.mark.skipif(pd is None, reason=no_pandas_warning)
-requires_redis = pytest.mark.skipif(aioredis is None, reason=no_redis_warning)
 logger = logging.getLogger('aioinflux')
 
 
