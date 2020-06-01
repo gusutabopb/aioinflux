@@ -264,6 +264,8 @@ class InfluxDBClient:
         :param tag_columns: Columns to be treated as tags
             (used when writing DataFrames only)
         :param extra_tags: Additional tags to be added to all points passed.
+            Valid when writing DataFrames or mappings only.
+            Silently ignored for user-defined classes and raw lineprotocol
         :return: Returns ``True`` if insert is successful.
             Raises :py:class:`ValueError` otherwise.
         """
