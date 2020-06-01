@@ -605,37 +605,78 @@ dictionary containing all or a subset of the following:
 Caching query results
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: v0.7.0
+.. versionchanged:: v0.10.0
 
-Aioinflux provides an optional caching layer on top of InfluxDB, based on `Redis`_ and :mod:`aioredis`.
-
-The caching functionality is designed for highly iterative/repetitive workloads
+Caching can is useful in highly iterative/repetitive workloads
 (i.e.: machine learning / quantitative finance model tuning)
 that constantly query InfluxDB for the same historical data repeatedly.
-By saving query results in memory locally, load on your InfluxDB instance can be greatly reduced.
+By saving query results locally, load on your InfluxDB instance can be greatly reduced.
 
-In order to enable/use caching functionality:
+Aioinflux used to provide a built-in caching local functionality using Redis.
+However, due to low perceived usage, vendor lock-in (Redis) and extra complexity
+added to Aioinflux, it was removed.
 
-1. Install the necessary optional dependencies: ``pip install aioinflux[cache]``
+Here we explain how to add a simple caching layer using pickle.
+The example below caches dataframes as compressed pickle files on disk.
+It can be easily modified to use your preferred caching strategy, such as
+using different serialization, compression, cache key generation, etc.
+See function docstrings, code comments below for more details.
 
-2. Pass Redis host information when initializing :class:`.InfluxDBClient` with the ``redis_opts`` argument.
-   ``redis_opts`` takes a dictionary with keyword arguments used when calling :func:`aioredis.create_redis`.
+- Uncached code:
 
-3. When using :meth:`~.InfluxDBClient.query` , set ``use_cache`` to ``True``.
-   Even when Redis is properly configured, cache will be ignored unless specified on a per-query basis.
+.. code:: python
 
-Optionally, to control when the cache expires, use the ``cache_expiry`` argument of :class:`.InfluxDBClient`.
-You can also just simply use Redis CLI to clear the cache:
+    from aioinflux import InfluxDBClient
 
-.. code:: bash
+    c = InfluxDBClient(output='dataframe')
+    q = """
+        SELECT * FROM executions
+        WHERE product_code='BTC_JPY'
+        AND time >= '2020-05-22'
+        AND time < '2020-05-23'
+    """
+    # If this query is repeated, it will keep hitting InfluxDB,
+    # increasing the load on instance and using extra bandwidth
+    df = await c.query(q)
 
-    redis-cli -n <db> flushdb
 
-In order to debug whether or not cache is being used or being hit/miss, enable the ``aioinflux`` logger
-and set it to ``DEBUG`` level. See :ref:`Debugging` for more details.
+- Caching code:
+
+.. code:: python
+
+    import re
+    import hashlib
+    import pathlib
+    import pandas as pd
+
+    def _hash_query(q: str) -> str:
+        """Normalizes and hashes the query to generate a caching key"""
+        q = re.sub("\s+", " ", q).strip().lower().encode()
+        return hashlib.sha1(q).hexdigest()
+
+    async def fetch(influxdb: InfluxDBClient, q: str) -> Tuple[pd.DataFrame, bool]:
+        """Tries to see if query is cached, else fetches data from the database.
+
+        Returns a tuple containing the query results and a boolean indicating whether or not
+        the data came from local cache or directly from InfluxDB
+        """
+        p = pathlib.Path(_hash_query(q))
+        if p.exists():
+            return pd.read_pickle(p, compression="xz"), True
+        df = await influxdb.query(q)
+        df.to_pickle(str(p), compression="xz")
+        return df, False
 
 
-.. _Redis: https://redis.io/
+- Caching code usage:
+
+.. code:: python
+
+    df, cached = await fetch(c, q)
+    print(cached)  # False - cache miss
+
+    df, cached = await fetch(c, q)
+    print(cached)  # True - cache hit
 
 
 Other functionality

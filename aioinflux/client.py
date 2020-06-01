@@ -67,8 +67,6 @@ class InfluxDBClient:
         password: Optional[str] = None,
         timeout: Optional[Union[aiohttp.ClientTimeout, float]] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
-        redis_opts: Optional[dict] = None,
-        cache_expiry: int = 86400,
         **kwargs
     ):
         """
@@ -113,13 +111,10 @@ class InfluxDBClient:
         :param database: Default database to be used by the client.
             This field is for argument consistency with the official InfluxDB Python client.
         :param loop: Asyncio event loop.
-        :param redis_opts: Dict fo keyword arguments for :func:`aioredis.create_redis`
-        :param cache_expiry: Expiry time (in seconds) for cached data
         :param kwargs: Additional kwargs for :class:`aiohttp.ClientSession`
         """
         self._loop = loop or asyncio.get_event_loop()
         self._session: aiohttp.ClientSession = None
-        self._redis: aioredis.Redis = None
         self._mode = None
         self._output = None
         self._db = None
@@ -143,10 +138,6 @@ class InfluxDBClient:
                 kwargs.update(timeout=aiohttp.ClientTimeout(total=timeout))
         self.opts = kwargs
 
-        # Cache configuration
-        self.redis_opts = redis_opts
-        self.cache_expiry = cache_expiry
-
     async def create_session(self, **kwargs):
         """Creates an :class:`aiohttp.ClientSession`
 
@@ -155,12 +146,6 @@ class InfluxDBClient:
         """
         self.opts.update(kwargs)
         self._session = aiohttp.ClientSession(**self.opts, loop=self._loop)
-        if self.redis_opts:
-            if aioredis:
-                self._redis = await aioredis.create_redis(**self.redis_opts,
-                                                          loop=self._loop)
-            else:
-                warnings.warn(no_redis_warning)
 
     @property
     def url(self):
@@ -226,8 +211,6 @@ class InfluxDBClient:
         if self._session:
             await self._session.close()
             self._session = None
-        if self._redis:
-            self._redis.close()
 
     @runner
     async def ping(self) -> dict:
@@ -308,7 +291,6 @@ class InfluxDBClient:
         chunked: bool = False,
         chunk_size: Optional[int] = None,
         db: Optional[str] = None,
-        use_cache: bool = False,
     ) -> Union[AsyncGenerator[ResultType, None], ResultType]:
         """Sends a query to InfluxDB.
         Please refer to the InfluxDB documentation for all the possible queries:
@@ -324,7 +306,6 @@ class InfluxDBClient:
             in the same format as non-chunked queries.
         :param chunk_size: Max number of points for each chunk. By default, InfluxDB chunks
             responses by series or by every 10,000 points, whichever occurs first.
-        :param use_cache:
         :return: Response in the format specified by the combination of
            :attr:`.InfluxDBClient.output` and ``chunked``
         """
@@ -359,27 +340,14 @@ class InfluxDBClient:
 
         url = self.url.format(endpoint='query')
         if chunked:
-            if use_cache:
-                raise ValueError("Can't use cache w/ chunked queries")
-            elif self.mode != 'async':
+            if self.mode != 'async':
                 raise ValueError("Can't use 'chunked' with non-async mode")
             else:
                 return _chunked_generator(url, data, self.output == 'dataframe')
 
-        key = f'aioinflux:{q}'
-        if use_cache and self._redis and await self._redis.exists(key):
-            logger.debug(f'Cache HIT: {q}')
-            data = lz4.decompress(await self._redis.get(key))
-        else:
-            async with self._session.post(url, data=data) as resp:
-                data = await resp.read()
-                if use_cache and self._redis:
-                    logger.debug(f'Cache MISS ({resp.status}): {q}')
-                    if resp.status == 200:
-                        await self._redis.set(key, lz4.compress(data))
-                        await self._redis.expire(key, self.cache_expiry)
-                else:
-                    logger.debug(f'{resp.status}: {q}')
+        async with self._session.post(url, data=data) as resp:
+            data = await resp.read()
+            logger.debug(f'{resp.status}: {q}')
 
         data = json.loads(data)
         self._check_error(data)
