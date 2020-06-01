@@ -1,9 +1,9 @@
 import inspect
 
-from typing import Optional, Iterator, Callable, Any
+from typing import Optional, Generator, Callable
 
 
-def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Iterator[Any]:
+def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Generator:
     """Iterates a response JSON yielding data point by point.
 
     Can be used with both regular and chunked responses.
@@ -38,11 +38,10 @@ def iterpoints(resp: dict, parser: Optional[Callable] = None) -> Iterator[Any]:
             continue
         for series in statement['series']:
             if parser is None:
-                return (x for x in series['values'])
+                yield from (x for x in series['values'])
             elif 'meta' in inspect.signature(parser).parameters:
                 meta = {k: series[k] for k in series if k != 'values'}
                 meta['statement_id'] = statement['statement_id']
-                return (parser(*x, meta=meta) for x in series['values'])
+                yield from (parser(*x, meta=meta) for x in series['values'])
             else:
-                return (parser(*x) for x in series['values'])
-    return iter([])
+                yield from (parser(*x) for x in series['values'])

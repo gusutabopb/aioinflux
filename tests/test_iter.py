@@ -35,3 +35,25 @@ async def test_iter_point_namedtuple(iter_client):
         points.append(point)
         assert len(point) == 5
     assert len(points) == 100
+
+
+def test_iter_multi_series():
+    # See https://github.com/gusutabopb/aioinflux/issues/29
+    d = {'results': [{'series': [
+        {'columns': ['time', 'free', 'total', 'used', 'percent', 'path'],
+         'name': 'win_disk',
+         'tags': {'instance': 'C:'},
+         'values': [[1577419571000000000, 94, 238, 144, 60.49140930175781, 'C:']]},
+        {'columns': ['time', 'free', 'total', 'used', 'percent', 'path'],
+         'name': 'win_disk',
+         'tags': {'instance': 'D:'},
+         'values': [[1577419571000000000, 1727, 1863, 136, 7.3103790283203125, 'D:']]},
+        {'columns': ['time', 'free', 'total', 'used', 'percent', 'path'],
+         'name': 'win_disk',
+         'tags': {'instance': 'HarddiskVolume1'},
+         'values': [[1577419330000000000, 0, 0, 0, 29.292930603027344, 'HarddiskVolume1']]},
+        {'columns': ['time', 'free', 'total', 'used', 'percent', 'path'],
+         'name': 'win_disk', 'tags': {'instance': '_Total'},
+         'values': [[1577419571000000000, 1821, 2101, 280, 13.345237731933594, '_Total']]}],
+        'statement_id': 0}]}
+    assert len(list(iterpoints(d))) == 4
