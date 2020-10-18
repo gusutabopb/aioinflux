@@ -104,7 +104,7 @@ def serialize(df, measurement, tag_columns=None, **extra_tags) -> bytes:
             tags.append(f"{k}={{p[{i+1}]}}")
         elif issubclass(v.type, np.integer):
             fields.append(f"{k}={{p[{i+1}]}}i")
-        elif issubclass(v.type, (np.float, np.bool_)):
+        elif issubclass(v.type, (np.float, np.bool_, np.floating)):
             fields.append(f"{k}={{p[{i+1}]}}")
         else:
             # String escaping is skipped for performance reasons
