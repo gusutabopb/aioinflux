@@ -1,3 +1,4 @@
+from datetime import datetime
 import pytest
 import testing_utils as utils
 from testing_utils import logger
@@ -105,6 +106,18 @@ async def test_change_db(client):
     await client.ping()
 
     client.db, client.output = state
+
+
+@utils.requires_pandas
+@pytest.mark.asyncio
+async def test_serialize_float():
+    """Test various dtypes which should all result into float serialization"""
+    from aioinflux.serialization.dataframe import serialize
+
+    for type_ in [float, np.float, np.float16, np.float32, np.float64, np.float128]:
+        df = pd.DataFrame([{'a': 3.5}], index=[datetime.now()], dtype=type_)
+        res = serialize(df, measurement='test_serialize')
+        assert b'a=3.5' in res
 
 
 ###############
