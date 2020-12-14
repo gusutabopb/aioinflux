@@ -13,7 +13,6 @@ jobs:
     docker:
       - image: circleci/python:3.8.2
       - image: influxdb:latest
-      - image: redis:latest
     steps:
       - checkout
       - run:
@@ -24,9 +23,9 @@ jobs:
           command: make test
       - run:
           name: Install extras
-          command: sudo pip install -e .[pandas,cache]
+          command: sudo pip install -e .[pandas]
       - run:
-          name: Run test again (w/ Pandas+Redis support)
+          name: Run test again (w/ Pandas support)
           command: make test
       - run:
           name: See coverage report
@@ -43,7 +42,6 @@ jobs:
     docker:
       - image: circleci/python:3.7.7
       - image: influxdb:latest
-      - image: redis:latest
   build-3.6:
     <<: *build
     docker:
@@ -53,7 +51,6 @@ jobs:
     docker:
       - image: circleci/python:3.6.10
       - image: influxdb:latest
-      - image: redis:latest
 workflows:
   version: 2
   build_and_test:
