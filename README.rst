@@ -21,6 +21,11 @@ aioinflux
    :alt: Documentation status
 
 
+
+| **🚨This project is archived and unmantained.🚨**
+| **For InfluxDB v2+ support, please use the official Python client library.**
+|
+
 Asynchronous Python client for `InfluxDB`_. Built on top of
 `aiohttp`_ and `asyncio`_.
 Aioinflux is an alternative to the official InfluxDB Python client.
