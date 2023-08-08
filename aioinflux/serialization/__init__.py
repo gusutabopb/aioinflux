@@ -19,6 +19,7 @@ def serialize(data, measurement=None, tag_columns=None, **extra_tags):
     elif isinstance(data, dict):
         return mapping.serialize(data, measurement, **extra_tags)
     elif hasattr(data, '__iter__'):
-        return b'\n'.join([serialize(i, measurement, tag_columns, **extra_tags) for i in data])
+        return b'\n'.join([serialize(i, measurement, tag_columns, **extra_tags)
+                           for i in data])
     else:
         raise ValueError('Invalid input', data)

@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from typing import Mapping
 
 import ciso8601
@@ -47,11 +48,13 @@ def _serialize_timestamp(point):
         dt = ciso8601.parse_datetime(dt)
         if not dt:
             raise ValueError(f'Invalid datetime string: {dt!r}')
-
-    if not dt.tzinfo:
+    elif isinstance(dt, datetime):
+        if dt.tzinfo:
+            return int((dt - dt.tzinfo.utcoffset(dt)).timestamp() * 10**9)
         # Assume tz-naive input to be in UTC, not local time
-        return int(dt.timestamp() - time.timezone) * 10 ** 9 + dt.microsecond * 1000
-    return int(dt.timestamp()) * 10 ** 9 + dt.microsecond * 1000
+        return int(dt.timestamp() * 10**9)
+
+    raise AttributeError('time is an unknown type %s', type(dt))
 
 
 def _serialize_fields(point):
